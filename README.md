@@ -102,7 +102,7 @@ docker run -p 5000:5000 blueprint-analyzer
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details. Reference to the project 
 You are free to use, modify, and distribute it for any purpose, provided you include proper attribution. Please reference this project as:
 
-**Mehredad, AI-Driven Service Blueprint Analyzer (2024). Available at: GitHub Repository.**
+**Mehredad, AI-Driven Service Blueprint Analyzer (2024). Available at: [GitHub Repository](https://github.com/Mehredad/AI-DrivenServiceBlueprintAnalyzer).**
 
 For academic or research use, please cite it as:
 **Mehredad (2024). AI-Driven Service Blueprint Analyzer. GitHub. Retrieved from: https://github.com/Mehredad/AI-DrivenServiceBlueprintAnalyzer.**
