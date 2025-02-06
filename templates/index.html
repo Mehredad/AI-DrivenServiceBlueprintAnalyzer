@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>AI-Powered Blueprint Analyzer</title>
+</head>
+
+<body>
+    <div class="container">
+        {% if error %}
+        <div style="color: red; margin-bottom: 15px;">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <h1>AI-Powered Blueprint Analyzer</h1>
+        <h5>Welcome to the service blueprint and experience design analyzer.</h5>
+
+        <h3>Project Goal</h3>
+        <p>Create SDUX-expert AI agent, Decrease user-side data inputs and prompt engineering, Generate higher-quality
+            insights faster than general LLMs, Provide granular insights rather than general suggestions.</p>
+
+        <h3>How to use it</h3>
+        <p>1. Select a name for the project.</p>
+        <p>2. Upload the project Service Blueprint or Journey Maps (pdf, png, jpg, or jpeg).</p>
+        <p>3. Upload other files like persona, user flow, CJM, system maps, etc (pdf, png, jpg, or jpeg).</p>
+        <p>4. Enjoy the results!</p>
+
+        <h2>Are you ready?</h2>
+        <form method="POST" enctype="multipart/form-data">
+            <label>Project Name (Required)</label>
+            <input type="text" name="analysis_name" placeholder="Enter project name" required>
+
+            <label>Upload Service Blueprint (Required)</label>
+            <input type="file" name="blueprint" required>
+
+            <label>Additional Documents (Optional)</label>
+            <input type="file" name="additional_files" multiple>
+
+            <input type="submit" value="Analyze!">
+        </form>
+    </div>
+</body>
+
+</html>

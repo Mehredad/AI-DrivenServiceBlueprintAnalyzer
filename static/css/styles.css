@@ -1,0 +1,91 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    text-align: left;
+    background-color: #f4f4f4;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+    text-align: left;
+    margin-bottom: 15px;
+}
+
+p {
+    text-align: left;
+    line-height: 1.6;
+}
+
+form {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+input[type="text"],
+input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+input[type="submit"] {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+input[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+.results-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.swot-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.improvements-section {
+    margin-top: 20px;
+    background-color: #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.swot-section ul,
+.improvements-section ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.swot-section li,
+.improvements-section li {
+    background-color: white;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}

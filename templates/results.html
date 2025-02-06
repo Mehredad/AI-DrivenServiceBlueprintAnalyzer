@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>Analysis Results</title>
+</head>
+
+<body>
+    <div class="container">
+        <a href="/" class="back-button">Back to Analysis</a>
+        <h1>Analysis Results!</h1>
+
+        <div class="results-container">
+            <div class="swot-section">
+                <h3>Strengths 💪</h3>
+                <ul>
+                    {% for strength in swot.strengths %}
+                    <li>{{ strength }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="swot-section">
+                <h3>Weaknesses 🚧</h3>
+                <ul>
+                    {% for weakness in swot.weaknesses %}
+                    <li>{{ weakness }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="swot-section">
+                <h3>Opportunities 🌟</h3>
+                <ul>
+                    {% for opportunity in swot.opportunities %}
+                    <li>{{ opportunity }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="swot-section">
+                <h3>Threats 🛡️</h3>
+                <ul>
+                    {% for threat in swot.threats %}
+                    <li>{{ threat }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="improvements-section">
+            <h2>Potential Improvements 🚀</h2>
+            <ul>
+                {% for improvement in improvements %}
+                <li>{{ improvement }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</body>
+
+</html>
