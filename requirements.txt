@@ -1,0 +1,41 @@
+# Blueprint AI — Python dependencies
+# Vercel reads requirements.txt from the repo root for Python serverless functions.
+# Pin everything for reproducible builds.
+
+# ── Core framework
+fastapi==0.111.0
+mangum==0.17.0          # ASGI adapter — Vercel uses this under the hood for Python
+
+# ── Database (async PostgreSQL via Supabase)
+sqlalchemy[asyncio]==2.0.31
+asyncpg==0.29.0
+alembic==1.13.2
+
+# ── Validation & settings
+pydantic==2.7.4
+pydantic-settings==2.3.4
+python-multipart==0.0.9
+email-validator==2.1.1
+
+# ── Auth
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# ── AI
+anthropic==0.28.0
+
+# ── HTTP client (healthchecks, Supabase Realtime broadcast)
+httpx==0.27.0
+
+# ── Export (PDF — requires system libs libpango/libcairo)
+# WeasyPrint works locally and on Render; on Vercel use JSON export instead.
+# Uncomment to enable PDF on compatible deployments:
+# weasyprint==62.3
+
+# ── Rate limiting
+slowapi==0.1.9
+
+# ── Testing (not installed in production by Vercel — only in CI)
+pytest==8.2.2
+pytest-asyncio==0.23.7
+aiosqlite==0.20.0

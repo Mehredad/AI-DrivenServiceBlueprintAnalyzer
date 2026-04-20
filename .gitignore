@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Environment — NEVER commit these
+.env
+.env.local
+.env.*.local
+
+# Test artifacts
+.pytest_cache/
+*.db
+test_blueprint.db
+htmlcov/
+.coverage
+coverage.xml
+
+# Vercel
+.vercel/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Alembic (keep versions, ignore pycache)
+api/alembic/versions/__pycache__/
