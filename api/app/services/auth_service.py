@@ -1,14 +1,14 @@
 """
 Auth service — password hashing, JWT creation/validation, refresh token management.
-All crypto happens here; routers stay thin.
+Uses bcrypt directly (not passlib) for Vercel runtime compatibility.
 """
 import hashlib
 import secrets
+import bcrypt
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,17 +16,17 @@ from app.config import get_settings
 from app.models import User, RefreshToken
 
 settings = get_settings()
-_pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 # ── Passwords ──────────────────────────────────────────────────────────────────
 
 def hash_password(plain: str) -> str:
-    return _pwd.hash(plain)
+    # Truncate to 72 bytes — bcrypt hard limit
+    return bcrypt.hashpw(plain[:72].encode(), bcrypt.gensalt(rounds=12)).decode()
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return _pwd.verify(plain, hashed)
+    return bcrypt.checkpw(plain[:72].encode(), hashed.encode())
 
 
 # ── Access tokens (JWT, 15 min) ────────────────────────────────────────────────
