@@ -1,0 +1,140 @@
+{
+  "title_default": "Customer Support Flow",
+  "domain_default": "other",
+  "swimlanes": [
+    { "id": "sl-sf-1", "name": "Physical Evidence",           "order": 0, "divider_type": null },
+    { "id": "sl-sf-2", "name": "Customer Actions",            "order": 1, "divider_type": "interaction" },
+    { "id": "sl-sf-3", "name": "Frontstage Employee Actions", "order": 2, "divider_type": "visibility" },
+    { "id": "sl-sf-4", "name": "Backstage & Systems",         "order": 3, "divider_type": "internal_interaction" },
+    { "id": "sl-sf-5", "name": "Support Processes",           "order": 4, "divider_type": null }
+  ],
+  "steps": [
+    { "id": "st-sf-1", "name": "Intake",      "order": 0 },
+    { "id": "st-sf-2", "name": "Triage",      "order": 1 },
+    { "id": "st-sf-3", "name": "Resolution",  "order": 2 },
+    { "id": "st-sf-4", "name": "Follow-up",   "order": 3 }
+  ],
+  "elements": [
+    {
+      "id": "el-sf-1",
+      "type": "physical_evidence",
+      "name": "Support chat widget",
+      "notes": "Live chat embedded in the product. Serves tier-1 queries and escalates to human agents.",
+      "swimlane_id": "sl-sf-1",
+      "step_id": "st-sf-1",
+      "status": "live",
+      "owner": "Support",
+      "meta": { "artefact_type": "digital_interface" }
+    },
+    {
+      "id": "el-sf-2",
+      "type": "customer_action",
+      "name": "Customer reports an issue",
+      "notes": "Customer describes the problem via chat or email. Quality of description affects triage speed.",
+      "swimlane_id": "sl-sf-2",
+      "step_id": "st-sf-1",
+      "status": "live",
+      "owner": "Customer",
+      "meta": { "channel": "in-product chat or email" }
+    },
+    {
+      "id": "el-sf-3",
+      "type": "backstage_action",
+      "name": "Ticket routing system",
+      "notes": "Tags incoming tickets by topic and urgency, then assigns to the right agent queue.",
+      "swimlane_id": "sl-sf-4",
+      "step_id": "st-sf-2",
+      "status": "live",
+      "owner": "IT Engineering",
+      "meta": {}
+    },
+    {
+      "id": "el-sf-4",
+      "type": "frontstage_action",
+      "name": "Support agent reviews and triages ticket",
+      "notes": "Agent reads customer message, tags priority, and either resolves immediately or escalates.",
+      "swimlane_id": "sl-sf-3",
+      "step_id": "st-sf-2",
+      "status": "live",
+      "owner": "Support Agent",
+      "meta": { "medium": "ticketing system" }
+    },
+    {
+      "id": "el-sf-5",
+      "type": "risk",
+      "name": "Incorrect triage causing delay",
+      "notes": "Mis-tagged tickets end up in the wrong queue, adding 4–8 hours before reassignment.",
+      "swimlane_id": "sl-sf-4",
+      "step_id": "st-sf-2",
+      "status": "draft",
+      "owner": "Support Lead",
+      "meta": { "severity": "high" }
+    },
+    {
+      "id": "el-sf-6",
+      "type": "support_process",
+      "name": "Internal knowledge base",
+      "notes": "Searchable runbooks and known-issue articles used by agents to resolve tier-2 queries.",
+      "swimlane_id": "sl-sf-5",
+      "step_id": "st-sf-3",
+      "status": "live",
+      "owner": "Technical Team",
+      "meta": {}
+    },
+    {
+      "id": "el-sf-7",
+      "type": "frontstage_action",
+      "name": "Agent communicates resolution",
+      "notes": "Agent explains fix to customer via chat or email and confirms the issue is resolved.",
+      "swimlane_id": "sl-sf-3",
+      "step_id": "st-sf-3",
+      "status": "live",
+      "owner": "Support Agent",
+      "meta": { "medium": "chat or email" }
+    },
+    {
+      "id": "el-sf-8",
+      "type": "physical_evidence",
+      "name": "Resolution confirmation email",
+      "notes": "Sent to the customer when their ticket is marked resolved. Includes summary and re-open link.",
+      "swimlane_id": "sl-sf-1",
+      "step_id": "st-sf-3",
+      "status": "live",
+      "owner": "Support",
+      "meta": { "artefact_type": "digital_interface" }
+    },
+    {
+      "id": "el-sf-9",
+      "type": "moment_of_truth",
+      "name": "Customer evaluates whether issue is truly resolved",
+      "notes": "The customer's verdict — whether to re-open or accept resolution — determines satisfaction and NPS.",
+      "swimlane_id": "sl-sf-2",
+      "step_id": "st-sf-4",
+      "status": "draft",
+      "owner": "Support",
+      "meta": { "sentiment": "neutral", "reason": "directly drives CSAT and re-contact rate" }
+    },
+    {
+      "id": "el-sf-10",
+      "type": "physical_evidence",
+      "name": "CSAT survey",
+      "notes": "One-question satisfaction rating sent 24 hours after resolution. Target: >85% positive.",
+      "swimlane_id": "sl-sf-1",
+      "step_id": "st-sf-4",
+      "status": "in-progress",
+      "owner": "Support",
+      "meta": { "artefact_type": "digital_interface" }
+    },
+    {
+      "id": "el-sf-11",
+      "type": "opportunity",
+      "name": "NPS and resolution-time dashboard",
+      "notes": "Weekly report of NPS score, average time-to-resolution, and repeat-contact rate by category.",
+      "swimlane_id": "sl-sf-5",
+      "step_id": "st-sf-4",
+      "status": "draft",
+      "owner": "Support Lead",
+      "meta": {}
+    }
+  ]
+}

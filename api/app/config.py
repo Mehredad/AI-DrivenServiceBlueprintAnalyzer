@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     # ── Anthropic (server-side only — never exposed to frontend)
     anthropic_api_key: str = ""
 
+    # ── NVIDIA NIM (OpenAI-compatible free tier — for lightweight AI tasks)
+    nim_api_key: str = ""
+    nim_base_url: str = "https://integrate.api.nvidia.com/v1"
+    nim_model: str = "meta/llama-4-scout-17b-16e-instruct"
+
     # ── CORS
     allowed_origins: str = "http://localhost:3000,http://localhost:8000"
 

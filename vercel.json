@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 120
+    }
+  },
   "builds": [
     {
       "src": "api/index.py",
@@ -12,6 +17,10 @@
     {
       "src": "frontend/index.html",
       "use": "@vercel/static"
+    },
+    {
+      "src": "frontend/templates/(.*)",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -22,6 +31,10 @@
     {
       "src": "/health",
       "dest": "api/index.py"
+    },
+    {
+      "src": "/templates/(.*)",
+      "dest": "/frontend/templates/$1"
     },
     {
       "src": "/(.*)",

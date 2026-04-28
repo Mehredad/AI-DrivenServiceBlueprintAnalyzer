@@ -11,25 +11,30 @@ Key differences from a traditional deployment:
 import logging
 from contextlib import asynccontextmanager
 
+from pathlib import Path
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy import text
 
 from app.config import get_settings
-from app.database import AsyncSessionLocal
+from app.database import AsyncSessionLocal, _db_ready
 
 from app.routers.auth         import router as auth_router
 from app.routers.boards       import router as boards_router
 from app.routers.capabilities import router as caps_router
+from app.routers.elements     import router as elements_router
 from app.routers.agent        import router as agent_router
 from app.routers.insights     import router as insights_router
 from app.routers.governance   import router as governance_router
 from app.routers.exports      import router as exports_router
 from app.routers.audit        import router as audit_router
+from app.routers.uploads      import router as uploads_router
+from app.routers.imports      import router as imports_router
 
 settings = get_settings()
 logging.basicConfig(level=getattr(logging, settings.log_level.upper(), logging.INFO))
@@ -40,13 +45,15 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["200/minute"])
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Lightweight startup check — no pool warmup (serverless is stateless)
-    try:
-        async with AsyncSessionLocal() as session:
-            await session.execute(text("SELECT 1"))
-        log.info("DB connection OK")
-    except Exception as exc:
-        log.warning(f"DB connection check failed: {exc}")
+    if not _db_ready:
+        log.error("DATABASE_URL is not set — all database operations will return 503.")
+    else:
+        try:
+            async with AsyncSessionLocal() as session:
+                await session.execute(text("SELECT 1"))
+            log.info("DB connection OK")
+        except Exception as exc:
+            log.warning(f"DB connection check failed: {exc}")
     yield
     # No teardown needed — Vercel recycles the process
 
@@ -93,15 +100,42 @@ async def security_headers(request: Request, call_next):
 app.include_router(auth_router)
 app.include_router(boards_router)
 app.include_router(caps_router)
+app.include_router(elements_router)
 app.include_router(agent_router)
 app.include_router(insights_router)
 app.include_router(governance_router)
 app.include_router(exports_router)
 app.include_router(audit_router)
+app.include_router(uploads_router)
+app.include_router(imports_router)
+
+
+_FRONTEND = Path(__file__).parent.parent.parent / "frontend" / "index.html"
+_TEMPLATES_DIR = Path(__file__).parent.parent.parent / "frontend" / "templates"
+
+
+@app.get("/", include_in_schema=False)
+async def serve_frontend():
+    if _FRONTEND.exists():
+        return FileResponse(str(_FRONTEND))
+    return JSONResponse({"detail": "Frontend not found"}, status_code=404)
+
+
+@app.get("/templates/{filename}", include_in_schema=False)
+async def serve_template(filename: str):
+    path = _TEMPLATES_DIR / filename
+    if path.exists() and path.suffix == ".json":
+        return FileResponse(str(path), media_type="application/json")
+    return JSONResponse({"detail": "Template not found"}, status_code=404)
 
 
 @app.get("/health", tags=["health"])
 async def health():
+    if not _db_ready:
+        return JSONResponse(status_code=503, content={
+            "status": "degraded", "database": "not_configured",
+            "version": "1.0.0", "environment": settings.environment,
+        })
     try:
         async with AsyncSessionLocal() as session:
             await session.execute(text("SELECT 1"))

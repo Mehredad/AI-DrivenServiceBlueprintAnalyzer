@@ -1,0 +1,130 @@
+{
+  "title_default": "SaaS Onboarding Journey",
+  "domain_default": "other",
+  "swimlanes": [
+    { "id": "sl-so-1", "name": "Physical Evidence",           "order": 0, "divider_type": null },
+    { "id": "sl-so-2", "name": "Customer Actions",            "order": 1, "divider_type": "interaction" },
+    { "id": "sl-so-3", "name": "Frontstage Employee Actions", "order": 2, "divider_type": "visibility" },
+    { "id": "sl-so-4", "name": "Backstage & Systems",         "order": 3, "divider_type": "internal_interaction" },
+    { "id": "sl-so-5", "name": "Support Processes",           "order": 4, "divider_type": null }
+  ],
+  "steps": [
+    { "id": "st-so-1", "name": "Awareness",   "order": 0 },
+    { "id": "st-so-2", "name": "Sign-up",     "order": 1 },
+    { "id": "st-so-3", "name": "Activation",  "order": 2 },
+    { "id": "st-so-4", "name": "First Value", "order": 3 },
+    { "id": "st-so-5", "name": "Retention",   "order": 4 }
+  ],
+  "elements": [
+    {
+      "id": "el-so-1",
+      "type": "physical_evidence",
+      "name": "Marketing website",
+      "notes": "Main acquisition channel. Converts visitors to trial sign-ups via landing page CTA.",
+      "swimlane_id": "sl-so-1",
+      "step_id": "st-so-1",
+      "status": "live",
+      "owner": "Marketing",
+      "meta": { "artefact_type": "digital_interface" }
+    },
+    {
+      "id": "el-so-2",
+      "type": "customer_action",
+      "name": "Customer discovers product",
+      "notes": "Customer arrives via search, ad, or referral and reads the value proposition.",
+      "swimlane_id": "sl-so-2",
+      "step_id": "st-so-1",
+      "status": "live",
+      "owner": "Marketing",
+      "meta": { "channel": "web" }
+    },
+    {
+      "id": "el-so-3",
+      "type": "physical_evidence",
+      "name": "Sign-up form",
+      "notes": "Email + password registration. Must complete within 90 seconds for best conversion.",
+      "swimlane_id": "sl-so-1",
+      "step_id": "st-so-2",
+      "status": "live",
+      "owner": "Product",
+      "meta": { "artefact_type": "digital_interface" }
+    },
+    {
+      "id": "el-so-4",
+      "type": "customer_action",
+      "name": "Customer registers account",
+      "notes": "Completes email + password form and verifies email address.",
+      "swimlane_id": "sl-so-2",
+      "step_id": "st-so-2",
+      "status": "live",
+      "owner": "Product",
+      "meta": { "channel": "web" }
+    },
+    {
+      "id": "el-so-5",
+      "type": "support_process",
+      "name": "Auth service",
+      "notes": "Handles registration, email verification, and OAuth social login.",
+      "swimlane_id": "sl-so-5",
+      "step_id": "st-so-2",
+      "status": "live",
+      "owner": "Engineering",
+      "meta": {}
+    },
+    {
+      "id": "el-so-6",
+      "type": "physical_evidence",
+      "name": "Welcome email sequence",
+      "notes": "3-email drip: day 0 confirm, day 1 quick-start guide, day 3 first milestone nudge.",
+      "swimlane_id": "sl-so-1",
+      "step_id": "st-so-3",
+      "status": "live",
+      "owner": "Marketing",
+      "meta": { "artefact_type": "digital_interface" }
+    },
+    {
+      "id": "el-so-7",
+      "type": "frontstage_action",
+      "name": "Onboarding checklist presented",
+      "notes": "System surfaces the next recommended setup step to guide the user through activation.",
+      "swimlane_id": "sl-so-3",
+      "step_id": "st-so-3",
+      "status": "in-progress",
+      "owner": "Product",
+      "meta": { "medium": "in-app UI" }
+    },
+    {
+      "id": "el-so-8",
+      "type": "moment_of_truth",
+      "name": "Customer generates first meaningful output",
+      "notes": "The moment the user produces their first report or key action — the activation milestone that predicts retention.",
+      "swimlane_id": "sl-so-2",
+      "step_id": "st-so-4",
+      "status": "in-progress",
+      "owner": "Product",
+      "meta": { "sentiment": "positive", "reason": "determines trial-to-paid conversion" }
+    },
+    {
+      "id": "el-so-9",
+      "type": "frontstage_action",
+      "name": "In-app help widget",
+      "notes": "Contextual tooltips and live chat accessible during first-run experience.",
+      "swimlane_id": "sl-so-3",
+      "step_id": "st-so-4",
+      "status": "draft",
+      "owner": "Support",
+      "meta": { "medium": "live chat" }
+    },
+    {
+      "id": "el-so-10",
+      "type": "opportunity",
+      "name": "Usage analytics to predict churn",
+      "notes": "Track weekly active usage, feature adoption rate, and drop-off points post-activation.",
+      "swimlane_id": "sl-so-4",
+      "step_id": "st-so-5",
+      "status": "draft",
+      "owner": "Product",
+      "meta": {}
+    }
+  ]
+}

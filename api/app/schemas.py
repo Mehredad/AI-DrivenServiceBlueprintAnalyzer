@@ -23,7 +23,7 @@ class UserRegister(BaseModel):
     @field_validator("role")
     @classmethod
     def validate_role(cls, v: str) -> str:
-        allowed = {"designer", "clinician", "data", "governance", "pm"}
+        allowed = {"pm", "designer", "researcher", "developer", "delivery", "governance"}
         if v not in allowed:
             raise ValueError(f"role must be one of {allowed}")
         return v
@@ -55,13 +55,18 @@ class TokenResponse(BaseModel):
 
 
 class UserOut(BaseModel):
-    id:         str
-    email:      str
-    full_name:  Optional[str] = None
-    role:       str
-    created_at: datetime
+    id:                  str
+    email:               str
+    full_name:           Optional[str] = None
+    role:                str
+    has_seen_onboarding: bool = False
+    created_at:          datetime
 
     model_config = {"from_attributes": True}
+
+
+class UserPatch(BaseModel):
+    has_seen_onboarding: Optional[bool] = None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -77,7 +82,7 @@ class BoardCreate(BaseModel):
     def validate_domain(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
-        allowed = {"healthcare", "public", "banking", "education"}
+        allowed = {"healthcare", "public", "banking", "education", "finance", "operations", "other"}
         if v not in allowed:
             raise ValueError(f"domain must be one of {allowed}")
         return v
@@ -94,8 +99,8 @@ class BoardPatch(BaseModel):
     def validate_phase(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
-        if v not in {"understand", "harvest", "improve"}:
-            raise ValueError("phase must be understand|harvest|improve")
+        if v not in {"understand", "design", "operate"}:
+            raise ValueError("phase must be understand|design|operate")
         return v
 
 
@@ -136,6 +141,14 @@ class CollaboratorAdd(BaseModel):
         if v not in {"viewer", "editor", "admin"}:
             raise ValueError("role must be viewer|editor|admin")
         return v
+
+
+class CollaboratorOut(BaseModel):
+    user_id:   str
+    email:     str
+    full_name: Optional[str] = None
+    role:      str
+    joined_at: datetime
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -204,9 +217,11 @@ class ChatHistoryItem(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    board_id: str
-    message:  str = Field(min_length=1, max_length=4000)
-    history:  list[ChatHistoryItem] = Field(default_factory=list, max_length=40)
+    board_id:    str
+    message:     str = Field(min_length=1, max_length=4000)
+    history:     list[ChatHistoryItem] = Field(default_factory=list, max_length=40)
+    role:        Optional[str] = None
+    attachments: list[str] = Field(default_factory=list, max_length=3)  # list of upload UUIDs
 
 
 class ChatResponse(BaseModel):
@@ -216,12 +231,69 @@ class ChatResponse(BaseModel):
 
 
 class ChatMessageOut(BaseModel):
-    id:         str
-    role:       str
-    content:    str
-    created_at: datetime
+    id:          str
+    role:        str
+    content:     str
+    attachments: list[Any] = []
+    created_at:  datetime
 
     model_config = {"from_attributes": True}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# UPLOADS
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────────────────
+# IMPORTS (PRD-11)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class ImportStartRequest(BaseModel):
+    upload_id: str = Field(min_length=1)
+
+
+class ImportJobOut(BaseModel):
+    job_id: str
+    status: str   # queued | processing | done | partial | failed
+    result: Optional[dict[str, Any]] = None
+    error:  Optional[str] = None
+
+
+class ImportAcceptRequest(BaseModel):
+    edits: Optional[dict[str, Any]] = None   # full modified extraction result, or null to use stored result
+
+
+class ImportAcceptResponse(BaseModel):
+    success:  bool
+    board_id: str
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# UPLOADS
+# ─────────────────────────────────────────────────────────────────────────────
+
+class UploadSignRequest(BaseModel):
+    filename:     str = Field(min_length=1, max_length=255)
+    content_type: str
+    size:         int = Field(gt=0, le=10 * 1024 * 1024)
+
+    @field_validator("content_type")
+    @classmethod
+    def validate_content_type(cls, v: str) -> str:
+        allowed = {"application/pdf", "image/png", "image/jpeg", "image/webp"}
+        if v not in allowed:
+            raise ValueError("Unsupported file type. PDF or images only.")
+        return v
+
+
+class UploadSignResponse(BaseModel):
+    upload_id:  str
+    upload_url: str
+
+
+class UploadUrlResponse(BaseModel):
+    url:        str
+    expires_at: str
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -291,5 +363,85 @@ class AuditLogOut(BaseModel):
     entity_id:   Optional[str] = None
     diff:        Optional[dict[str, Any]] = None
     created_at:  datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ELEMENTS
+# ─────────────────────────────────────────────────────────────────────────────
+
+_ELEMENT_TYPES = {
+    "customer_action", "physical_evidence", "frontstage_action", "backstage_action",
+    "support_process", "moment_of_truth",
+    "touchpoint", "system", "data_flow", "handoff", "risk",
+    "opportunity", "pain_point", "research_evidence", "ai_capability", "governance_checkpoint",
+}
+_ELEMENT_STATUSES = {"draft", "in-progress", "live", "deprecated"}
+
+
+class ElementCreate(BaseModel):
+    type:        str = Field(min_length=1, max_length=50)
+    name:        str = Field(min_length=1, max_length=200)
+    notes:       Optional[str] = Field(None, max_length=2000)
+    owner:       Optional[str] = Field(None, max_length=255)
+    status:      str = "draft"
+    swimlane_id: Optional[str] = None
+    step_id:     Optional[str] = None
+    meta:        Optional[dict[str, Any]] = None
+
+    @field_validator("type")
+    @classmethod
+    def validate_type(cls, v: str) -> str:
+        if v not in _ELEMENT_TYPES:
+            raise ValueError(f"type must be one of {_ELEMENT_TYPES}")
+        return v
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        if v not in _ELEMENT_STATUSES:
+            raise ValueError("status must be draft|in-progress|live|deprecated")
+        return v
+
+
+class ElementUpdate(BaseModel):
+    type:        Optional[str] = Field(None, max_length=50)
+    name:        Optional[str] = Field(None, min_length=1, max_length=200)
+    notes:       Optional[str] = Field(None, max_length=2000)
+    owner:       Optional[str] = Field(None, max_length=255)
+    status:      Optional[str] = None
+    swimlane_id: Optional[str] = None
+    step_id:     Optional[str] = None
+    meta:        Optional[dict[str, Any]] = None
+
+    @field_validator("type")
+    @classmethod
+    def validate_type(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in _ELEMENT_TYPES:
+            raise ValueError(f"type must be one of {_ELEMENT_TYPES}")
+        return v
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in _ELEMENT_STATUSES:
+            raise ValueError("status must be draft|in-progress|live|deprecated")
+        return v
+
+
+class ElementOut(BaseModel):
+    id:          str
+    board_id:    str
+    swimlane_id: Optional[str] = None
+    step_id:     Optional[str] = None
+    type:        str
+    name:        str
+    notes:       Optional[str] = None
+    owner:       Optional[str] = None
+    status:      str
+    meta:        dict[str, Any] = {}
+    created_at:  datetime
+    updated_at:  datetime
 
     model_config = {"from_attributes": True}

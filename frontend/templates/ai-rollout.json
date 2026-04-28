@@ -1,0 +1,156 @@
+{
+  "title_default": "AI Feature Rollout",
+  "domain_default": "other",
+  "swimlanes": [
+    { "id": "sl-ai-1", "name": "Physical Evidence",           "order": 0 },
+    { "id": "sl-ai-2", "name": "Customer Actions",            "order": 1 },
+    { "id": "sl-ai-3", "name": "Frontstage Employee Actions", "order": 2 },
+    { "id": "sl-ai-4", "name": "Backstage & AI Systems",      "order": 3 },
+    { "id": "sl-ai-5", "name": "Support Processes",           "order": 4 }
+  ],
+  "steps": [
+    { "id": "st-ai-1", "name": "First encounter",     "order": 0 },
+    { "id": "st-ai-2", "name": "Opt in & try",        "order": 1 },
+    { "id": "st-ai-3", "name": "Routine use",         "order": 2 },
+    { "id": "st-ai-4", "name": "Unexpected output",   "order": 3 },
+    { "id": "st-ai-5", "name": "Escalate & resolve",  "order": 4 }
+  ],
+  "elements": [
+    {
+      "id": "el-ai-1",
+      "type": "physical_evidence",
+      "name": "Feature announcement banner",
+      "notes": "In-app banner explaining what the AI feature does and how to opt out. Appears on first login after rollout.",
+      "swimlane_id": "sl-ai-1",
+      "step_id": "st-ai-1",
+      "status": "draft",
+      "owner": "Product",
+      "meta": {}
+    },
+    {
+      "id": "el-ai-2",
+      "type": "customer_action",
+      "name": "User reads AI feature explanation",
+      "notes": "User encounters the feature description and decides whether to enable it.",
+      "swimlane_id": "sl-ai-2",
+      "step_id": "st-ai-1",
+      "status": "draft",
+      "owner": "Product",
+      "meta": {}
+    },
+    {
+      "id": "el-ai-3",
+      "type": "frontstage_action",
+      "name": "Contextual onboarding tooltip",
+      "notes": "Tooltip explaining the first AI recommendation the user sees, with a confidence indicator.",
+      "swimlane_id": "sl-ai-3",
+      "step_id": "st-ai-2",
+      "status": "draft",
+      "owner": "Product",
+      "meta": {}
+    },
+    {
+      "id": "el-ai-4",
+      "type": "customer_action",
+      "name": "User accepts first AI recommendation",
+      "notes": "Critical action — measures first-use conversion from opt-in to acted-on recommendation.",
+      "swimlane_id": "sl-ai-2",
+      "step_id": "st-ai-2",
+      "status": "draft",
+      "owner": "Product",
+      "meta": {}
+    },
+    {
+      "id": "el-ai-5",
+      "type": "ai_capability",
+      "name": "Recommendation model",
+      "notes": "Collaborative-filtering model suggesting next actions. Trained on 6 months of usage data. p99 latency <200ms.",
+      "swimlane_id": "sl-ai-4",
+      "step_id": "st-ai-2",
+      "status": "in-progress",
+      "owner": "ML Engineering",
+      "meta": {
+        "risk_level": "medium",
+        "autonomy": "advisory",
+        "xai_strategy": "Confidence score shown alongside each recommendation"
+      }
+    },
+    {
+      "id": "el-ai-6",
+      "type": "governance_checkpoint",
+      "name": "AI ethics review",
+      "notes": "Internal review covering fairness, explainability, and right-to-opt-out before any user exposure.",
+      "swimlane_id": "sl-ai-5",
+      "step_id": "st-ai-2",
+      "status": "draft",
+      "owner": "Governance",
+      "meta": {}
+    },
+    {
+      "id": "el-ai-7",
+      "type": "physical_evidence",
+      "name": "Recommendation card UI",
+      "notes": "Card component showing AI suggestion, confidence level, and dismiss option.",
+      "swimlane_id": "sl-ai-1",
+      "step_id": "st-ai-3",
+      "status": "in-progress",
+      "owner": "Design",
+      "meta": {}
+    },
+    {
+      "id": "el-ai-8",
+      "type": "backstage_action",
+      "name": "Model serving infrastructure",
+      "notes": "Real-time inference endpoint with <200ms p99 latency SLA. Auto-scales on request volume.",
+      "swimlane_id": "sl-ai-4",
+      "step_id": "st-ai-3",
+      "status": "in-progress",
+      "owner": "Engineering",
+      "meta": {}
+    },
+    {
+      "id": "el-ai-9",
+      "type": "pain_point",
+      "name": "Explainability gap",
+      "notes": "Users do not understand why they receive specific recommendations, leading to distrust and low adoption.",
+      "swimlane_id": "sl-ai-2",
+      "step_id": "st-ai-4",
+      "status": "draft",
+      "owner": "Product",
+      "meta": {}
+    },
+    {
+      "id": "el-ai-10",
+      "type": "risk",
+      "name": "Bias in training data",
+      "notes": "Training corpus over-represents power users; recommendations may not generalise to new or low-engagement users.",
+      "swimlane_id": "sl-ai-4",
+      "step_id": "st-ai-4",
+      "status": "draft",
+      "owner": "ML Engineering",
+      "meta": {}
+    },
+    {
+      "id": "el-ai-11",
+      "type": "frontstage_action",
+      "name": "Support agent reviews AI decision log",
+      "notes": "When a user escalates, support staff access the explanation trail for the AI recommendation that caused confusion.",
+      "swimlane_id": "sl-ai-3",
+      "step_id": "st-ai-5",
+      "status": "draft",
+      "owner": "Support",
+      "meta": {}
+    },
+    {
+      "id": "el-ai-12",
+      "type": "support_process",
+      "name": "Production model monitor",
+      "notes": "Tracks prediction drift, feature importance shifts, and data quality. Alerts on-call if drift threshold exceeded.",
+      "swimlane_id": "sl-ai-5",
+      "step_id": "st-ai-5",
+      "status": "in-progress",
+      "owner": "ML Engineering",
+      "meta": {}
+    }
+  ]
+}

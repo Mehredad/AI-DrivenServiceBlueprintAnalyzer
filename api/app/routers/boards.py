@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models import User
 from app.schemas import (
-    BoardCreate, BoardPatch, BoardOut, BoardSummary, CollaboratorAdd,
+    BoardCreate, BoardPatch, BoardOut, BoardSummary, CollaboratorAdd, CollaboratorOut,
 )
 from app.services import board_service
 from app.middleware.auth_middleware import get_current_user
@@ -69,6 +69,15 @@ async def archive_board(
 ):
     await board_service.archive_board(db, board_id, user.id)
     await db.commit()
+
+
+@router.get("/{board_id}/collaborators", response_model=list[CollaboratorOut])
+async def list_collaborators(
+    board_id: str,
+    user: User = Depends(get_current_user),
+    db:   AsyncSession = Depends(get_db),
+):
+    return await board_service.list_collaborators(db, board_id, user.id)
 
 
 @router.post("/{board_id}/collaborators", status_code=201)

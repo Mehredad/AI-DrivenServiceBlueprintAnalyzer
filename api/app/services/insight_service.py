@@ -1,20 +1,35 @@
 """
-Insight service — uses the Anthropic API to analyse the live board state
-and return structured insights that get persisted to the insights table.
+Insight service — analyses the live board state and returns structured insights.
+Tries NVIDIA NIM first (free tier) and falls back to Anthropic if NIM is
+unavailable or fails.
 """
 import json
+import logging
 from anthropic import AsyncAnthropic
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.models import Insight
 from app.services.agent_service import build_board_context
+from app.services.nim_client import nim_complete
 
+log = logging.getLogger(__name__)
 settings = get_settings()
-_client  = AsyncAnthropic(api_key=settings.anthropic_api_key)
+_anthropic: AsyncAnthropic | None = None
 
-INSIGHT_PROMPT = """\
-Analyse this HCAI blueprint board and return a JSON array of insights.
+def _get_anthropic() -> AsyncAnthropic:
+    global _anthropic
+    if _anthropic is None:
+        _anthropic = AsyncAnthropic(api_key=settings.anthropic_api_key)
+    return _anthropic
+
+_SYSTEM = (
+    "You are an expert service-design analyst reviewing a system journey map. "
+    "You always respond with valid JSON only — no prose, no markdown fences."
+)
+
+_PROMPT = """\
+Analyse this blueprint board and return a JSON array of insights.
 
 Each insight object must have EXACTLY these fields:
 - "severity":    one of "high" | "medium" | "low" | "info" | "positive"
@@ -25,46 +40,53 @@ Each insight object must have EXACTLY these fields:
 
 Rules:
 - Include at most 8 insights total
-- Prioritise real issues over generic ones — reference specific steps, swimlanes, cap IDs
+- Prioritise real issues — reference specific steps, swimlane names, element IDs
 - Always include at least one "positive" insight if something is done well
-- Always flag missing XAI strategies, undocumented overrides, transparency gaps, bias risks
-- Return ONLY the raw JSON array — no markdown fences, no preamble, no explanation
+- Flag missing XAI strategies, undocumented overrides, transparency gaps, bias risks only when AI capabilities are present on the board
+- If the board has no elements, return a single info insight encouraging the user to start mapping
+- Return ONLY the raw JSON array — no markdown fences, no preamble
 
 Example action_types: "add_element", "flag_risk", "escalate_governance", "open_monitoring", "ask_agent"
 """
 
 
+def _parse_insights(raw: str) -> list[dict]:
+    text = raw.strip()
+    if text.startswith("```"):
+        text = text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+    try:
+        items = json.loads(text)
+        return items if isinstance(items, list) else []
+    except json.JSONDecodeError:
+        log.warning("Failed to parse insight JSON: %s", text[:200])
+        return []
+
+
 async def generate_insights(db: AsyncSession, board_id: str, user_id: str) -> list[Insight]:
     """
     Ask the AI to analyse the board and persist the resulting insights.
+    Tries NIM first; falls back to Anthropic.
     Returns the list of newly created Insight objects.
     """
     ctx = await build_board_context(db, board_id)
     ctx_str = json.dumps(ctx, indent=2, default=str)
+    user_msg = f"Board state:\n{ctx_str}\n\n{_PROMPT}"
 
-    response = await _client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=2048,
-        system=(
-            "You are an HCAI design expert analysing a service blueprint board. "
-            "You always respond with valid JSON only — no prose, no markdown."
-        ),
-        messages=[
-            {"role": "user", "content": f"Board state:\n{ctx_str}\n\n{INSIGHT_PROMPT}"}
-        ],
-    )
+    # Try NIM first (free)
+    raw = await nim_complete(system=_SYSTEM, user=user_msg, max_tokens=2048)
 
-    raw = response.content[0].text.strip()
-    # Strip accidental markdown fences if the model adds them
-    if raw.startswith("```"):
-        raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+    # Fall back to Anthropic
+    if raw is None:
+        log.info("NIM unavailable for insights — using Anthropic")
+        resp = await _get_anthropic().messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=2048,
+            system=_SYSTEM,
+            messages=[{"role": "user", "content": user_msg}],
+        )
+        raw = resp.content[0].text
 
-    try:
-        items: list[dict] = json.loads(raw)
-        if not isinstance(items, list):
-            items = []
-    except json.JSONDecodeError:
-        items = []
+    items = _parse_insights(raw)
 
     created: list[Insight] = []
     for item in items[:8]:
