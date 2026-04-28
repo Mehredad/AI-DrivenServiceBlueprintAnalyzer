@@ -608,7 +608,7 @@ select.fi{appearance:none;cursor:pointer;}
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:7px;padding:0 2px;">
       <span id="sidebar-user-name" style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">Not signed in</span>
-      <button onclick="logout()" style="font-size:10px;color:var(--text3);background:none;border:none;cursor:pointer;padding:2px 4px;font-family:'DM Sans',sans-serif;" title="Sign out">Sign out</button>
+      <button id="sidebar-auth-btn" onclick="showAuthModal()" style="font-size:10px;color:var(--text3);background:none;border:none;cursor:pointer;padding:2px 4px;font-family:'DM Sans',sans-serif;" title="Sign in">Sign in</button>
     </div>
   </div>
 </aside>
@@ -994,7 +994,7 @@ select.fi{appearance:none;cursor:pointer;}
 <!-- ═══════════════════════════════════════════════════════
      AUTH MODAL — shown on first load if not logged in
 ═══════════════════════════════════════════════════════ -->
-<div class="overlay open" id="overlay-auth" style="z-index:300;">
+<div class="overlay" id="overlay-auth" style="z-index:300;">
   <div class="modal sm">
     <div class="modal-head" style="flex-direction:column;align-items:flex-start;gap:6px;">
       <div style="display:flex;align-items:center;gap:8px;width:100%;">
@@ -1048,6 +1048,39 @@ select.fi{appearance:none;cursor:pointer;}
 </div>
 
 <div class="overlay" id="overlay-new-project"><div class="modal lg"><div class="modal-head"><div class="modal-icon" style="background:var(--bg2);">+</div><div><div class="modal-title">New Project</div><div class="modal-sub">Choose domain · name project · set your role</div></div><button class="btn-icon btn" onclick="closeModal('new-project')" style="border:none;font-size:15px;margin-left:auto;">×</button></div><div class="wiz-steps"><div class="wiz-step act"><div class="wiz-n">1</div>Domain</div><div class="wiz-div"></div><div class="wiz-step"><div class="wiz-n">2</div>Team</div><div class="wiz-div"></div><div class="wiz-step"><div class="wiz-n">3</div>Blueprint</div></div><div class="modal-body"><div class="fg"><div class="fl">Domain</div><div class="domain-grid"><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🏥</div><div class="domain-card-name">Healthcare</div><div class="domain-card-desc">Triage, radiology, clinical decision support</div></div><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🏛</div><div class="domain-card-name">Public Services</div><div class="domain-card-desc">Benefits, welfare, licensing, citizen services</div></div><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🏦</div><div class="domain-card-name">Finance</div><div class="domain-card-desc">Fraud detection, credit scoring, recommendations</div></div><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🎓</div><div class="domain-card-name">Education</div><div class="domain-card-desc">AI tutoring, outcome prediction, LMS</div></div><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🏭</div><div class="domain-card-name">Operations</div><div class="domain-card-desc">Supply chain, logistics, process automation</div></div><div class="domain-card sel" onclick="selDom(this)"><div class="domain-card-icon">🌐</div><div class="domain-card-name">Other</div><div class="domain-card-desc">Any context — build your own swimlanes</div></div></div></div><div class="fg"><div class="fl">Project name</div><input class="fi" type="text" placeholder="e.g. My AI Service Blueprint"></div><div class="fg"><div class="fl">Start from</div><select class="fi" id="np-template"><option value="blank">Blank canvas</option><option value="saas-onboarding">SaaS Onboarding journey</option><option value="internal-tool">Internal IT Tool delivery</option><option value="support-flow">Customer Support Flow</option><option value="ai-rollout">AI Feature Rollout</option></select><div class="fh">Templates are fully editable — change or delete anything.</div></div><div class="fg"><div class="fl">Your role</div><select class="fi"><option>PM</option><option>Service / UX Designer</option><option>UX Researcher</option><option>Developer / Engineer</option><option>Delivery Lead</option><option>Governance / Compliance</option></select></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('new-project')">Cancel</button><button class="btn btn-ghost" onclick="createBoardAndImport()" style="margin-left:auto;margin-right:8px;">📥 Import file</button><button class="btn btn-primary" onclick="createBoardFromModal()">Create →</button></div></div></div>
+
+<div class="overlay" id="overlay-add-actor">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-head">
+      <div class="modal-icon" style="background:var(--blue-bg);">🎭</div>
+      <div>
+        <div class="modal-title">Add Actor</div>
+        <div class="modal-sub">Name this actor, then add the journey steps they move through</div>
+      </div>
+      <button class="btn-icon btn" onclick="closeModal('add-actor')" style="border:none;font-size:15px;margin-left:auto;">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px;display:flex;flex-direction:column;gap:16px;">
+      <div class="fg">
+        <div class="fl">Actor / Swimlane name</div>
+        <input id="actor-name-input" type="text" class="fi" placeholder='e.g. "Customer", "Frontstage Staff", "Support System"'
+          onkeydown="if(event.key==='Enter')document.getElementById('actor-steps-list').querySelector('.actor-step-input')?.focus()" />
+      </div>
+      <div class="fg">
+        <div class="fl">Journey steps <span style="font-weight:400;color:var(--text3);">(optional — you can add later)</span></div>
+        <div id="actor-steps-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+        <button class="btn btn-ghost" onclick="addActorStepRow()" style="margin-top:8px;font-size:11px;height:28px;align-self:flex-start;">+ Add step</button>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:12px;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:11px;color:var(--text3);">Or start from a file:</span>
+        <button class="btn btn-ghost" onclick="closeModal('add-actor');triggerImportFlow();" style="font-size:11px;height:28px;">📥 Import blueprint</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('add-actor')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmAddActor()">Add to canvas →</button>
+    </div>
+  </div>
+</div>
 
 <div class="overlay" id="overlay-add-element">
   <div class="modal lg">
@@ -1299,6 +1332,13 @@ function logout() {
   localStorage.removeItem('bp_access_token');
   localStorage.removeItem('bp_refresh_token');
   authToken = ''; refreshToken = ''; currentUser = null;
+  currentBoardId = '';
+  const nameEl = document.getElementById('sidebar-user-name');
+  if (nameEl) nameEl.textContent = 'Not signed in';
+  const authBtn = document.getElementById('sidebar-auth-btn');
+  if (authBtn) { authBtn.textContent = 'Sign in'; authBtn.onclick = showAuthModal; }
+  boardState.swimlanes = []; boardState.steps = []; boardState.elements = [];
+  renderCanvas();
   showAuthModal();
 }
 
@@ -1308,6 +1348,8 @@ async function loadCurrentUser() {
     currentUser = await res.json();
     const nameEl = document.getElementById('sidebar-user-name');
     if (nameEl) nameEl.textContent = currentUser.full_name || currentUser.email;
+    const authBtn = document.getElementById('sidebar-auth-btn');
+    if (authBtn) { authBtn.textContent = 'Sign out'; authBtn.onclick = logout; }
   }
 }
 
@@ -1397,6 +1439,10 @@ function scheduleSave(statePatch) {
 
 async function persistBoard(statePatch) {
   if (!currentBoardId) return;
+  if (currentBoardId.startsWith('local-')) {
+    try { localStorage.setItem('bp_local_board', JSON.stringify({ id: currentBoardId, title: boardState.title, ...statePatch })); } catch {}
+    return;
+  }
   savePending = true;
   const res = await apiFetch(`/api/boards/${currentBoardId}`, {
     method: 'PATCH',
@@ -1830,25 +1876,72 @@ function startInlineEdit(nameEl, currentName, onCommit) {
 
 async function _ensureBoard() {
   if (currentBoardId) return true;
-  if (!currentUser) { showToast('Please sign in to start building'); return false; }
+  if (!currentUser) {
+    // Local mode: work in memory without authentication
+    currentBoardId = 'local-' + crypto.randomUUID().slice(0, 8);
+    boardState.title = 'Untitled Blueprint';
+    const projName = document.getElementById('proj-name-display');
+    if (projName) projName.textContent = boardState.title;
+    return true;
+  }
   const board = await createNewBoard('Untitled Blueprint', null);
   if (!board) { showToast('Could not create project — please try again'); return false; }
   return true;
 }
 
-async function addSwimlane() {
+function addSwimlane() {
+  openAddActorModal();
+}
+
+function openAddActorModal() {
+  document.getElementById('actor-name-input').value = '';
+  const list = document.getElementById('actor-steps-list');
+  list.innerHTML = _actorStepRowHTML('e.g. "Discover"');
+  openModal('add-actor');
+  setTimeout(() => document.getElementById('actor-name-input').focus(), 80);
+}
+
+function _actorStepRowHTML(placeholder) {
+  return `<div class="actor-step-row" style="display:flex;gap:6px;align-items:center;">
+    <input type="text" class="fi actor-step-input" placeholder="${placeholder}" style="flex:1;height:34px;" />
+    <button class="btn btn-ghost" onclick="removeActorStep(this)" style="height:34px;padding:0 10px;font-size:15px;line-height:1;" title="Remove">×</button>
+  </div>`;
+}
+
+function addActorStepRow() {
+  const list = document.getElementById('actor-steps-list');
+  const div = document.createElement('div');
+  div.innerHTML = _actorStepRowHTML('e.g. "Sign Up"');
+  list.appendChild(div.firstElementChild);
+  list.lastElementChild.querySelector('input').focus();
+}
+
+function removeActorStep(btn) {
+  const list = document.getElementById('actor-steps-list');
+  const row = btn.closest('.actor-step-row');
+  if (list.children.length > 1) row.remove();
+  else row.querySelector('input').value = '';
+}
+
+async function confirmAddActor() {
+  const actorName = document.getElementById('actor-name-input').value.trim();
+  if (!actorName) { showToast('Please enter an actor name'); return; }
+
+  const stepNames = [...document.querySelectorAll('#actor-steps-list .actor-step-input')]
+    .map(i => i.value.trim()).filter(Boolean);
+
   if (!await _ensureBoard()) return;
-  const name = prompt('Swimlane name (e.g. "Customer Actions", "Frontstage Employee Actions", "Support Processes"):');
-  if (!name || !name.trim()) return;
-  boardState.swimlanes.push({ id: crypto.randomUUID(), name: name.trim(), order: boardState.swimlanes.length });
-  if (boardState.steps.length === 0) {
-    const stepName = prompt('Add your first step (e.g. "Discover", "Sign Up", "Activate"):');
-    if (stepName && stepName.trim()) {
-      boardState.steps.push({ id: crypto.randomUUID(), name: stepName.trim(), order: 0 });
-    }
+  closeModal('add-actor');
+
+  boardState.swimlanes.push({ id: crypto.randomUUID(), name: actorName, order: boardState.swimlanes.length });
+
+  if (boardState.steps.length === 0 && stepNames.length > 0) {
+    stepNames.forEach((name, i) => boardState.steps.push({ id: crypto.randomUUID(), name, order: i }));
   }
+
   renderCanvas();
   persistStructure();
+  showToast(`"${actorName}" added ✓`);
 }
 
 function renameSwimlane(id) {
@@ -3816,11 +3909,7 @@ renderRiskChecklist();
 renderMonitoringPlan();
 
 
-if (!authToken) {
-  showAuthModal();
-} else {
-  initApp();
-}
+initApp();
 </script>
 
 <!-- IMPORT FILE INPUT (hidden) -->
