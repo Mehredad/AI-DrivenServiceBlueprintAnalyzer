@@ -1,17 +1,13 @@
 {
   "version": 2,
-  "functions": {
-    "api/index.py": {
-      "maxDuration": 120
-    }
-  },
   "builds": [
     {
       "src": "api/index.py",
       "use": "@vercel/python",
       "config": {
         "maxLambdaSize": "50mb",
-        "runtime": "python3.12"
+        "runtime": "python3.12",
+        "maxDuration": 120
       }
     },
     {
