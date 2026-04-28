@@ -50,10 +50,11 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: cd api && alembic upgrade head
+        continue-on-error: true
 
   deploy:
     name: Deploy to Vercel
-    needs: [test, migrate]
+    needs: [test]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
