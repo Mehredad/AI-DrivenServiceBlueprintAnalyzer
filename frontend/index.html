@@ -1828,8 +1828,16 @@ function startInlineEdit(nameEl, currentName, onCommit) {
 
 // ── SWIMLANE MUTATIONS ───────────────────────────────────
 
-function addSwimlane() {
-  if (!currentBoardId) { openModal('new-project'); return; }
+async function _ensureBoard() {
+  if (currentBoardId) return true;
+  if (!currentUser) { showToast('Please sign in to start building'); return false; }
+  const board = await createNewBoard('Untitled Blueprint', null);
+  if (!board) { showToast('Could not create project — please try again'); return false; }
+  return true;
+}
+
+async function addSwimlane() {
+  if (!await _ensureBoard()) return;
   const name = prompt('Swimlane name (e.g. "Customer Actions", "Frontstage Employee Actions", "Support Processes"):');
   if (!name || !name.trim()) return;
   boardState.swimlanes.push({ id: crypto.randomUUID(), name: name.trim(), order: boardState.swimlanes.length });
@@ -1896,8 +1904,8 @@ function setSwimlaneDivider(id) {
 
 // ── STEP MUTATIONS ───────────────────────────────────────
 
-function addStep() {
-  if (!currentBoardId) { openModal('new-project'); return; }
+async function addStep() {
+  if (!await _ensureBoard()) return;
   const name = prompt('Step name (e.g. "Discover", "Sign Up", "Activate", "Support"):');
   if (!name || !name.trim()) return;
   boardState.steps.push({ id: crypto.randomUUID(), name: name.trim(), order: boardState.steps.length });
@@ -3141,16 +3149,17 @@ async function loadPersistedInsights() {
 async function showBoardListModal() {
   await loadBoardList();
   if (!boardsList.length) {
-    openModal('new-project');
-  } else {
-    currentBoardId = boardsList[0].id;
-    const url = new URL(window.location.href);
-    url.searchParams.set('board', currentBoardId);
-    window.history.pushState({}, '', url);
-    await loadBoard(currentBoardId);
-    initRealtime(currentBoardId);
-    await loadPersistedInsights();
+    // No boards yet — show empty canvas so user can start building directly.
+    // A board is auto-created on first addSwimlane() / addStep() call.
+    return;
   }
+  currentBoardId = boardsList[0].id;
+  const url = new URL(window.location.href);
+  url.searchParams.set('board', currentBoardId);
+  window.history.pushState({}, '', url);
+  await loadBoard(currentBoardId);
+  initRealtime(currentBoardId);
+  await loadPersistedInsights();
 }
 
 // Close board popover on outside click
