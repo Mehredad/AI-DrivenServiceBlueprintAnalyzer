@@ -1,0 +1,118 @@
+{
+  "title_default": "Internal IT Tool Delivery",
+  "domain_default": "other",
+  "swimlanes": [
+    { "id": "sl-it-1", "name": "Physical Evidence",           "order": 0, "divider_type": null },
+    { "id": "sl-it-2", "name": "Customer Actions",            "order": 1, "divider_type": "interaction" },
+    { "id": "sl-it-3", "name": "Frontstage Employee Actions", "order": 2, "divider_type": "visibility" },
+    { "id": "sl-it-4", "name": "Backstage & Systems",         "order": 3, "divider_type": "internal_interaction" },
+    { "id": "sl-it-5", "name": "Support Processes",           "order": 4, "divider_type": null }
+  ],
+  "steps": [
+    { "id": "st-it-1", "name": "Request",  "order": 0 },
+    { "id": "st-it-2", "name": "Approval", "order": 1 },
+    { "id": "st-it-3", "name": "Delivery", "order": 2 },
+    { "id": "st-it-4", "name": "Support",  "order": 3 }
+  ],
+  "elements": [
+    {
+      "id": "el-it-1",
+      "type": "physical_evidence",
+      "name": "Service request portal",
+      "notes": "Self-service web form for hardware, software, and access requests. Integrated with the ITSM platform.",
+      "swimlane_id": "sl-it-1",
+      "step_id": "st-it-1",
+      "status": "live",
+      "owner": "IT Manager",
+      "meta": { "artefact_type": "digital_interface" }
+    },
+    {
+      "id": "el-it-2",
+      "type": "customer_action",
+      "name": "Requester submits IT request",
+      "notes": "Employee fills in and submits the self-service form describing their hardware, software, or access need.",
+      "swimlane_id": "sl-it-2",
+      "step_id": "st-it-1",
+      "status": "live",
+      "owner": "Requester",
+      "meta": { "channel": "web" }
+    },
+    {
+      "id": "el-it-3",
+      "type": "physical_evidence",
+      "name": "Approval notification email",
+      "notes": "Automated email sent to requester and manager when a ticket enters the approval queue.",
+      "swimlane_id": "sl-it-1",
+      "step_id": "st-it-2",
+      "status": "live",
+      "owner": "IT Manager",
+      "meta": { "artefact_type": "digital_interface" }
+    },
+    {
+      "id": "el-it-4",
+      "type": "backstage_action",
+      "name": "ITSM approval workflow",
+      "notes": "Routes requests to the appropriate approver based on cost threshold and request type.",
+      "swimlane_id": "sl-it-4",
+      "step_id": "st-it-2",
+      "status": "live",
+      "owner": "IT Engineering",
+      "meta": {}
+    },
+    {
+      "id": "el-it-5",
+      "type": "support_process",
+      "name": "Provisioning pipeline",
+      "notes": "Automated provisioning of accounts, licences, and devices triggered on approval.",
+      "swimlane_id": "sl-it-5",
+      "step_id": "st-it-3",
+      "status": "in-progress",
+      "owner": "IT Engineering",
+      "meta": {}
+    },
+    {
+      "id": "el-it-6",
+      "type": "support_process",
+      "name": "Access rights grant",
+      "notes": "Writes to Active Directory and SaaS app connectors to apply the approved permissions.",
+      "swimlane_id": "sl-it-5",
+      "step_id": "st-it-3",
+      "status": "in-progress",
+      "owner": "IT Engineering",
+      "meta": {}
+    },
+    {
+      "id": "el-it-7",
+      "type": "physical_evidence",
+      "name": "Helpdesk ticketing interface",
+      "notes": "Post-delivery support channel. Requester raises follow-up issues here if provisioning fails.",
+      "swimlane_id": "sl-it-1",
+      "step_id": "st-it-4",
+      "status": "live",
+      "owner": "Service Desk",
+      "meta": { "artefact_type": "digital_interface" }
+    },
+    {
+      "id": "el-it-8",
+      "type": "frontstage_action",
+      "name": "Service desk agent handles follow-up",
+      "notes": "Agent reviews the requester's issue, consults provisioning logs, and either resolves or escalates.",
+      "swimlane_id": "sl-it-3",
+      "step_id": "st-it-4",
+      "status": "live",
+      "owner": "Service Desk",
+      "meta": { "medium": "ticketing system + phone" }
+    },
+    {
+      "id": "el-it-9",
+      "type": "pain_point",
+      "name": "Long wait times for complex requests",
+      "notes": "Multi-approver chains for high-cost requests regularly exceed SLA of 3 business days.",
+      "swimlane_id": "sl-it-2",
+      "step_id": "st-it-2",
+      "status": "draft",
+      "owner": "IT Manager",
+      "meta": {}
+    }
+  ]
+}

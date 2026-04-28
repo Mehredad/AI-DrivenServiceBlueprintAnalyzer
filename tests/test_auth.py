@@ -77,3 +77,25 @@ async def test_logout_invalidates_token(client, user_payload):
     await client.post("/api/auth/logout", json={"refresh_token": refresh})
     r = await client.post("/api/auth/refresh", json={"refresh_token": refresh})
     assert r.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_me_has_seen_onboarding_defaults_false(client, auth_headers):
+    r = await client.get("/api/auth/me", headers=auth_headers)
+    assert r.status_code == 200
+    assert r.json()["has_seen_onboarding"] is False
+
+
+@pytest.mark.asyncio
+async def test_patch_me_sets_onboarding_flag(client, auth_headers):
+    r = await client.patch(
+        "/api/auth/me",
+        json={"has_seen_onboarding": True},
+        headers=auth_headers,
+    )
+    assert r.status_code == 200
+    assert r.json()["has_seen_onboarding"] is True
+
+    # Verify it persists on re-fetch
+    r2 = await client.get("/api/auth/me", headers=auth_headers)
+    assert r2.json()["has_seen_onboarding"] is True

@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 from fastapi import HTTPException
 
 from app.models import Board, BoardCollaborator, User, AuditLog
-from app.schemas import BoardCreate, BoardPatch
+from app.schemas import BoardCreate, BoardPatch, CollaboratorOut
 
 
 # ── Access control ────────────────────────────────────────────────────────────
@@ -111,6 +111,29 @@ async def archive_board(db: AsyncSession, board_id: str, user_id: str) -> None:
 
 
 # ── Collaborators ─────────────────────────────────────────────────────────────
+
+async def list_collaborators(
+    db: AsyncSession,
+    board_id: str,
+    user_id: str,
+) -> list[CollaboratorOut]:
+    await assert_board_access(db, board_id, user_id)
+    result = await db.execute(
+        select(BoardCollaborator, User)
+        .join(User, BoardCollaborator.user_id == User.id)
+        .where(BoardCollaborator.board_id == board_id)
+    )
+    return [
+        CollaboratorOut(
+            user_id=str(row.BoardCollaborator.user_id),
+            email=row.User.email,
+            full_name=row.User.full_name,
+            role=row.BoardCollaborator.role,
+            joined_at=row.BoardCollaborator.joined_at,
+        )
+        for row in result.all()
+    ]
+
 
 async def add_collaborator(
     db: AsyncSession,

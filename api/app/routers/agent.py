@@ -30,7 +30,9 @@ async def chat(
     history = [{"role": h.role, "content": h.content} for h in body.history]
 
     text, tokens, msg_id = await agent_service.chat(
-        db, body.board_id, user.id, body.message, history
+        db, body.board_id, user.id, body.message, history,
+        role=body.role,
+        attachment_ids=body.attachments,
     )
     await db.commit()
 

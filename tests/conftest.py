@@ -10,10 +10,16 @@ import sys, os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'api'))
 
+TEST_DB_URL = "sqlite+aiosqlite:///./test_blueprint.db"
+
+# Set env vars before any app module is imported (app.database reads these at import time)
+os.environ.setdefault('DATABASE_URL', TEST_DB_URL)
+os.environ.setdefault('SECRET_KEY', 'test-secret-key-for-ci-only')
+os.environ.setdefault('ANTHROPIC_API_KEY', 'test-key')
+os.environ.setdefault('ENVIRONMENT', 'development')
+
 from app.main import app
 from app.database import Base, get_db
-
-TEST_DB_URL = "sqlite+aiosqlite:///./test_blueprint.db"
 
 _engine = create_async_engine(TEST_DB_URL, echo=False)
 _SessionLocal = async_sessionmaker(

@@ -37,12 +37,12 @@ async def test_get_board(client, auth_headers, board):
 async def test_patch_board_title_and_phase(client, auth_headers, board):
     r = await client.patch(
         f"/api/boards/{board['id']}",
-        json={"title": "Updated Title", "phase": "harvest"},
+        json={"title": "Updated Title", "phase": "design"},
         headers=auth_headers,
     )
     assert r.status_code == 200
     assert r.json()["title"] == "Updated Title"
-    assert r.json()["phase"] == "harvest"
+    assert r.json()["phase"] == "design"
     assert r.json()["version"] == 2
 
 

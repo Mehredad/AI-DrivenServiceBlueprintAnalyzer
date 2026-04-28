@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models import User
-from app.schemas import UserRegister, UserLogin, TokenRefresh, TokenResponse, UserOut
+from app.schemas import UserRegister, UserLogin, TokenRefresh, TokenResponse, UserOut, UserPatch
 from app.services import auth_service
 from app.middleware.auth_middleware import get_current_user
 
@@ -75,4 +75,17 @@ async def logout(body: TokenRefresh, db: AsyncSession = Depends(get_db)):
 
 @router.get("/me", response_model=UserOut)
 async def me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+@router.patch("/me", response_model=UserOut)
+async def update_me(
+    body: UserPatch,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if body.has_seen_onboarding is not None:
+        current_user.has_seen_onboarding = body.has_seen_onboarding
+    await db.commit()
+    await db.refresh(current_user)
     return current_user
