@@ -178,6 +178,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .bp-add-step-cell{position:sticky;top:0;z-index:9;background:var(--bg);border-bottom:1px solid var(--border);height:42px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
 .bp-lane-label{position:sticky;left:0;z-index:8;background:var(--bg2);border-right:1px solid var(--border);border-bottom:1px solid var(--border2);min-height:100px;display:flex;align-items:center;padding:0 10px;gap:6px;font-size:11px;font-weight:600;}
 .bp-lane-name{flex:1;overflow:hidden;text-overflow:ellipsis;word-break:break-word;line-height:1.3;}
+.bp-lane-type-icon{font-size:13px;flex-shrink:0;opacity:.45;line-height:1;}
 .bp-lane-actions{display:none;flex-direction:column;gap:2px;flex-shrink:0;}
 .bp-lane-label:hover .bp-lane-actions{display:flex;}
 .bp-cell{min-height:100px;border-right:1px solid var(--border2);border-bottom:1px solid var(--border2);position:relative;background:var(--surface);}
@@ -1050,22 +1051,27 @@ select.fi{appearance:none;cursor:pointer;}
 <div class="overlay" id="overlay-new-project"><div class="modal lg"><div class="modal-head"><div class="modal-icon" style="background:var(--bg2);">+</div><div><div class="modal-title">New Project</div><div class="modal-sub">Choose domain · name project · set your role</div></div><button class="btn-icon btn" onclick="closeModal('new-project')" style="border:none;font-size:15px;margin-left:auto;">×</button></div><div class="wiz-steps"><div class="wiz-step act"><div class="wiz-n">1</div>Domain</div><div class="wiz-div"></div><div class="wiz-step"><div class="wiz-n">2</div>Team</div><div class="wiz-div"></div><div class="wiz-step"><div class="wiz-n">3</div>Blueprint</div></div><div class="modal-body"><div class="fg"><div class="fl">Domain</div><div class="domain-grid"><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🏥</div><div class="domain-card-name">Healthcare</div><div class="domain-card-desc">Triage, radiology, clinical decision support</div></div><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🏛</div><div class="domain-card-name">Public Services</div><div class="domain-card-desc">Benefits, welfare, licensing, citizen services</div></div><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🏦</div><div class="domain-card-name">Finance</div><div class="domain-card-desc">Fraud detection, credit scoring, recommendations</div></div><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🎓</div><div class="domain-card-name">Education</div><div class="domain-card-desc">AI tutoring, outcome prediction, LMS</div></div><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🏭</div><div class="domain-card-name">Operations</div><div class="domain-card-desc">Supply chain, logistics, process automation</div></div><div class="domain-card sel" onclick="selDom(this)"><div class="domain-card-icon">🌐</div><div class="domain-card-name">Other</div><div class="domain-card-desc">Any context — build your own swimlanes</div></div></div></div><div class="fg"><div class="fl">Project name</div><input class="fi" type="text" placeholder="e.g. My AI Service Blueprint"></div><div class="fg"><div class="fl">Start from</div><select class="fi" id="np-template"><option value="blank">Blank canvas</option><option value="saas-onboarding">SaaS Onboarding journey</option><option value="internal-tool">Internal IT Tool delivery</option><option value="support-flow">Customer Support Flow</option><option value="ai-rollout">AI Feature Rollout</option></select><div class="fh">Templates are fully editable — change or delete anything.</div></div><div class="fg"><div class="fl">Your role</div><select class="fi"><option>PM</option><option>Service / UX Designer</option><option>UX Researcher</option><option>Developer / Engineer</option><option>Delivery Lead</option><option>Governance / Compliance</option></select></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('new-project')">Cancel</button><button class="btn btn-ghost" onclick="createBoardAndImport()" style="margin-left:auto;margin-right:8px;">📥 Import file</button><button class="btn btn-primary" onclick="createBoardFromModal()">Create →</button></div></div></div>
 
 <div class="overlay" id="overlay-add-actor">
-  <div class="modal" style="max-width:480px;">
+  <div class="modal" style="max-width:540px;">
     <div class="modal-head">
-      <div class="modal-icon" style="background:var(--blue-bg);">🎭</div>
+      <div class="modal-icon" style="background:var(--blue-bg);">＋</div>
       <div>
-        <div class="modal-title">Add Actor</div>
-        <div class="modal-sub">Name this actor, then add the journey steps they move through</div>
+        <div class="modal-title">Add Swimlane</div>
+        <div class="modal-sub">Choose a lane type — tells the AI what elements belong here</div>
       </div>
       <button class="btn-icon btn" onclick="closeModal('add-actor')" style="border:none;font-size:15px;margin-left:auto;">×</button>
     </div>
     <div class="modal-body" style="padding:20px;display:flex;flex-direction:column;gap:16px;">
       <div class="fg">
-        <div class="fl">Actor / Swimlane name</div>
-        <input id="actor-name-input" type="text" class="fi" placeholder='e.g. "Customer", "Frontstage Staff", "Support System"'
-          onkeydown="if(event.key==='Enter')document.getElementById('actor-steps-list').querySelector('.actor-step-input')?.focus()" />
+        <div class="fl">Lane type <span style="font-weight:400;color:var(--text3);">— determines which elements live here</span></div>
+        <div class="type-grid" style="grid-template-columns:repeat(4,1fr);" id="lane-type-picker"></div>
+        <div id="lane-type-desc" style="font-size:11px;color:var(--text3);margin-top:6px;min-height:16px;"></div>
       </div>
       <div class="fg">
+        <div class="fl">Swimlane name</div>
+        <input id="actor-name-input" type="text" class="fi" placeholder='e.g. "Customer Actions", "Support System"'
+          onkeydown="if(event.key==='Enter')document.getElementById('actor-steps-list')?.querySelector('.actor-step-input')?.focus()" />
+      </div>
+      <div class="fg" id="actor-steps-section">
         <div class="fl">Journey steps <span style="font-weight:400;color:var(--text3);">(optional — you can add later)</span></div>
         <div id="actor-steps-list" style="display:flex;flex-direction:column;gap:6px;"></div>
         <button class="btn btn-ghost" onclick="addActorStepRow()" style="margin-top:8px;font-size:11px;height:28px;align-self:flex-start;">+ Add step</button>
@@ -1090,8 +1096,8 @@ select.fi{appearance:none;cursor:pointer;}
       <button class="btn-icon btn" onclick="closeModal('add-element')" style="border:none;font-size:15px;margin-left:auto;">×</button>
     </div>
     <div class="modal-body">
-      <div class="fg"><div class="fl">Type</div><div class="type-grid" id="el-type-picker"></div></div>
-      <div class="fg"><div class="fl">Name *</div><input class="fi" id="el-name" placeholder="Short, descriptive name" maxlength="200"></div>
+      <div class="fg" id="el-type-picker-fg"><div class="fl">Type</div><div class="type-grid" id="el-type-picker"></div></div>
+      <div class="fg"><div class="fl" id="el-name-label">Name *</div><input class="fi" id="el-name" placeholder="Short, descriptive name" maxlength="200"></div>
       <div class="fg"><div class="fl">Notes</div><textarea class="fi" id="el-notes" rows="2" placeholder="Context, observations, details…" maxlength="2000"></textarea></div>
       <div style="display:flex;gap:8px;">
         <div class="fg" style="flex:1;"><div class="fl">Swimlane</div><select class="fi" id="el-swimlane"><option value="">— select —</option></select></div>
@@ -1815,7 +1821,9 @@ function renderGrid() {
   lanes.forEach((lane, li) => {
     const isFirst = li === 0;
     const isLast  = li === lanes.length - 1;
+    const _ltDef = lane.lane_type && lane.lane_type !== 'custom' ? SWIMLANE_TYPES.find(lt => lt.type === lane.lane_type) : null;
     html += `<div class="bp-lane-label" data-id="${escHtml(lane.id)}">
+      ${_ltDef ? `<span class="bp-lane-type-icon" title="${escHtml(_ltDef.label)}">${_ltDef.icon}</span>` : ''}
       <span class="bp-lane-name" ondblclick="renameSwimlane('${escHtml(lane.id)}')">${escHtml(lane.name)}</span>
       <span class="bp-lane-actions">
         <button class="bp-act-btn" onclick="moveSwimlane('${escHtml(lane.id)}',-1)" ${isFirst ? 'disabled' : ''} title="Move up">&#8593;</button>
@@ -1894,11 +1902,39 @@ function addSwimlane() {
 }
 
 function openAddActorModal() {
+  _selectedLaneType = null;
   document.getElementById('actor-name-input').value = '';
   const list = document.getElementById('actor-steps-list');
-  list.innerHTML = _actorStepRowHTML('e.g. "Discover"');
+  if (list) list.innerHTML = _actorStepRowHTML('e.g. "Discover"');
+  const stepsSection = document.getElementById('actor-steps-section');
+  if (stepsSection) stepsSection.style.display = boardState.steps.length === 0 ? '' : 'none';
+  renderLaneTypePicker();
   openModal('add-actor');
   setTimeout(() => document.getElementById('actor-name-input').focus(), 80);
+}
+
+function renderLaneTypePicker() {
+  const picker = document.getElementById('lane-type-picker');
+  if (!picker) return;
+  picker.innerHTML = SWIMLANE_TYPES.map(lt =>
+    `<div class="type-chip${lt.type === _selectedLaneType ? ' sel' : ''}" onclick="selectLaneType('${lt.type}')" title="${lt.desc}">
+      <span class="type-chip-icon">${lt.icon}</span>
+      <span>${lt.label}</span>
+    </div>`
+  ).join('');
+}
+
+function selectLaneType(type) {
+  _selectedLaneType = type;
+  renderLaneTypePicker();
+  const lt = SWIMLANE_TYPES.find(x => x.type === type);
+  const descEl = document.getElementById('lane-type-desc');
+  if (descEl) descEl.textContent = lt ? lt.desc : '';
+  const nameInput = document.getElementById('actor-name-input');
+  if (lt && nameInput && !nameInput.value.trim()) {
+    nameInput.value = lt.label;
+    nameInput.select();
+  }
 }
 
 function _actorStepRowHTML(placeholder) {
@@ -1925,7 +1961,7 @@ function removeActorStep(btn) {
 
 async function confirmAddActor() {
   const actorName = document.getElementById('actor-name-input').value.trim();
-  if (!actorName) { showToast('Please enter an actor name'); return; }
+  if (!actorName) { showToast('Please enter a swimlane name'); return; }
 
   const stepNames = [...document.querySelectorAll('#actor-steps-list .actor-step-input')]
     .map(i => i.value.trim()).filter(Boolean);
@@ -1933,7 +1969,12 @@ async function confirmAddActor() {
   if (!await _ensureBoard()) return;
   closeModal('add-actor');
 
-  boardState.swimlanes.push({ id: crypto.randomUUID(), name: actorName, order: boardState.swimlanes.length });
+  boardState.swimlanes.push({
+    id: crypto.randomUUID(),
+    name: actorName,
+    order: boardState.swimlanes.length,
+    lane_type: _selectedLaneType || 'custom',
+  });
 
   if (boardState.steps.length === 0 && stepNames.length > 0) {
     stepNames.forEach((name, i) => boardState.steps.push({ id: crypto.randomUUID(), name, order: i }));
@@ -2088,6 +2129,26 @@ const ELEMENT_TYPES = [
   { type: 'governance_checkpoint',  icon: '✅', label: 'Gov. Check' },
 ];
 
+const SWIMLANE_TYPES = [
+  { type:'customer_actions',   label:'Customer Actions',   icon:'👤', desc:'What the customer does at each step',              element_types:['customer_action'],                     default_element:'customer_action'    },
+  { type:'physical_evidence',  label:'Physical Evidence',  icon:'📄', desc:'Artefacts the customer sees or touches',           element_types:['physical_evidence'],                   default_element:'physical_evidence'  },
+  { type:'frontstage_actions', label:'Frontstage Actions', icon:'🎭', desc:'Visible employee or system responses',             element_types:['frontstage_action','touchpoint'],       default_element:'frontstage_action'  },
+  { type:'backstage_actions',  label:'Backstage Actions',  icon:'🔧', desc:'Hidden employee or system actions',                element_types:['backstage_action','data_flow'],         default_element:'backstage_action'   },
+  { type:'support_processes',  label:'Support Processes',  icon:'⚙️',  desc:'Systems and services enabling delivery',           element_types:['support_process','system'],             default_element:'support_process'    },
+  { type:'moment_of_truth',    label:'Moment of Truth',    icon:'⭐', desc:'Critical moments that define the experience',      element_types:['moment_of_truth'],                     default_element:'moment_of_truth'    },
+  { type:'touchpoints',        label:'Touchpoints',        icon:'🧩', desc:'Channels and interfaces used',                     element_types:['touchpoint'],                          default_element:'touchpoint'         },
+  { type:'systems',            label:'Systems',            icon:'🧱', desc:'Tech platforms, APIs and infrastructure',          element_types:['system'],                              default_element:'system'             },
+  { type:'data_flow',          label:'Data Flow',          icon:'📊', desc:'How data moves between actors',                    element_types:['data_flow'],                           default_element:'data_flow'          },
+  { type:'handoffs',           label:'Handoffs',           icon:'🔀', desc:'Transitions between actors or systems',            element_types:['handoff'],                             default_element:'handoff'            },
+  { type:'risks',              label:'Risks',              icon:'⚠️',  desc:'Potential failure or harm points',                 element_types:['risk'],                                default_element:'risk'               },
+  { type:'opportunities',      label:'Opportunities',      icon:'💡', desc:'Improvement or innovation potential',              element_types:['opportunity'],                         default_element:'opportunity'        },
+  { type:'pain_points',        label:'Pain Points',        icon:'😟', desc:'Friction or frustration points',                   element_types:['pain_point'],                          default_element:'pain_point'         },
+  { type:'ai_capability',      label:'AI Capability',      icon:'🤖', desc:'AI-powered features and decision points',          element_types:['ai_capability'],                       default_element:'ai_capability'      },
+  { type:'research_evidence',  label:'Research Evidence',  icon:'📌', desc:'Observations and data from research',              element_types:['research_evidence'],                   default_element:'research_evidence'  },
+  { type:'governance',         label:'Gov. Check',         icon:'✅', desc:'Compliance, policy and audit checkpoints',         element_types:['governance_checkpoint'],               default_element:'governance_checkpoint'},
+  { type:'custom',             label:'Custom',             icon:'✏️',  desc:'Define your own — all element types available',   element_types:null,                                    default_element:null                 },
+];
+
 const TYPE_META_FIELDS = {
   customer_action: `<div class="fg"><div class="fl">What does the customer do?</div><input class="fi" id="el-meta-action_description" placeholder="e.g. submits form, calls helpline"></div>
     <div class="fg"><div class="fl">Channel</div><input class="fi" id="el-meta-channel" placeholder="e.g. web, phone, in-person"></div>`,
@@ -2130,6 +2191,8 @@ const TYPE_META_FIELDS = {
 
 let _selectedElType = null;
 let _drawerElementId = null;
+let _selectedLaneType = null;
+let _currentAllowedTypes = null;
 
 // ── PRD-04: Roles & Phases ────────────────────────────
 const ROLES = {
@@ -2158,11 +2221,28 @@ function openAddElement(laneId, stepId, preType) {
     else openModal('new-project');
     return;
   }
-  _selectedElType = preType || null;
+
+  // Resolve lane context → allowed element types
+  const lane = laneId ? boardState.swimlanes.find(l => l.id === laneId) : null;
+  const laneTypeDef = (lane && lane.lane_type && lane.lane_type !== 'custom')
+    ? SWIMLANE_TYPES.find(lt => lt.type === lane.lane_type)
+    : null;
+  _currentAllowedTypes = laneTypeDef?.element_types || null;
+
+  // Determine initial element type selection
+  if (preType) {
+    _selectedElType = preType;
+  } else if (_currentAllowedTypes && _currentAllowedTypes.length > 0) {
+    _selectedElType = laneTypeDef.default_element;
+  } else {
+    _selectedElType = null;
+  }
+
   // Reset form
   ['el-name','el-notes','el-owner'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   const statusEl = document.getElementById('el-status');
   if (statusEl) statusEl.value = 'draft';
+
   // Populate swimlane/step selects
   const lanesSel = document.getElementById('el-swimlane');
   const stepsSel = document.getElementById('el-step');
@@ -2176,24 +2256,47 @@ function openAddElement(laneId, stepId, preType) {
       boardState.steps.map(s => `<option value="${escHtml(s.id)}">${escHtml(s.name)}</option>`).join('');
     if (stepId) stepsSel.value = stepId;
   }
+
   renderTypePickerUI(_selectedElType);
   openModal('add-element');
 }
 
 function renderTypePickerUI(selectedType) {
   const picker = document.getElementById('el-type-picker');
+  const pickerFg = document.getElementById('el-type-picker-fg');
   if (!picker) return;
-  picker.innerHTML = ELEMENT_TYPES.map(t =>
+
+  const visibleTypes = _currentAllowedTypes
+    ? ELEMENT_TYPES.filter(t => _currentAllowedTypes.includes(t.type))
+    : ELEMENT_TYPES;
+
+  const isSingleLocked = _currentAllowedTypes !== null && visibleTypes.length === 1;
+
+  if (pickerFg) pickerFg.style.display = isSingleLocked ? 'none' : '';
+
+  picker.innerHTML = visibleTypes.map(t =>
     `<div class="type-chip${t.type === selectedType ? ' sel' : ''}" onclick="selectElementType('${t.type}')">
       <span class="type-chip-icon">${t.icon}</span>
       <span>${t.label}</span>
     </div>`
   ).join('');
+
   renderTypeMetaFields(selectedType);
+
   const lbl = document.getElementById('el-type-label');
   if (lbl) {
     const info = ELEMENT_TYPES.find(t => t.type === selectedType);
     lbl.textContent = info ? info.label + ' element' : 'Select a type to continue';
+  }
+
+  // Contextual name label
+  const nameLbl = document.getElementById('el-name-label');
+  if (nameLbl) {
+    if (selectedType === 'customer_action') nameLbl.textContent = 'What does the customer do? *';
+    else if (selectedType === 'pain_point')  nameLbl.textContent = 'Describe the pain point *';
+    else if (selectedType === 'opportunity') nameLbl.textContent = 'Describe the opportunity *';
+    else if (selectedType === 'risk')        nameLbl.textContent = 'Describe the risk *';
+    else nameLbl.textContent = 'Name *';
   }
 }
 
