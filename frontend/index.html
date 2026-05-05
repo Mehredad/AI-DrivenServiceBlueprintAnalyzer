@@ -160,6 +160,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 /* CANVAS */
 .canvas-area{flex:1;overflow:auto;padding:16px;min-width:0;}
 .bp-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);overflow:hidden;box-shadow:var(--sh);min-width:840px;}
+.bp-grid-scroll{overflow-x:auto;}.bp-grid-scroll::-webkit-scrollbar{height:6px;}.bp-grid-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 .bp-head{padding:11px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:var(--bg);}
 .bp-head-title{font-family:'Fraunces',serif;font-size:13px;font-weight:400;flex:1;}
 .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:52vh;text-align:center;gap:10px;color:var(--text2);padding:40px 20px;}
@@ -210,22 +211,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .el-status-in-progress{background:var(--blue);}
 .el-status-live{background:var(--green);}
 .el-status-deprecated{background:var(--border2);}
-.el-touchpoint{border-color:var(--blue-bd);background:var(--blue-bg);}
+.el-touchpoint{border-color:var(--blue);background:var(--blue-bg);}
 .el-system{border-color:var(--border2);background:var(--bg2);}
-.el-data_flow{border-color:var(--teal-bd);background:var(--teal-bg);}
-.el-handoff{border-color:var(--purple-bd);background:var(--purple-bg);}
-.el-risk{border-color:var(--amber-bd);background:var(--amber-bg);}
-.el-opportunity{border-color:var(--green-bd);background:var(--green-bg);}
-.el-pain_point{border-color:var(--red-bd);background:var(--red-bg);}
-.el-research_evidence{border-color:var(--blue-bd);background:var(--blue-bg);}
-.el-ai_capability{border-color:var(--purple-bd);background:var(--purple-bg);}
-.el-governance_checkpoint{border-color:var(--green-bd);background:var(--green-bg);}
-.el-customer_action{border-color:var(--blue-bd);background:var(--blue-bg);}
+.el-data_flow{border-color:var(--teal);background:var(--teal-bg);}
+.el-handoff{border-color:var(--purple);background:var(--purple-bg);}
+.el-risk{border-color:var(--amber);background:var(--amber-bg);}
+.el-opportunity{border-color:var(--green);background:var(--green-bg);}
+.el-pain_point{border-color:var(--red);background:var(--red-bg);}
+.el-research_evidence{border-color:var(--blue);background:var(--blue-bg);}
+.el-ai_capability{border-color:var(--purple);background:var(--purple-bg);}
+.el-governance_checkpoint{border-color:var(--green);background:var(--green-bg);}
+.el-customer_action{border-color:var(--blue);background:var(--blue-bg);}
 .el-physical_evidence{border-color:var(--border2);background:var(--bg2);}
-.el-frontstage_action{border-color:var(--teal-bd);background:var(--teal-bg);}
-.el-backstage_action{border-color:var(--purple-bd);background:var(--purple-bg);}
-.el-support_process{border-color:var(--amber-bd);background:var(--amber-bg);}
-.el-moment_of_truth{border-color:var(--red-bd);background:var(--red-bg);}
+.el-frontstage_action{border-color:var(--teal);background:var(--teal-bg);}
+.el-backstage_action{border-color:var(--purple);background:var(--purple-bg);}
+.el-support_process{border-color:var(--amber);background:var(--amber-bg);}
+.el-moment_of_truth{border-color:var(--red);background:var(--red-bg);}
 .el-card.dimmed{opacity:0.3;filter:grayscale(0.5);}
 /* ROLE CARDS — PRD-04 */
 .role-card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;}
@@ -799,7 +800,9 @@ select.fi{appearance:none;cursor:pointer;}
         </div>
 
         <!-- Dynamic canvas grid — populated by renderCanvas() in PRD-02 -->
-        <div id="canvas-grid" class="bp-grid" style="display:none;"></div>
+        <div class="bp-grid-scroll">
+          <div id="canvas-grid" class="bp-grid" style="display:none;"></div>
+        </div>
       </div>
     </div><!-- /blueprint view -->
 
@@ -1111,7 +1114,7 @@ select.fi{appearance:none;cursor:pointer;}
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal('add-element')">Cancel</button>
-      <button class="btn btn-primary" onclick="createElement()">Create</button>
+      <button class="btn btn-primary" onclick="submitNewElement()">Create</button>
     </div>
   </div>
 </div>
@@ -2243,18 +2246,20 @@ function openAddElement(laneId, stepId, preType) {
   const statusEl = document.getElementById('el-status');
   if (statusEl) statusEl.value = 'draft';
 
-  // Populate swimlane/step selects
+  // Populate swimlane/step selects — embed `selected` in HTML so pre-selection is reliable
   const lanesSel = document.getElementById('el-swimlane');
   const stepsSel = document.getElementById('el-step');
   if (lanesSel) {
     lanesSel.innerHTML = '<option value="">— select —</option>' +
-      boardState.swimlanes.map(l => `<option value="${escHtml(l.id)}">${escHtml(l.name)}</option>`).join('');
-    if (laneId) lanesSel.value = laneId;
+      boardState.swimlanes.map(l =>
+        `<option value="${escHtml(l.id)}"${l.id === laneId ? ' selected' : ''}>${escHtml(l.name)}</option>`
+      ).join('');
   }
   if (stepsSel) {
     stepsSel.innerHTML = '<option value="">— select —</option>' +
-      boardState.steps.map(s => `<option value="${escHtml(s.id)}">${escHtml(s.name)}</option>`).join('');
-    if (stepId) stepsSel.value = stepId;
+      boardState.steps.map(s =>
+        `<option value="${escHtml(s.id)}"${s.id === stepId ? ' selected' : ''}>${escHtml(s.name)}</option>`
+      ).join('');
   }
 
   renderTypePickerUI(_selectedElType);
@@ -2321,7 +2326,7 @@ function renderElementCard(el) {
   </div>`;
 }
 
-async function createElement() {
+async function submitNewElement() {
   if (!currentBoardId) { showToast('No board open'); return; }
   if (!_selectedElType) { showToast('Please select a type first'); return; }
   const name = document.getElementById('el-name')?.value?.trim();
@@ -2347,13 +2352,24 @@ async function createElement() {
     meta,
   };
 
-  const res = await apiFetch(`/api/boards/${currentBoardId}/elements`, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  });
-  if (!res || !res.ok) { showToast('Failed to create element'); return; }
+  let el;
+  if (currentBoardId.startsWith('local-')) {
+    el = { id: crypto.randomUUID(), board_id: currentBoardId, ...body, meta: body.meta || {},
+           created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+  } else {
+    const res = await apiFetch(`/api/boards/${currentBoardId}/elements`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    if (!res || !res.ok) {
+      const detail = res ? await res.text().catch(() => res.status) : 'no response';
+      console.error('submitNewElement failed:', detail);
+      showToast(`Failed to create element (${res?.status ?? 'network error'})`);
+      return;
+    }
+    el = await res.json();
+  }
 
-  const el = await res.json();
   boardState.elements.push(el);
   closeModal('add-element');
   renderCanvas();
@@ -2371,23 +2387,88 @@ function openElementDrawer(id) {
   document.getElementById('el-drawer-type-icon').textContent = t.icon;
   document.getElementById('el-drawer-name').textContent = el.name;
 
-  const lane = boardState.swimlanes.find(l => l.id === el.swimlane_id);
-  const step = boardState.steps.find(s => s.id === el.step_id);
-  const meta = el.meta || {};
-  const metaHtml = Object.entries(meta).filter(([,v]) => v !== null && v !== '').map(([k, v]) =>
-    `<div class="el-drawer-row"><div class="el-drawer-label">${escHtml(k.replace(/_/g,' '))}</div><div class="el-drawer-val">${escHtml(String(v))}</div></div>`
-  ).join('');
+  const lanesOpts = '<option value="">— none —</option>' +
+    boardState.swimlanes.map(l =>
+      `<option value="${escHtml(l.id)}"${l.id === el.swimlane_id ? ' selected' : ''}>${escHtml(l.name)}</option>`
+    ).join('');
+  const stepsOpts = '<option value="">— none —</option>' +
+    boardState.steps.map(s =>
+      `<option value="${escHtml(s.id)}"${s.id === el.step_id ? ' selected' : ''}>${escHtml(s.name)}</option>`
+    ).join('');
+  const metaFieldsHtml = TYPE_META_FIELDS[el.type] || '';
 
   document.getElementById('el-drawer-body').innerHTML = `
     <div class="el-drawer-row"><div class="el-drawer-label">Type</div><div class="el-drawer-val">${escHtml(t.label)}</div></div>
-    ${el.notes ? `<div class="el-drawer-row"><div class="el-drawer-label">Notes</div><div class="el-drawer-val" style="white-space:pre-wrap;">${escHtml(el.notes)}</div></div>` : ''}
-    ${lane ? `<div class="el-drawer-row"><div class="el-drawer-label">Swimlane</div><div class="el-drawer-val">${escHtml(lane.name)}</div></div>` : ''}
-    ${step ? `<div class="el-drawer-row"><div class="el-drawer-label">Step</div><div class="el-drawer-val">${escHtml(step.name)}</div></div>` : ''}
-    ${el.owner ? `<div class="el-drawer-row"><div class="el-drawer-label">Owner</div><div class="el-drawer-val">${escHtml(el.owner)}</div></div>` : ''}
-    <div class="el-drawer-row"><div class="el-drawer-label">Status</div><div class="el-drawer-val">${escHtml(el.status || 'draft')}</div></div>
-    ${metaHtml}
+    <div class="fg"><div class="fl">Name</div><input class="fi" id="eld-name" value="${escHtml(el.name)}"></div>
+    <div class="fg"><div class="fl">Notes</div><textarea class="fi" id="eld-notes" rows="3" style="resize:vertical;">${escHtml(el.notes || '')}</textarea></div>
+    <div class="fg"><div class="fl">Owner</div><input class="fi" id="eld-owner" value="${escHtml(el.owner || '')}"></div>
+    <div class="fg"><div class="fl">Status</div><select class="fi" id="eld-status">
+      <option value="draft"${(el.status||'draft')==='draft'?' selected':''}>Draft</option>
+      <option value="in-progress"${el.status==='in-progress'?' selected':''}>In Progress</option>
+      <option value="live"${el.status==='live'?' selected':''}>Live</option>
+      <option value="deprecated"${el.status==='deprecated'?' selected':''}>Deprecated</option>
+    </select></div>
+    <div class="fg"><div class="fl">Swimlane</div><select class="fi" id="eld-swimlane">${lanesOpts}</select></div>
+    <div class="fg"><div class="fl">Step</div><select class="fi" id="eld-step">${stepsOpts}</select></div>
+    ${metaFieldsHtml ? `<div style="border-top:1px solid var(--border);padding-top:10px;margin-top:2px;display:flex;flex-direction:column;gap:10px;">${metaFieldsHtml}</div>` : ''}
   `;
+
+  // Pre-fill type-specific meta fields with saved values
+  const meta = el.meta || {};
+  Object.entries(meta).forEach(([k, v]) => {
+    const field = document.getElementById(`el-meta-${k}`);
+    if (field) field.value = String(v);
+  });
+
   document.getElementById('element-drawer').classList.add('open');
+}
+
+async function saveElementDrawer() {
+  if (!_drawerElementId || !currentBoardId) return;
+  const el = boardState.elements.find(e => e.id === _drawerElementId);
+  if (!el) return;
+
+  const name = document.getElementById('eld-name')?.value?.trim();
+  if (!name) { showToast('Name is required'); return; }
+
+  const meta = {};
+  document.querySelectorAll('#el-drawer-body [id^="el-meta-"]').forEach(field => {
+    const key = field.id.replace('el-meta-', '');
+    let val = field.value?.trim();
+    if (val === 'true') val = true;
+    else if (val === 'false') val = false;
+    if (val !== '' && val !== undefined) meta[key] = val;
+  });
+
+  const body = {
+    name,
+    notes: document.getElementById('eld-notes')?.value?.trim() || null,
+    owner: document.getElementById('eld-owner')?.value?.trim() || null,
+    status: document.getElementById('eld-status')?.value || 'draft',
+    swimlane_id: document.getElementById('eld-swimlane')?.value || null,
+    step_id: document.getElementById('eld-step')?.value || null,
+    meta,
+  };
+
+  if (!currentBoardId.startsWith('local-')) {
+    const res = await apiFetch(`/api/boards/${currentBoardId}/elements/${_drawerElementId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+    if (!res || !res.ok) { showToast('Save failed'); return; }
+    const updated = await res.json();
+    const idx = boardState.elements.findIndex(e => e.id === _drawerElementId);
+    if (idx !== -1) boardState.elements[idx] = updated;
+  } else {
+    const idx = boardState.elements.findIndex(e => e.id === _drawerElementId);
+    if (idx !== -1) boardState.elements[idx] = { ...el, ...body, updated_at: new Date().toISOString() };
+  }
+
+  closeElementDrawer();
+  renderCanvas();
+  updateAiBadge();
+  updateRegistryNavVisibility();
+  showToast('Element saved');
 }
 
 function closeElementDrawer() {
@@ -2398,8 +2479,10 @@ function closeElementDrawer() {
 async function deleteElementDrawer() {
   if (!_drawerElementId || !currentBoardId) return;
   if (!confirm('Delete this element? This cannot be undone.')) return;
-  const res = await apiFetch(`/api/boards/${currentBoardId}/elements/${_drawerElementId}`, { method: 'DELETE' });
-  if (!res || !res.ok) { showToast('Delete failed'); return; }
+  if (!currentBoardId.startsWith('local-')) {
+    const res = await apiFetch(`/api/boards/${currentBoardId}/elements/${_drawerElementId}`, { method: 'DELETE' });
+    if (!res || !res.ok) { showToast('Delete failed'); return; }
+  }
   boardState.elements = boardState.elements.filter(e => e.id !== _drawerElementId);
   closeElementDrawer();
   renderCanvas();
@@ -4066,7 +4149,8 @@ initApp();
   <div class="el-drawer-body" id="el-drawer-body"></div>
   <div class="el-drawer-foot">
     <button class="btn btn-ghost" onclick="deleteElementDrawer()" style="color:var(--red);border-color:var(--red-bd);">Delete</button>
-    <button class="btn btn-ghost" onclick="closeElementDrawer()" style="margin-left:auto;">Close</button>
+    <button class="btn btn-ghost" onclick="closeElementDrawer()" style="margin-left:auto;">Cancel</button>
+    <button class="btn btn-primary" onclick="saveElementDrawer()">Save</button>
   </div>
 </div>
 
