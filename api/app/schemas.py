@@ -47,6 +47,10 @@ class TokenRefresh(BaseModel):
     refresh_token: str
 
 
+class GoogleAuth(BaseModel):
+    credential: str  # Google ID token from Identity Services
+
+
 class TokenResponse(BaseModel):
     access_token:  str
     refresh_token: str
