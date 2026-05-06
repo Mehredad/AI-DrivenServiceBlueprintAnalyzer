@@ -38,3 +38,4 @@ Thumbs.db
 
 # Alembic (keep versions, ignore pycache)
 api/alembic/versions/__pycache__/
+.gstack/

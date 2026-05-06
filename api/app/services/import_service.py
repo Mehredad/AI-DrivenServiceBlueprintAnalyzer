@@ -6,14 +6,21 @@ Runs synchronously (Vercel Option A): POST /import blocks until extraction is
 complete. The DB job record is kept so the poll endpoint stays contractually
 compatible with a future async approach.
 """
+from __future__ import annotations
+
 import json
 import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from google import genai
-from google.genai import types
+try:
+    from google import genai
+    from google.genai import types
+except ImportError:
+    genai = None  # type: ignore[assignment]
+    types = None  # type: ignore[assignment]
+
 from fastapi import HTTPException
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,10 +31,10 @@ from app.services.upload_service import download_bytes
 
 log = logging.getLogger(__name__)
 settings = get_settings()
-_client: genai.Client | None = None
+_client = None
 
 
-def _get_client() -> genai.Client:
+def _get_client():
     global _client
     if _client is None:
         _client = genai.Client(api_key=settings.gemini_api_key)

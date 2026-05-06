@@ -3,12 +3,19 @@ Agent service — builds a board-aware system prompt from live DB state,
 calls the Google Gemini API server-side (key never leaves server),
 persists both turns of the conversation.
 """
+from __future__ import annotations
+
 import json
 import logging
 from typing import Optional
 
-from google import genai
-from google.genai import types
+try:
+    from google import genai
+    from google.genai import types
+except ImportError:  # CI / test environment without google-genai installed
+    genai = None  # type: ignore[assignment]
+    types = None  # type: ignore[assignment]
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,10 +25,10 @@ from app.models import Board, Capability, Element, Insight, GovernanceDecision, 
 log = logging.getLogger(__name__)
 
 settings = get_settings()
-_client: genai.Client | None = None
+_client = None
 
 
-def _get_client() -> genai.Client:
+def _get_client():
     global _client
     if _client is None:
         _client = genai.Client(api_key=settings.gemini_api_key)

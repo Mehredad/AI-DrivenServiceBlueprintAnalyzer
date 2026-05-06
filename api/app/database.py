@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import NullPool
 from app.config import get_settings
 
 settings = get_settings()
@@ -21,11 +22,10 @@ if _db_ready:
     _is_sqlite = _db_url.startswith("sqlite")
     _engine_kw: dict = {"echo": not settings.is_production}
     if not _is_sqlite:
-        # statement_cache_size=0 required for Supabase PgBouncer (transaction pool mode)
+        # NullPool + statement_cache_size=0 required for Vercel serverless + Supabase PgBouncer
+        # (transaction pool mode can't maintain prepared statement state across pooled connections)
         _engine_kw.update({
-            "pool_pre_ping": True,
-            "pool_size": 5,
-            "max_overflow": 10,
+            "poolclass": NullPool,
             "connect_args": {"statement_cache_size": 0},
         })
     engine = create_async_engine(_db_url, **_engine_kw)
