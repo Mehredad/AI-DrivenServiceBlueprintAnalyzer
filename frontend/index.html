@@ -1542,7 +1542,11 @@ const boardState = {
 // See .github/workflows/deploy.yml for injection logic
 // For local dev: replace the empty strings below manually
 // ═══════════════════════════════════════════════════════
-const API_BASE = '';  // same origin — works on both localhost and Vercel
+// On localhost:3000 (file/live server), proxy to the uvicorn backend at 8000.
+// On localhost:8000 (uvicorn serves this file directly) or Vercel, use same origin.
+const API_BASE = (location.hostname === 'localhost' && location.port === '3000')
+  ? 'http://localhost:8000'
+  : '';
 
 // Supabase public config (safe to expose — anon key is read-only by design)
 // These are injected by the GitHub Actions deploy workflow via sed substitution.
