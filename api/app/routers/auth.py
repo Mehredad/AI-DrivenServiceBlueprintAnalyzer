@@ -1,11 +1,14 @@
 """
 Auth router — /api/auth/*
 """
+import logging
 import secrets
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 import httpx
+
+log = logging.getLogger(__name__)
 
 from app.config import get_settings
 from app.database import get_db
@@ -24,26 +27,55 @@ async def auth_config():
     return {"google_client_id": s.google_client_id or None}
 
 
+@router.post("/google/debug")
+async def google_debug(body: GoogleAuth):
+    """Temporary: returns raw tokeninfo response so we can see what Google sends."""
+    try:
+        async with httpx.AsyncClient(timeout=12.0) as client:
+            r = await client.get(
+                "https://oauth2.googleapis.com/tokeninfo",
+                params={"id_token": body.credential},
+            )
+        return {"status": r.status_code, "body": r.json()}
+    except Exception as exc:
+        return {"error": str(exc)}
+
+
 async def _verify_google_token(credential: str, client_id: str) -> dict:
-    """Verify a Google ID token via Google's tokeninfo endpoint (no JWKS parsing)."""
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        r = await client.get(
-            "https://oauth2.googleapis.com/tokeninfo",
-            params={"id_token": credential},
-        )
+    """Verify a Google ID token via Google's tokeninfo endpoint."""
+    try:
+        async with httpx.AsyncClient(timeout=12.0) as client:
+            r = await client.get(
+                "https://oauth2.googleapis.com/tokeninfo",
+                params={"id_token": credential},
+            )
+    except httpx.TimeoutException:
+        log.error("Google tokeninfo request timed out")
+        raise HTTPException(504, "Google authentication timed out — please try again")
+    except httpx.HTTPError as exc:
+        log.error("Google tokeninfo network error: %s", exc)
+        raise HTTPException(502, "Could not reach Google's auth servers")
 
     if r.status_code != 200:
+        log.warning("Google tokeninfo returned %d: %s", r.status_code, r.text[:200])
         raise HTTPException(401, "Invalid or expired Google credential")
 
     payload = r.json()
+    log.info("Google tokeninfo payload keys: %s", list(payload.keys()))
 
-    if payload.get("aud") != client_id:
+    # aud check — Google tokeninfo returns the client_id as aud
+    if payload.get("aud", "").strip() != client_id.strip():
+        log.error(
+            "Google aud mismatch: got %r expected %r",
+            payload.get("aud"), client_id,
+        )
         raise HTTPException(401, "Google token was not issued for this application")
 
     if payload.get("iss") not in ("accounts.google.com", "https://accounts.google.com"):
         raise HTTPException(401, "Invalid token issuer")
 
-    if not payload.get("email_verified"):
+    # tokeninfo returns email_verified as the STRING "true"/"false", not a boolean
+    if str(payload.get("email_verified", "false")).lower() != "true":
         raise HTTPException(401, "Google account email is not verified")
 
     return payload
@@ -56,32 +88,46 @@ async def google_login(body: GoogleAuth, db: AsyncSession = Depends(get_db)):
     if not s.google_client_id:
         raise HTTPException(501, "Google authentication is not configured on this server")
 
-    payload = await _verify_google_token(body.credential, s.google_client_id)
+    try:
+        payload = await _verify_google_token(body.credential, s.google_client_id)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        log.exception("Unexpected error verifying Google token: %s", exc)
+        raise HTTPException(500, "Google sign-in verification failed unexpectedly")
 
     email = payload.get("email", "").lower().strip()
     if not email:
         raise HTTPException(401, "No email address in Google credential")
 
-    full_name = payload.get("name", "") or payload.get("given_name", "")
+    full_name = (payload.get("name") or payload.get("given_name") or "").strip()
 
-    user = await auth_service.get_user_by_email(db, email)
-    if not user:
-        user = User(
-            email=email,
-            password_hash=auth_service.hash_password(secrets.token_hex(32)),
-            full_name=full_name,
-            role="designer",
-        )
-        db.add(user)
-        await db.flush()
-    elif not user.is_active:
-        raise HTTPException(403, "Account is disabled")
+    try:
+        user = await auth_service.get_user_by_email(db, email)
+        if not user:
+            log.info("Creating new user via Google Sign-In: %s", email)
+            user = User(
+                email=email,
+                password_hash=auth_service.hash_password(secrets.token_hex(32)),
+                full_name=full_name or None,
+                role="designer",
+            )
+            db.add(user)
+            await db.flush()
+        elif not user.is_active:
+            raise HTTPException(403, "Account is disabled")
 
-    user.last_login = datetime.now(timezone.utc)
-    access, expires_in = auth_service.create_access_token(user.id, user.role)
-    refresh = await auth_service.create_refresh_token(db, user.id)
-    await db.commit()
-    return TokenResponse(access_token=access, refresh_token=refresh, expires_in=expires_in)
+        user.last_login = datetime.now(timezone.utc)
+        access, expires_in = auth_service.create_access_token(user.id, user.role)
+        refresh = await auth_service.create_refresh_token(db, user.id)
+        await db.commit()
+        return TokenResponse(access_token=access, refresh_token=refresh, expires_in=expires_in)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        log.exception("DB error during Google login for %s: %s", email, exc)
+        await db.rollback()
+        raise HTTPException(500, "Failed to create or retrieve your account")
 
 
 @router.post("/register", response_model=TokenResponse, status_code=201)
