@@ -789,7 +789,7 @@ select.fi{appearance:none;cursor:pointer;}
           <h2>Your blueprint is empty</h2>
           <p>Start by adding a swimlane — for example, <em>"Customer Actions"</em>, <em>"Frontstage Employee Actions"</em>, or <em>"Support Processes"</em>.</p>
           <button class="btn btn-primary" onclick="addSwimlane()">+ Add swimlane</button>
-          <button class="btn btn-ghost" onclick="triggerImportFlow()" style="font-size:12px;color:var(--text3);">📥 Or import from a file</button>
+          <button class="btn btn-ghost" onclick="triggerImportFlow()" style="font-size:12px;color:var(--text3);">↑ Import from Figma, Miro, or Mural</button>
         </div>
         <!-- Empty state — has lanes but no steps -->
         <div id="canvas-empty-steps" class="canvas-empty-lanes">
@@ -1081,7 +1081,7 @@ select.fi{appearance:none;cursor:pointer;}
       </div>
       <div style="border-top:1px solid var(--border);padding-top:12px;display:flex;align-items:center;gap:8px;">
         <span style="font-size:11px;color:var(--text3);">Or start from a file:</span>
-        <button class="btn btn-ghost" onclick="closeModal('add-actor');triggerImportFlow();" style="font-size:11px;height:28px;">📥 Import blueprint</button>
+        <button class="btn btn-ghost" onclick="closeModal('add-actor');triggerImportFlow();" style="font-size:11px;height:28px;">↑ Import blueprint</button>
       </div>
     </div>
     <div class="modal-foot">
