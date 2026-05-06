@@ -80,7 +80,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .topbar{height:48px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:8px;flex-shrink:0;}
 .tb-crumb{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:4px;}
 .role-sw{display:flex;background:var(--bg2);border-radius:var(--r);padding:2px;border:1px solid var(--border);}
-.role-btn{padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .13s;white-space:nowrap;}
+.role-btn{padding:6px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .13s;white-space:nowrap;min-height:30px;}
 .role-btn.active{background:var(--surface);color:var(--text);box-shadow:var(--sh);}
 .board-progress{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;white-space:nowrap;display:none;}
 .help-wrap{position:relative;}
@@ -109,7 +109,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .canvas-empty-lanes{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:52vh;text-align:center;gap:10px;color:var(--text2);padding:40px 20px;}
 .canvas-empty-lanes h2{font-family:'Fraunces',serif;font-size:20px;font-weight:300;color:var(--text);}
 .canvas-empty-lanes p{font-size:13px;max-width:360px;line-height:1.6;}
-.btn{padding:5px 11px;border-radius:var(--r);font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .12s;border:none;font-weight:600;display:inline-flex;align-items:center;gap:5px;}
+.btn{padding:7px 12px;border-radius:var(--r);font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .12s;border:none;font-weight:600;display:inline-flex;align-items:center;gap:5px;min-height:30px;}
 .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border);}
 .btn-ghost:hover{background:var(--bg);border-color:var(--border2);}
 .btn-primary{background:var(--text);color:white;}
@@ -610,7 +610,7 @@ select.fi{appearance:none;cursor:pointer;}
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:7px;padding:0 2px;">
       <span id="sidebar-user-name" style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">Not signed in</span>
-      <button id="sidebar-auth-btn" onclick="showAuthModal()" style="font-size:10px;color:var(--text3);background:none;border:none;cursor:pointer;padding:2px 4px;font-family:'DM Sans',sans-serif;" title="Sign in">Sign in</button>
+      <button id="sidebar-auth-btn" onclick="showAuthModal()" style="font-size:10px;color:var(--text3);background:none;border:none;cursor:pointer;padding:5px 8px;font-family:'DM Sans',sans-serif;min-height:28px;" title="Sign in">Sign in</button>
     </div>
   </div>
 </aside>
