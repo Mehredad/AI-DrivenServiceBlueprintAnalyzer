@@ -1546,10 +1546,12 @@ const API_BASE = '';  // same origin — works on both localhost and Vercel
 
 // Supabase public config (safe to expose — anon key is read-only by design)
 // These are injected by the GitHub Actions deploy workflow via sed substitution.
-// If deploying manually, replace these strings with your actual values.
+// Locally: run the backend via uvicorn and visit localhost:8000 (not a separate file server).
 // Get both from: Supabase Dashboard → Settings → API
-const SUPABASE_URL      = '%%SUPABASE_URL%%';      // e.g. https://xxxx.supabase.co
-const SUPABASE_ANON_KEY = '%%SUPABASE_ANON_KEY%%'; // anon/public key (NOT service_role)
+const _sbUrl = '%%SUPABASE_URL%%';
+const _sbKey = '%%SUPABASE_ANON_KEY%%';
+const SUPABASE_URL      = (_sbUrl.startsWith('%%'))  ? '' : _sbUrl;
+const SUPABASE_ANON_KEY = (_sbKey.startsWith('%%'))  ? '' : _sbKey;
 
 
 // ═══════════════════════════════════════════════════════
