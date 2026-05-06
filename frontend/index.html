@@ -3840,9 +3840,19 @@ async function handleImportFile(file) {
   // ── Local / unauthenticated path ──────────────────────────
   if (currentBoardId.startsWith('local-')) {
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch(API_BASE + '/api/import/analyze', { method: 'POST', body: fd });
+      // Read file as base64 so we can send plain JSON (avoids multipart/Vercel issues)
+      const fileData = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = () => resolve(reader.result.split(',')[1]); // strip data:...;base64,
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const res = await fetch(API_BASE + '/api/import/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content_type: file.type, file_data: fileData }),
+      });
       hideImportProgress();
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
