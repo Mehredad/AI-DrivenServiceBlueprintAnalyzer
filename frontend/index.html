@@ -3782,7 +3782,18 @@ const _PROGRESS_PHASES = [
 ];
 
 function triggerImportFlow() {
-  if (!currentBoardId) { openModal('new-project'); return; }
+  if (!currentBoardId) {
+    if (!currentUser) {
+      // Local mode: spin up an in-memory board so the file picker can proceed
+      currentBoardId = 'local-' + crypto.randomUUID().slice(0, 8);
+      boardState.title = 'Untitled Blueprint';
+      const projName = document.getElementById('proj-name-display');
+      if (projName) projName.textContent = boardState.title;
+    } else {
+      openModal('new-project');
+      return;
+    }
+  }
   document.getElementById('import-file-input').click();
 }
 
@@ -3826,6 +3837,31 @@ async function handleImportFile(file) {
 
   showImportProgress();
 
+  // ── Local / unauthenticated path ──────────────────────────
+  if (currentBoardId.startsWith('local-')) {
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(API_BASE + '/api/import/analyze', { method: 'POST', body: fd });
+      hideImportProgress();
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        showToast(e.detail || "We couldn't extract the blueprint. Try a clearer image.");
+        return;
+      }
+      const result = await res.json();
+      _importJobId  = null;  // no server job in local mode
+      _importResult = JSON.parse(JSON.stringify(result));
+      const status  = result.confidence === 'low' ? 'partial' : 'done';
+      showImportReview({ result, status });
+    } catch (err) {
+      hideImportProgress();
+      showToast(err.message || 'Import failed — please try again.');
+    }
+    return;
+  }
+
+  // ── Authenticated path ────────────────────────────────────
   try {
     // 1. Sign upload
     const signRes = await apiFetch(`/api/boards/${currentBoardId}/uploads/sign`, {
@@ -4047,10 +4083,63 @@ function toggleImportEdit() {
 }
 
 async function acceptImport() {
-  if (!currentBoardId || !_importJobId) return;
+  if (!currentBoardId) return;
   const btn = document.getElementById('import-accept-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Applying…'; }
 
+  // ── Local / unauthenticated path ──────────────────────────
+  if (!_importJobId) {
+    try {
+      const data = _importIsEdit ? _importResult : (_importResult || {});
+      const rawLanes = data.swimlanes || [];
+      const rawSteps = data.steps     || [];
+      const rawElems = data.elements  || [];
+
+      const laneIdMap = {};
+      rawLanes.forEach(l => { laneIdMap[l.name] = crypto.randomUUID(); });
+      const stepIdMap = {};
+      rawSteps.forEach(s => { stepIdMap[s.name] = crypto.randomUUID(); });
+
+      boardState.swimlanes = rawLanes.map((l, i) => ({
+        id: laneIdMap[l.name], name: l.name, order: l.order ?? i,
+      }));
+      boardState.steps = rawSteps.map((s, i) => ({
+        id: stepIdMap[s.name], name: s.name, order: s.order ?? i,
+      }));
+      boardState.elements = rawElems.map(e => ({
+        id:          crypto.randomUUID(),
+        board_id:    currentBoardId,
+        swimlane_id: laneIdMap[e.swimlane_name] || null,
+        step_id:     stepIdMap[e.step_name]     || null,
+        type:        e.type  || 'touchpoint',
+        name:        (e.name || 'Unnamed element').slice(0, 200),
+        notes:       e.notes || null,
+        status:      'draft',
+        meta:        {},
+        created_at:  new Date().toISOString(),
+        updated_at:  new Date().toISOString(),
+      }));
+
+      if (data.title && boardState.title === 'Untitled Blueprint') {
+        boardState.title = data.title.slice(0, 500);
+        const projName = document.getElementById('proj-name-display');
+        if (projName) projName.textContent = boardState.title;
+      }
+
+      closeModal('import-review');
+      _importResult = null;
+      renderCanvas();
+      updateAiBadge();
+      updateRegistryNavVisibility();
+      showToast('Blueprint imported ✓');
+    } catch (err) {
+      showToast(err.message || 'Could not apply import — please try again.');
+      if (btn) { btn.disabled = false; btn.textContent = 'Accept & populate board'; }
+    }
+    return;
+  }
+
+  // ── Authenticated path ────────────────────────────────────
   try {
     const res = await apiFetch(`/api/boards/${currentBoardId}/import/${_importJobId}/accept`, {
       method: 'POST',
@@ -4061,8 +4150,8 @@ async function acceptImport() {
       throw new Error(e.detail || 'Accept failed');
     }
     closeModal('import-review');
-    _importJobId  = null;
-    _importResult = null;
+    _importJobId    = null;
+    _importResult   = null;
     _importNewBoard = false;
     showToast('Blueprint imported ✓');
     await loadBoard(currentBoardId);
@@ -4073,7 +4162,7 @@ async function acceptImport() {
 }
 
 async function discardImport() {
-  if (currentBoardId && _importJobId) {
+  if (currentBoardId && _importJobId && !currentBoardId.startsWith('local-')) {
     await apiFetch(`/api/boards/${currentBoardId}/import/${_importJobId}`, { method: 'DELETE' }).catch(() => {});
   }
   closeModal('import-review');

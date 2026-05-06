@@ -13,7 +13,7 @@ from contextlib import asynccontextmanager
 
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -108,6 +108,34 @@ app.include_router(exports_router)
 app.include_router(audit_router)
 app.include_router(uploads_router)
 app.include_router(imports_router)
+
+
+@app.post("/api/import/analyze", tags=["imports"])
+@limiter.limit("3/hour")
+async def analyze_blueprint_public(request: Request, file: UploadFile = File(...)):
+    """
+    Auth-free blueprint extraction. Accepts a PDF or image, returns the
+    extracted JSON structure (same shape as ImportJob.result). Rate-limited
+    by IP to 3 calls per hour. No DB writes, no storage — fire-and-forget.
+    """
+    from app.services import import_service
+
+    ALLOWED = {"application/pdf", "image/png", "image/jpeg", "image/webp"}
+    ct = (file.content_type or "").split(";")[0].strip()
+    if ct not in ALLOWED:
+        return JSONResponse({"detail": "Unsupported file type. Use PDF, PNG, JPG, or WebP."}, status_code=415)
+
+    data = await file.read()
+    if len(data) > 10 * 1024 * 1024:
+        return JSONResponse({"detail": "File too large — maximum 10 MB."}, status_code=413)
+
+    result, _ = await import_service._run_extraction(data, ct)
+    if result is None:
+        return JSONResponse(
+            {"detail": "Could not extract a blueprint from this file. Try a clearer image or a higher-quality PDF."},
+            status_code=422,
+        )
+    return JSONResponse(result)
 
 
 _FRONTEND = Path(__file__).parent.parent.parent / "frontend" / "index.html"
