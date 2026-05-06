@@ -9,11 +9,12 @@ Key differences from a traditional deployment:
 - Docs disabled in production (reduce attack surface)
 """
 import logging
+import pydantic
 from contextlib import asynccontextmanager
 
 from pathlib import Path
 
-from fastapi import FastAPI, File, Request, UploadFile
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -110,22 +111,31 @@ app.include_router(uploads_router)
 app.include_router(imports_router)
 
 
+class _AnalyzeRequest(pydantic.BaseModel):
+    content_type: str
+    file_data: str  # base64-encoded file bytes
+
+
 @app.post("/api/import/analyze", tags=["imports"])
-@limiter.limit("3/hour")
-async def analyze_blueprint_public(request: Request, file: UploadFile = File(...)):
+async def analyze_blueprint_public(body: _AnalyzeRequest):
     """
-    Auth-free blueprint extraction. Accepts a PDF or image, returns the
-    extracted JSON structure (same shape as ImportJob.result). Rate-limited
-    by IP to 3 calls per hour. No DB writes, no storage — fire-and-forget.
+    Auth-free blueprint extraction. Accepts base64-encoded file data, returns
+    the extracted JSON structure (same shape as ImportJob.result).
+    No DB writes, no storage.
     """
+    import base64 as _b64
     from app.services import import_service
 
     ALLOWED = {"application/pdf", "image/png", "image/jpeg", "image/webp"}
-    ct = (file.content_type or "").split(";")[0].strip()
+    ct = body.content_type.split(";")[0].strip()
     if ct not in ALLOWED:
         return JSONResponse({"detail": "Unsupported file type. Use PDF, PNG, JPG, or WebP."}, status_code=415)
 
-    data = await file.read()
+    try:
+        data = _b64.b64decode(body.file_data)
+    except Exception:
+        return JSONResponse({"detail": "Invalid file data."}, status_code=400)
+
     if len(data) > 10 * 1024 * 1024:
         return JSONResponse({"detail": "File too large — maximum 10 MB."}, status_code=413)
 
