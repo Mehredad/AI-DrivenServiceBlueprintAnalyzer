@@ -29,8 +29,9 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
 
-    # ── Anthropic (server-side only — never exposed to frontend)
-    anthropic_api_key: str = ""
+    # ── Google Gemini (server-side only — never exposed to frontend)
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.5-flash"
 
     # ── NVIDIA NIM (OpenAI-compatible free tier — for lightweight AI tasks)
     nim_api_key: str = ""

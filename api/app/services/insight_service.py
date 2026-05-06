@@ -1,11 +1,13 @@
 """
 Insight service — analyses the live board state and returns structured insights.
-Tries NVIDIA NIM first (free tier) and falls back to Anthropic if NIM is
+Tries NVIDIA NIM first (free tier) and falls back to Google Gemini if NIM is
 unavailable or fails.
 """
 import json
 import logging
-from anthropic import AsyncAnthropic
+
+from google import genai
+from google.genai import types
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
@@ -15,13 +17,15 @@ from app.services.nim_client import nim_complete
 
 log = logging.getLogger(__name__)
 settings = get_settings()
-_anthropic: AsyncAnthropic | None = None
+_gemini: genai.Client | None = None
 
-def _get_anthropic() -> AsyncAnthropic:
-    global _anthropic
-    if _anthropic is None:
-        _anthropic = AsyncAnthropic(api_key=settings.anthropic_api_key)
-    return _anthropic
+
+def _get_gemini() -> genai.Client:
+    global _gemini
+    if _gemini is None:
+        _gemini = genai.Client(api_key=settings.gemini_api_key)
+    return _gemini
+
 
 _SYSTEM = (
     "You are an expert service-design analyst reviewing a system journey map. "
@@ -65,26 +69,26 @@ def _parse_insights(raw: str) -> list[dict]:
 async def generate_insights(db: AsyncSession, board_id: str, user_id: str) -> list[Insight]:
     """
     Ask the AI to analyse the board and persist the resulting insights.
-    Tries NIM first; falls back to Anthropic.
+    Tries NIM first (free); falls back to Gemini.
     Returns the list of newly created Insight objects.
     """
     ctx = await build_board_context(db, board_id)
     ctx_str = json.dumps(ctx, indent=2, default=str)
     user_msg = f"Board state:\n{ctx_str}\n\n{_PROMPT}"
 
-    # Try NIM first (free)
     raw = await nim_complete(system=_SYSTEM, user=user_msg, max_tokens=2048)
 
-    # Fall back to Anthropic
     if raw is None:
-        log.info("NIM unavailable for insights — using Anthropic")
-        resp = await _get_anthropic().messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=2048,
-            system=_SYSTEM,
-            messages=[{"role": "user", "content": user_msg}],
+        log.info("NIM unavailable for insights — using Gemini")
+        response = await _get_gemini().aio.models.generate_content(
+            model=settings.gemini_model,
+            contents=[types.Content(role="user", parts=[types.Part(text=user_msg)])],
+            config=types.GenerateContentConfig(
+                system_instruction=_SYSTEM,
+                max_output_tokens=2048,
+            ),
         )
-        raw = resp.content[0].text
+        raw = response.text or ""
 
     items = _parse_insights(raw)
 

@@ -1,14 +1,15 @@
 """
 Agent service — builds a board-aware system prompt from live DB state,
-calls the Anthropic API server-side (key never leaves server),
+calls the Google Gemini API server-side (key never leaves server),
 persists both turns of the conversation.
 """
-import base64
 import json
 import logging
 from typing import Optional
-from anthropic import AsyncAnthropic
-from sqlalchemy import select, func
+
+from google import genai
+from google.genai import types
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
@@ -17,13 +18,15 @@ from app.models import Board, Capability, Element, Insight, GovernanceDecision, 
 log = logging.getLogger(__name__)
 
 settings = get_settings()
-_client: AsyncAnthropic | None = None
+_client: genai.Client | None = None
 
-def _get_client() -> AsyncAnthropic:
+
+def _get_client() -> genai.Client:
     global _client
     if _client is None:
-        _client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+        _client = genai.Client(api_key=settings.gemini_api_key)
     return _client
+
 
 MAX_HISTORY_MESSAGES = 20
 MAX_RESPONSE_TOKENS  = 1024
@@ -43,7 +46,6 @@ async def build_board_context(db: AsyncSession, board_id: str) -> dict:
     )
     caps = caps_res.scalars().all()
 
-    # Top 20 elements by recency (avoid huge token counts on large boards)
     elems_res = await db.execute(
         select(Element)
         .where(Element.board_id == board_id)
@@ -114,10 +116,9 @@ async def build_board_context(db: AsyncSession, board_id: str) -> dict:
     }
 
 
-# ── System prompt builder (composable three-section approach) ─────────────────
+# ── System prompt builder ─────────────────────────────────────────────────────
 
 def _has_ai_content(ctx: dict) -> bool:
-    """True if the board has AI capabilities or AI-tagged elements."""
     if ctx.get("capabilities"):
         return True
     return any(e.get("type") == "ai_capability" for e in ctx.get("elements", []))
@@ -179,18 +180,28 @@ def build_system_prompt(ctx: dict, role: Optional[str] = None) -> str:
     return "\n\n".join(sections)
 
 
-# ── Main chat function ────────────────────────────────────────────────────────
+# ── Message format helpers ────────────────────────────────────────────────────
 
-async def _build_content_blocks(
+def _history_to_gemini(history: list[dict]) -> list[types.Content]:
+    """Convert stored message history to Gemini Content objects."""
+    contents = []
+    for msg in history:
+        role = "user" if msg["role"] == "user" else "model"
+        text = msg["content"] if isinstance(msg["content"], str) else str(msg["content"])
+        contents.append(types.Content(role=role, parts=[types.Part(text=text)]))
+    return contents
+
+
+async def _build_user_parts(
     db: AsyncSession, attachment_ids: list[str], board_id: str, text: str
-) -> tuple[list, list]:
+) -> tuple[list[types.Part], list[dict]]:
     """
-    Fetch attached files from Supabase Storage and build Anthropic content blocks.
-    Falls back gracefully if storage is not configured or a file download fails.
+    Fetch attached files and build Gemini Part objects (images and PDFs supported).
+    Falls back gracefully if storage is not configured or a file fails.
     """
     from app.services.upload_service import download_bytes
 
-    blocks: list[dict] = []
+    parts: list[types.Part] = []
     attach_refs: list[dict] = []
 
     if attachment_ids:
@@ -210,31 +221,20 @@ async def _build_content_blocks(
             })
             try:
                 file_bytes = await download_bytes(up.storage_path)
-                b64 = base64.b64encode(file_bytes).decode()
-                if up.content_type == "application/pdf":
-                    blocks.append({
-                        "type": "document",
-                        "source": {
-                            "type":       "base64",
-                            "media_type": "application/pdf",
-                            "data":       b64,
-                        },
-                    })
-                elif up.content_type.startswith("image/"):
-                    blocks.append({
-                        "type": "image",
-                        "source": {
-                            "type":       "base64",
-                            "media_type": up.content_type,
-                            "data":       b64,
-                        },
-                    })
+                parts.append(types.Part(
+                    inline_data=types.Blob(
+                        mime_type=up.content_type,
+                        data=file_bytes,
+                    )
+                ))
             except Exception as exc:
                 log.warning("Could not fetch attachment %s: %s", up.id, exc)
 
-    blocks.append({"type": "text", "text": text})
-    return blocks, attach_refs
+    parts.append(types.Part(text=text))
+    return parts, attach_refs
 
+
+# ── Main chat function ────────────────────────────────────────────────────────
 
 async def chat(
     db:             AsyncSession,
@@ -246,7 +246,7 @@ async def chat(
     attachment_ids: list[str] = [],
 ) -> tuple[str, int, str]:
     """
-    Call Anthropic API with board-aware system prompt.
+    Call Gemini API with board-aware system prompt.
     Persists both turns to chat_messages.
     Returns (response_text, total_tokens_used, assistant_message_id).
     """
@@ -256,27 +256,28 @@ async def chat(
     trimmed = history[-MAX_HISTORY_MESSAGES:]
 
     if attachment_ids:
-        user_content, attach_refs = await _build_content_blocks(
+        user_parts, attach_refs = await _build_user_parts(
             db, attachment_ids, board_id, message
         )
     else:
-        user_content = message
-        attach_refs  = []
+        user_parts  = [types.Part(text=message)]
+        attach_refs = []
 
-    messages = [
-        *[{"role": h["role"], "content": h["content"]} for h in trimmed],
-        {"role": "user", "content": user_content},
+    contents = _history_to_gemini(trimmed) + [
+        types.Content(role="user", parts=user_parts)
     ]
 
-    response = await _get_client().messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=MAX_RESPONSE_TOKENS,
-        system=system,
-        messages=messages,
+    response = await _get_client().aio.models.generate_content(
+        model=settings.gemini_model,
+        contents=contents,
+        config=types.GenerateContentConfig(
+            system_instruction=system,
+            max_output_tokens=MAX_RESPONSE_TOKENS,
+        ),
     )
 
-    text   = response.content[0].text
-    tokens = response.usage.input_tokens + response.usage.output_tokens
+    text   = response.text or ""
+    tokens = response.usage_metadata.total_token_count if response.usage_metadata else 0
 
     log.info("Chat tokens used: %d (board=%s, attachments=%d)", tokens, board_id, len(attach_refs))
 
