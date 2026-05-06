@@ -1,13 +1,16 @@
 """
-Alembic env.py — async SQLAlchemy configuration.
-DATABASE_URL is read from the environment (same as the app).
+Alembic env.py — synchronous SQLAlchemy + psycopg2 configuration.
+
+We intentionally use psycopg2 (sync) instead of asyncpg (async) here because
+Supabase uses PgBouncer in transaction-pool mode on port 6543. asyncpg's
+dialect.initialize() fires `select pg_catalog.version()` as a prepared statement
+before statement_cache_size=0 takes effect, causing DuplicatePreparedStatementError.
+psycopg2 does not use prepared statements for metadata queries, so it works cleanly.
 """
-import asyncio
 import os
 from logging.config import fileConfig
 
-from sqlalchemy import pool
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy import create_engine, pool
 
 from alembic import context
 
@@ -16,15 +19,14 @@ from app.models import Base  # noqa: F401
 
 config = context.config
 
-# Override sqlalchemy.url from environment variable
 db_url = os.environ.get("DATABASE_URL", "")
 
-# Normalize Supabase URL formats to the asyncpg dialect
-if db_url and not db_url.startswith("sqlite"):
-    if db_url.startswith("postgres://"):
-        db_url = "postgresql+asyncpg://" + db_url[len("postgres://"):]
-    elif db_url.startswith("postgresql://"):
-        db_url = "postgresql+asyncpg://" + db_url[len("postgresql://"):]
+# Normalise to a psycopg2-compatible URL (strip +asyncpg, replace postgres://)
+if db_url:
+    if db_url.startswith("postgresql+asyncpg://"):
+        db_url = "postgresql://" + db_url[len("postgresql+asyncpg://"):]
+    elif db_url.startswith("postgres://"):
+        db_url = "postgresql://" + db_url[len("postgres://"):]
 
 if not db_url:
     import sys
@@ -51,25 +53,13 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def do_run_migrations(connection):
-    context.configure(connection=connection, target_metadata=target_metadata)
-    with context.begin_transaction():
-        context.run_migrations()
-
-
-async def run_async_migrations() -> None:
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
-    async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
-    await connectable.dispose()
-
-
 def run_migrations_online() -> None:
-    asyncio.run(run_async_migrations())
+    connectable = create_engine(db_url, poolclass=pool.NullPool)
+    with connectable.connect() as connection:
+        context.configure(connection=connection, target_metadata=target_metadata)
+        with context.begin_transaction():
+            context.run_migrations()
+    connectable.dispose()
 
 
 if context.is_offline_mode():
