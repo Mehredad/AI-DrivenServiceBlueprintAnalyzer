@@ -140,7 +140,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .ins-strip-icon{width:20px;height:20px;border-radius:50%;background:var(--amber);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .ins-chips{display:flex;gap:6px;flex:1;overflow-x:auto;padding:6px 0;align-items:center;}
 .ins-chips::-webkit-scrollbar{display:none;}
-.ins-chip{display:flex;align-items:center;gap:5px;background:white;border:1px solid var(--amber-bd);border-radius:16px;padding:3px 9px;white-space:nowrap;font-size:10px;cursor:pointer;transition:all .12s;flex-shrink:0;}
+.ins-chip{display:flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--amber-bd);border-radius:16px;padding:3px 9px;white-space:nowrap;font-size:10px;cursor:pointer;transition:all .12s;flex-shrink:0;}
 .ins-chip:hover{border-color:var(--amber);box-shadow:var(--sh);}
 .icd{width:5px;height:5px;border-radius:50%;}
 .icd.h{background:var(--red);}
@@ -3373,13 +3373,13 @@ async function initApp() {
   initChatDragDrop();
   renderCanvas();  // show empty state immediately before any board loads
   await loadCurrentUser();
-  await loadBoardList();  // populate boardsList for the picker
+  if (currentUser) await loadBoardList();
 
   if (currentUser && !currentUser.has_seen_onboarding) {
     setTimeout(startTour, 600);
   }
 
-  if (currentBoardId) {
+  if (currentBoardId && (currentUser || currentBoardId.startsWith('local-'))) {
     await loadBoard(currentBoardId);
     initRealtime(currentBoardId);
     await loadPersistedInsights();
