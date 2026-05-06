@@ -3,30 +3,34 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 
-def _mock_anthropic_response(text: str = "Test agent response."):
-    content_block = MagicMock()
-    content_block.text = text
+def _make_types_mock():
+    """Return a mock that stands in for google.genai.types."""
+    types = MagicMock()
+    types.Part = MagicMock(side_effect=lambda **kw: MagicMock(**kw))
+    types.Content = MagicMock(side_effect=lambda **kw: MagicMock(**kw))
+    types.GenerateContentConfig = MagicMock(side_effect=lambda **kw: MagicMock(**kw))
+    types.Blob = MagicMock(side_effect=lambda **kw: MagicMock(**kw))
+    return types
+
+
+def _make_client_mock(text: str = "Test agent response."):
     usage = MagicMock()
-    usage.input_tokens = 10
-    usage.output_tokens = 5
+    usage.total_token_count = 15
+
     response = MagicMock()
-    response.content = [content_block]
-    response.usage = usage
-    return response
+    response.text = text
+    response.usage_metadata = usage
 
-
-def _mock_client(text: str):
-    mock = MagicMock()
-    mock.messages.create = AsyncMock(return_value=_mock_anthropic_response(text))
-    return mock
+    client = MagicMock()
+    client.aio.models.generate_content = AsyncMock(return_value=response)
+    return client
 
 
 @pytest.mark.asyncio
 async def test_chat_accepts_role_field(client, auth_headers, board):
-    with patch(
-        "app.services.agent_service._get_client",
-        return_value=_mock_client("Here is your developer-focused review."),
-    ):
+    with patch("app.services.agent_service.types", _make_types_mock()), \
+         patch("app.services.agent_service._get_client",
+               return_value=_make_client_mock("Here is your developer-focused review.")):
         r = await client.post(
             "/api/agent/chat",
             json={
@@ -48,10 +52,9 @@ async def test_chat_accepts_role_field(client, auth_headers, board):
 
 @pytest.mark.asyncio
 async def test_chat_without_role_still_works(client, auth_headers, board):
-    with patch(
-        "app.services.agent_service._get_client",
-        return_value=_mock_client("Generic board review."),
-    ):
+    with patch("app.services.agent_service.types", _make_types_mock()), \
+         patch("app.services.agent_service._get_client",
+               return_value=_make_client_mock("Generic board review.")):
         r = await client.post(
             "/api/agent/chat",
             json={

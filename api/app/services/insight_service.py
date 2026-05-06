@@ -3,11 +3,18 @@ Insight service — analyses the live board state and returns structured insight
 Tries NVIDIA NIM first (free tier) and falls back to Google Gemini if NIM is
 unavailable or fails.
 """
+from __future__ import annotations
+
 import json
 import logging
 
-from google import genai
-from google.genai import types
+try:
+    from google import genai
+    from google.genai import types
+except ImportError:
+    genai = None  # type: ignore[assignment]
+    types = None  # type: ignore[assignment]
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
@@ -17,10 +24,10 @@ from app.services.nim_client import nim_complete
 
 log = logging.getLogger(__name__)
 settings = get_settings()
-_gemini: genai.Client | None = None
+_gemini = None
 
 
-def _get_gemini() -> genai.Client:
+def _get_gemini():
     global _gemini
     if _gemini is None:
         _gemini = genai.Client(api_key=settings.gemini_api_key)
