@@ -4591,7 +4591,8 @@ async function lpAuthSubmit() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        errEl.textContent = err.detail || 'Login failed. Check your credentials.';
+        const detail = err.detail;
+        errEl.textContent = Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : (detail || 'Login failed. Check your credentials.');
         return;
       }
       const tokens = await res.json();
