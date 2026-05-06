@@ -2,13 +2,10 @@
 Auth router — /api/auth/*
 """
 import secrets
-import time
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 import httpx
-from jose import jwt
-from jose.exceptions import JWTError
 
 from app.config import get_settings
 from app.database import get_db
@@ -28,27 +25,27 @@ async def auth_config():
 
 
 async def _verify_google_token(credential: str, client_id: str) -> dict:
-    """Verify a Google ID token using Google's JWKS endpoint."""
-    async with httpx.AsyncClient(timeout=8.0) as client:
-        r = await client.get("https://www.googleapis.com/oauth2/v3/certs")
-        r.raise_for_status()
-        jwks = r.json()
-
-    try:
-        payload = jwt.decode(
-            credential,
-            jwks,
-            algorithms=["RS256"],
-            audience=client_id,
-            options={"verify_at_hash": False},
+    """Verify a Google ID token via Google's tokeninfo endpoint (no JWKS parsing)."""
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        r = await client.get(
+            "https://oauth2.googleapis.com/tokeninfo",
+            params={"id_token": credential},
         )
-    except JWTError as exc:
-        raise HTTPException(401, f"Invalid Google credential: {exc}")
+
+    if r.status_code != 200:
+        raise HTTPException(401, "Invalid or expired Google credential")
+
+    payload = r.json()
+
+    if payload.get("aud") != client_id:
+        raise HTTPException(401, "Google token was not issued for this application")
 
     if payload.get("iss") not in ("accounts.google.com", "https://accounts.google.com"):
         raise HTTPException(401, "Invalid token issuer")
-    if payload.get("exp", 0) < time.time():
-        raise HTTPException(401, "Token expired")
+
+    if not payload.get("email_verified"):
+        raise HTTPException(401, "Google account email is not verified")
+
     return payload
 
 
