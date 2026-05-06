@@ -9,6 +9,7 @@ mangum==0.17.0          # ASGI adapter — Vercel uses this under the hood for P
 # ── Database (async PostgreSQL via Supabase)
 sqlalchemy[asyncio]==2.0.31
 asyncpg==0.29.0
+psycopg2-binary==2.9.9  # sync driver used only by Alembic migrations (avoids PgBouncer/asyncpg DuplicatePreparedStatementError)
 alembic==1.13.2
 
 # ── Validation & settings
