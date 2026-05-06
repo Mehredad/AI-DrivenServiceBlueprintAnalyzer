@@ -82,6 +82,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .role-sw{display:flex;background:var(--bg2);border-radius:var(--r);padding:2px;border:1px solid var(--border);}
 .role-btn{padding:6px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .13s;white-space:nowrap;min-height:30px;}
 .role-btn.active{background:var(--surface);color:var(--text);box-shadow:var(--sh);}
+.role-select{height:30px;padding:0 8px;border-radius:var(--r);border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-size:11px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;outline:none;}
+.role-select:hover{border-color:var(--border2);color:var(--text);}
 .board-progress{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;white-space:nowrap;display:none;}
 .help-wrap{position:relative;}
 .help-btn{width:24px;height:24px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);color:var(--text2);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;transition:all .12s;}
@@ -154,8 +156,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .phase-guide.h{background:var(--teal-bg);border-color:var(--teal-bd);color:var(--teal);}
 .phase-guide.i{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber);}
 .pqs{display:flex;gap:5px;margin-left:5px;flex-wrap:nowrap;}
-.pq{background:white;border:1px solid currentColor;border-radius:10px;padding:1px 7px;font-size:9px;font-family:'JetBrains Mono',monospace;cursor:pointer;opacity:.65;white-space:nowrap;}
-.pq:hover{opacity:1;}
+.pq{background:transparent;border:1px solid currentColor;border-radius:8px;padding:2px 7px;font-size:10px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;opacity:.6;white-space:nowrap;}
+.pq:hover{opacity:.9;background:rgba(255,255,255,.15);}
 
 /* CANVAS */
 .canvas-area{flex:1;overflow:auto;padding:16px;min-width:0;}
@@ -699,14 +701,14 @@ select.fi{appearance:none;cursor:pointer;}
     <div class="board-progress" id="board-progress">
       <span id="bp-elements">0 elements</span> · <span id="bp-lanes">0 lanes</span> · <span id="bp-steps">0 steps</span>
     </div>
-    <div class="role-sw" id="role-sw">
-      <button class="role-btn" data-role="pm"         onclick="setRole('pm',this)">PM</button>
-      <button class="role-btn" data-role="designer"   onclick="setRole('designer',this)">Designer</button>
-      <button class="role-btn" data-role="researcher" onclick="setRole('researcher',this)">Researcher</button>
-      <button class="role-btn" data-role="developer"  onclick="setRole('developer',this)">Developer</button>
-      <button class="role-btn" data-role="delivery"   onclick="setRole('delivery',this)">Delivery</button>
-      <button class="role-btn" data-role="governance" onclick="setRole('governance',this)">Governance</button>
-    </div>
+    <select id="role-select" class="role-select" onchange="setRole(this.value)" title="View as role">
+      <option value="pm">PM</option>
+      <option value="designer">Designer</option>
+      <option value="researcher">Researcher</option>
+      <option value="developer">Developer</option>
+      <option value="delivery">Delivery</option>
+      <option value="governance">Governance</option>
+    </select>
     <div class="help-wrap">
       <button class="help-btn" onclick="toggleHelpMenu()" title="Help">?</button>
       <div class="help-dropdown" id="help-dropdown" style="display:none;">
@@ -3074,11 +3076,8 @@ function startOnboard(role) {
   };
   activeRole = role;
   localStorage.setItem('bp_active_role', role);
-  const roleBtn = document.querySelector(`.role-btn[data-role="${role}"]`);
-  if (roleBtn) {
-    document.querySelectorAll('.role-btn[data-role]').forEach(b => b.classList.remove('active'));
-    roleBtn.classList.add('active');
-  }
+  const sel = document.getElementById('role-select');
+  if (sel) sel.value = role;
   switchTab('chat', document.getElementById('tab-chat'));
   const msg = msgs[role] || msgs.pm;
   addUserMsg(msg);
@@ -3199,11 +3198,11 @@ function setPhase(key, el) {
   qs.forEach((q, i) => { q.textContent = d.qs[i] || ''; q.onclick = () => askAgent(d.prompts[i] || ''); });
 }
 
-function setRole(role, btn) {
+function setRole(role) {
   activeRole = role;
   localStorage.setItem('bp_active_role', role);
-  document.querySelectorAll('.role-btn[data-role]').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  const sel = document.getElementById('role-select');
+  if (sel && sel.value !== role) sel.value = role;
   document.querySelectorAll('.el-card[data-el-id]').forEach(card => {
     const el = boardState.elements.find(e => e.id === card.dataset.elId);
     if (el) card.classList.toggle('dimmed', !isElementHighlighted(el));
@@ -3365,9 +3364,8 @@ function getTime() { const n = new Date(); return n.getHours() + ':' + String(n.
 // APP INITIALISATION
 // ═══════════════════════════════════════════════════════
 function initRoleUI() {
-  document.querySelectorAll('.role-btn[data-role]').forEach(b => {
-    b.classList.toggle('active', b.dataset.role === activeRole);
-  });
+  const sel = document.getElementById('role-select');
+  if (sel) sel.value = activeRole;
 }
 
 async function initApp() {
