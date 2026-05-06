@@ -22,7 +22,7 @@ python-jose[cryptography]==3.3.0
 bcrypt==4.1.3
 
 # ── AI
-anthropic==0.28.0
+google-genai>=1.0.0     # Gemini 2.5 Flash — primary model for chat, insights, import
 openai==1.55.3          # used for NVIDIA NIM OpenAI-compatible endpoint
 
 # ── HTTP client (healthchecks, Supabase Realtime broadcast)

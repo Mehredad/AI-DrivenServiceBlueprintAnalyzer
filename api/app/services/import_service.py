@@ -1,19 +1,19 @@
 """
 Import service — extracts board structure from uploaded PDF or image via
-Anthropic's multimodal API, then commits the result to the board.
+Google Gemini's multimodal API, then commits the result to the board.
 
 Runs synchronously (Vercel Option A): POST /import blocks until extraction is
 complete. The DB job record is kept so the poll endpoint stays contractually
 compatible with a future async approach.
 """
-import base64
 import json
 import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from anthropic import AsyncAnthropic
+from google import genai
+from google.genai import types
 from fastapi import HTTPException
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,13 +24,15 @@ from app.services.upload_service import download_bytes
 
 log = logging.getLogger(__name__)
 settings = get_settings()
-_client: AsyncAnthropic | None = None
+_client: genai.Client | None = None
 
-def _get_client() -> AsyncAnthropic:
+
+def _get_client() -> genai.Client:
     global _client
     if _client is None:
-        _client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+        _client = genai.Client(api_key=settings.gemini_api_key)
     return _client
+
 
 DAILY_IMPORT_LIMIT = 5
 _EXTRACTION_PROMPT = """\
@@ -82,15 +84,8 @@ async def _count_imports_today(db: AsyncSession, user_id: str) -> int:
 
 # ── Extraction ────────────────────────────────────────────────────────────────
 
-def _build_file_block(content_type: str, b64: str) -> dict:
-    if content_type == "application/pdf":
-        return {"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": b64}}
-    return {"type": "image", "source": {"type": "base64", "media_type": content_type, "data": b64}}
-
-
 def _parse_json(text: str) -> Optional[dict]:
     text = text.strip()
-    # Strip markdown fences if present despite instructions
     if text.startswith("```"):
         text = text.split("\n", 1)[-1]
         text = text.rsplit("```", 1)[0].strip()
@@ -101,24 +96,30 @@ def _parse_json(text: str) -> Optional[dict]:
 
 
 async def _run_extraction(file_bytes: bytes, content_type: str) -> tuple[Optional[dict], int]:
-    """Call Anthropic with the extraction prompt. Retries once on JSON parse failure."""
-    b64 = base64.b64encode(file_bytes).decode()
-    file_block = _build_file_block(content_type, b64)
-
+    """Call Gemini with the extraction prompt. Retries once on JSON parse failure."""
     for attempt in range(2):
-        resp = await _get_client().messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=4096,
-            messages=[{
-                "role": "user",
-                "content": [
-                    file_block,
-                    {"type": "text", "text": _EXTRACTION_PROMPT},
-                ],
-            }],
+        response = await _get_client().aio.models.generate_content(
+            model=settings.gemini_model,
+            contents=[
+                types.Content(
+                    role="user",
+                    parts=[
+                        types.Part(
+                            inline_data=types.Blob(
+                                mime_type=content_type,
+                                data=file_bytes,
+                            )
+                        ),
+                        types.Part(text=_EXTRACTION_PROMPT),
+                    ],
+                )
+            ],
+            config=types.GenerateContentConfig(
+                max_output_tokens=4096,
+            ),
         )
-        tokens = resp.usage.input_tokens + resp.usage.output_tokens
-        raw = resp.content[0].text
+        tokens = response.usage_metadata.total_token_count if response.usage_metadata else 0
+        raw    = response.text or ""
         parsed = _parse_json(raw)
         if parsed is not None:
             return parsed, tokens
@@ -151,12 +152,10 @@ async def start_import(
     user_id:   str,
     upload_id: str,
 ) -> ImportJob:
-    # Daily limit check
     count = await _count_imports_today(db, user_id)
     if count >= DAILY_IMPORT_LIMIT:
         raise HTTPException(429, "Daily import limit reached (5 per day).")
 
-    # Board must be empty
     board_res = await db.execute(select(Board).where(Board.id == board_id))
     board = board_res.scalar_one_or_none()
     if not board:
@@ -171,7 +170,6 @@ async def start_import(
     if has_lanes or has_steps or elem_count > 0:
         raise HTTPException(409, "Board already has content. Create a new board to import into instead.")
 
-    # Validate upload belongs to this board
     upload_res = await db.execute(
         select(Upload).where(Upload.id == upload_id, Upload.board_id == board_id)
     )
@@ -179,7 +177,6 @@ async def start_import(
     if not upload:
         raise HTTPException(404, "Upload not found on this board.")
 
-    # Create job
     job = ImportJob(
         board_id=board_id,
         upload_id=upload_id,
@@ -190,7 +187,6 @@ async def start_import(
     db.add(job)
     await db.flush()
 
-    # Run extraction synchronously
     try:
         file_bytes = await download_bytes(upload.storage_path)
         result, tokens = await _run_extraction(file_bytes, upload.content_type)
@@ -254,7 +250,6 @@ async def accept_import(
     raw_steps     = data.get("steps", [])
     raw_elements  = data.get("elements", [])
 
-    # Build swimlanes + steps with fresh UUIDs
     lane_id_map = {sl["name"]: str(uuid.uuid4()) for sl in raw_swimlanes}
     step_id_map = {st["name"]: str(uuid.uuid4()) for st in raw_steps}
 
@@ -267,7 +262,6 @@ async def accept_import(
         for i, st in enumerate(raw_steps)
     ]
 
-    # Patch board state
     board_res = await db.execute(select(Board).where(Board.id == board_id))
     board = board_res.scalar_one_or_none()
     if not board:
@@ -275,11 +269,9 @@ async def accept_import(
     board.state = {**board.state, "swimlanes": swimlanes, "steps": steps}
     board.version += 1
 
-    # Update board title/domain from extracted data if board title is still default-ish
     if data.get("title") and board.title in ("Untitled Blueprint", "Untitled"):
         board.title = data["title"][:500]
 
-    # Create elements
     for elem in raw_elements:
         lane_id = lane_id_map.get(elem.get("swimlane_name", ""))
         step_id = step_id_map.get(elem.get("step_name", ""))
