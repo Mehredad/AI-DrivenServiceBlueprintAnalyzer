@@ -6,6 +6,7 @@
 <title>Blueprint AI — System Journey Design</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root{
   --bg:#F5F3EF;--bg2:#EDEBE5;--bg3:#E3E0D8;--surface:#FFFFFF;
@@ -544,10 +545,342 @@ select.fi{appearance:none;cursor:pointer;}
 .agent-msg ul{margin:6px 0 6px 14px;}
 .agent-msg li{margin-bottom:3px;}
 .agent-msg code{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--bg2);padding:1px 4px;border-radius:3px;}
+
+/* ── LANDING PAGE ──────────────────────────────────────────────────────────── */
+#landing{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;}
+.lp-nav{display:flex;align-items:center;justify-content:space-between;padding:14px 48px;border-bottom:1px solid var(--border);background:rgba(245,243,239,.95);backdrop-filter:blur(10px);position:sticky;top:0;z-index:10;flex-shrink:0;}
+.lp-logo{display:flex;align-items:center;gap:10px;font-family:'Fraunces',serif;font-size:19px;font-weight:400;letter-spacing:-.3px;color:var(--text);text-decoration:none;}
+.lp-nav-btns{display:flex;align-items:center;gap:8px;}
+.lp-inner{max-width:1160px;margin:0 auto;width:100%;padding:0 48px;}
+.lp-hero{display:grid;grid-template-columns:1fr 390px;gap:72px;padding:72px 48px 64px;max-width:1160px;margin:0 auto;width:100%;align-items:start;}
+.lp-badge{display:inline-flex;align-items:center;gap:6px;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);border-radius:20px;padding:4px 12px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:500;letter-spacing:.5px;margin-bottom:24px;}
+.lp-h1{font-family:'Fraunces',serif;font-size:50px;font-weight:300;line-height:1.06;letter-spacing:-1.5px;margin-bottom:20px;color:var(--text);}
+.lp-h1 em{font-style:italic;color:var(--blue);}
+.lp-sub{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:28px;max-width:500px;}
+.lp-roles{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:36px;}
+.lp-role-chip{padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;border:1px solid var(--border2);color:var(--text2);background:var(--surface);}
+/* Auth card */
+.lp-auth-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:26px 26px 22px;box-shadow:var(--sh2);}
+.lp-auth-title{font-family:'Fraunces',serif;font-size:17px;font-weight:400;margin-bottom:16px;color:var(--text);}
+.lp-auth-tabs{display:flex;background:var(--bg2);border-radius:var(--r);padding:2px;border:1px solid var(--border);margin-bottom:18px;}
+.lp-auth-tab{flex:1;padding:7px 10px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .13s;min-height:32px;}
+.lp-auth-tab.active{background:var(--surface);color:var(--text);box-shadow:var(--sh);}
+.lp-google-wrap{margin-bottom:14px;}
+.lp-divider{display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--text3);font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:.5px;}
+.lp-divider::before,.lp-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.lp-fg{display:flex;flex-direction:column;gap:4px;margin-bottom:9px;}
+.lp-fl{font-size:11px;font-weight:600;color:var(--text2);}
+.lp-fi{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:12px;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);outline:none;transition:border-color .12s;}
+.lp-fi:focus{border-color:var(--blue);background:var(--surface);}
+.lp-fi::placeholder{color:var(--text3);}
+.lp-err{font-size:11px;color:var(--red);min-height:14px;margin-bottom:4px;}
+.lp-submit-btn{width:100%;padding:10px;background:var(--text);color:white;border:none;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .12s;margin-top:2px;}
+.lp-submit-btn:hover{opacity:.82;}
+.lp-submit-btn:disabled{opacity:.5;cursor:not-allowed;}
+.lp-legal{font-size:10px;color:var(--text3);text-align:center;margin-top:10px;line-height:1.5;}
+/* Features */
+.lp-features{padding:56px 0;border-top:1px solid var(--border);}
+.lp-features-inner{max-width:1160px;margin:0 auto;padding:0 48px;}
+.lp-section-label{font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1.2px;color:var(--text3);margin-bottom:10px;}
+.lp-section-title{font-family:'Fraunces',serif;font-size:32px;font-weight:300;letter-spacing:-.8px;margin-bottom:36px;color:var(--text);}
+.lp-feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.lp-feat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:22px;}
+.lp-feat-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:12px;}
+.lp-feat-title{font-family:'Fraunces',serif;font-size:17px;font-weight:400;margin-bottom:7px;color:var(--text);}
+.lp-feat-desc{font-size:12px;color:var(--text2);line-height:1.65;}
+/* Comparison */
+.lp-compare{padding:0 0 72px;}
+.lp-compare-inner{max-width:1160px;margin:0 auto;padding:0 48px;}
+.lp-compare-wrap{overflow-x:auto;border-radius:var(--rxl);border:1px solid var(--border);box-shadow:var(--sh);}
+.lp-compare-table{width:100%;border-collapse:collapse;background:var(--surface);}
+.lp-compare-table th{padding:11px 14px;text-align:left;font-size:11px;font-weight:700;font-family:'DM Sans',sans-serif;background:var(--bg2);border-bottom:1px solid var(--border);white-space:nowrap;}
+.lp-compare-table th:not(:first-child){text-align:center;min-width:90px;}
+.lp-compare-table th.bp-col{background:var(--blue-bg);color:var(--blue);}
+.lp-compare-table td{padding:9px 14px;font-size:12px;border-bottom:1px solid var(--border);color:var(--text);}
+.lp-compare-table td:not(:first-child){text-align:center;}
+.lp-compare-table tr:last-child td{border-bottom:none;}
+.lp-compare-table tr:hover td{background:var(--bg);}
+.lp-compare-table .td-feat{font-size:12px;font-weight:600;}
+.lp-compare-table .td-sub{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;font-weight:400;display:block;margin-top:2px;}
+.lp-check{color:#16a34a;}
+.lp-partial{color:var(--amber);font-size:11px;font-weight:700;}
+.lp-cross{color:var(--text3);}
+/* Footer */
+.lp-footer{padding:20px 48px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+.lp-footer-copy{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.lp-footer-links{display:flex;gap:16px;}
+.lp-footer-links a{font-size:11px;color:var(--text3);text-decoration:none;font-family:'DM Sans',sans-serif;}
+.lp-footer-links a:hover{color:var(--text);}
 </style>
 </head>
 <body>
-<div class="app" id="app">
+
+<!-- ═══ LANDING PAGE — shown when unauthenticated ═══ -->
+<div id="landing">
+  <!-- NAV -->
+  <nav class="lp-nav">
+    <div class="lp-logo">
+      <div class="logo-mark">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1" width="4.5" height="4.5" rx=".8" fill="white"/><rect x="7" y="1" width="5" height="4.5" rx=".8" fill="white" opacity=".6"/><rect x="1" y="7.5" width="5" height="4.5" rx=".8" fill="white" opacity=".6"/><rect x="7.5" y="7.5" width="4.5" height="4.5" rx=".8" fill="white" opacity=".28"/></svg>
+      </div>
+      Blueprint AI
+    </div>
+    <div class="lp-nav-btns">
+      <button class="btn btn-ghost" onclick="lpScrollToAuth('login')" style="font-size:12px;">Sign in</button>
+      <button class="btn btn-primary" onclick="lpScrollToAuth('register')" style="font-size:12px;">Get started free</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="lp-hero">
+    <!-- LEFT: pitch -->
+    <div>
+      <div class="lp-badge">Beta &middot; Free to use</div>
+      <h1 class="lp-h1">Map your service.<br><em>Let AI read the room.</em></h1>
+      <p class="lp-sub">Blueprint AI gives every stakeholder — from Product Managers to Governance teams — a live, AI-analysed view of how your end-to-end service works. Built for complex services that involve AI, or those that should.</p>
+      <div class="lp-roles">
+        <span class="lp-role-chip">PM</span>
+        <span class="lp-role-chip">Service Designer</span>
+        <span class="lp-role-chip">UX Researcher</span>
+        <span class="lp-role-chip">Developer</span>
+        <span class="lp-role-chip">Delivery Lead</span>
+        <span class="lp-role-chip">Governance</span>
+      </div>
+      <!-- Stat row -->
+      <div style="display:flex;gap:32px;margin-top:8px;">
+        <div><div style="font-family:'Fraunces',serif;font-size:28px;font-weight:400;letter-spacing:-1px;color:var(--text);">6</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">stakeholder lenses</div></div>
+        <div><div style="font-family:'Fraunces',serif;font-size:28px;font-weight:400;letter-spacing:-1px;color:var(--text);">1</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">shared live canvas</div></div>
+        <div><div style="font-family:'Fraunces',serif;font-size:28px;font-weight:400;letter-spacing:-1px;color:var(--blue);">AI</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">reads your blueprint</div></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: auth card -->
+    <div class="lp-auth-card" id="lp-auth-card">
+      <div class="lp-auth-title">Get started</div>
+      <div class="lp-auth-tabs">
+        <button class="lp-auth-tab active" id="lp-tab-login"    onclick="lpSwitchTab('login')">Sign in</button>
+        <button class="lp-auth-tab"        id="lp-tab-register" onclick="lpSwitchTab('register')">Create account</button>
+      </div>
+
+      <!-- Google Sign-In -->
+      <div id="lp-google-area" class="lp-google-wrap">
+        <div id="lp-google-btn" style="display:flex;justify-content:center;"></div>
+        <div class="lp-divider">or continue with email</div>
+      </div>
+
+      <!-- Name (register only) -->
+      <div class="lp-fg" id="lp-name-fg" style="display:none;">
+        <div class="lp-fl">Full name</div>
+        <input class="lp-fi" type="text" id="lp-name" placeholder="Your name" autocomplete="name">
+      </div>
+
+      <div class="lp-fg">
+        <div class="lp-fl">Email</div>
+        <input class="lp-fi" type="email" id="lp-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')lpAuthSubmit()">
+      </div>
+
+      <div class="lp-fg">
+        <div class="lp-fl">Password</div>
+        <input class="lp-fi" type="password" id="lp-password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password" onkeydown="if(event.key==='Enter')lpAuthSubmit()">
+        <div id="lp-pw-hint" style="display:none;font-size:10px;color:var(--text3);margin-top:2px;">Min 8 chars &middot; one uppercase &middot; one number</div>
+      </div>
+
+      <!-- Role (register only) -->
+      <div class="lp-fg" id="lp-role-fg" style="display:none;">
+        <div class="lp-fl">Your role</div>
+        <select class="lp-fi" id="lp-role">
+          <option value="pm">PM / Product Manager</option>
+          <option value="designer" selected>Service / UX Designer</option>
+          <option value="researcher">UX Researcher</option>
+          <option value="developer">Developer / Engineer</option>
+          <option value="delivery">Delivery Lead</option>
+          <option value="governance">Governance / Compliance</option>
+        </select>
+      </div>
+
+      <div class="lp-err" id="lp-error"></div>
+      <button class="lp-submit-btn" id="lp-submit-btn" onclick="lpAuthSubmit()">Sign in</button>
+      <div class="lp-legal">By continuing, you agree this is a research tool.<br>Your data is stored securely and never sold.</div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <div class="lp-features">
+    <div class="lp-features-inner">
+      <div class="lp-section-label">Why Blueprint AI</div>
+      <div class="lp-section-title">Built for the complexity of real services</div>
+      <div class="lp-feat-grid">
+        <div class="lp-feat-card">
+          <div class="lp-feat-icon" style="background:var(--blue-bg);">🧠</div>
+          <div class="lp-feat-title">AI that reads your blueprint</div>
+          <div class="lp-feat-desc">The Blueprint Agent analyses your actual service map — not a generic assistant. It references specific elements, flags real risks, and gives role-calibrated advice based on exactly what is on your canvas.</div>
+        </div>
+        <div class="lp-feat-card">
+          <div class="lp-feat-icon" style="background:var(--teal-bg);">👥</div>
+          <div class="lp-feat-title">One map, six stakeholder views</div>
+          <div class="lp-feat-desc">Switch between PM, Service Designer, Researcher, Developer, Delivery, and Governance lenses. Each role gets AI insights and guidance tailored to their specific responsibilities and questions.</div>
+        </div>
+        <div class="lp-feat-card">
+          <div class="lp-feat-icon" style="background:var(--amber-bg);">🛡</div>
+          <div class="lp-feat-title">Governance built in, not bolted on</div>
+          <div class="lp-feat-desc">Track AI capabilities, XAI strategies, autonomy levels, and oversight decisions on the same canvas where your service is mapped. Compliance, transparency, and harm assessment are part of the workflow — not afterthoughts.</div>
+        </div>
+        <div class="lp-feat-card">
+          <div class="lp-feat-icon" style="background:var(--purple-bg);">📥</div>
+          <div class="lp-feat-title">Import from existing blueprints</div>
+          <div class="lp-feat-desc">Upload a PDF or image of any existing journey map, service blueprint, or process diagram. Gemini's multimodal AI extracts the structure automatically — swimlanes, steps, and elements — so you can start working immediately.</div>
+        </div>
+        <div class="lp-feat-card">
+          <div class="lp-feat-icon" style="background:var(--green-bg);">✦</div>
+          <div class="lp-feat-title">Severity-rated insights engine</div>
+          <div class="lp-feat-desc">Generate a board-level analysis at any time. Insights are rated by severity, tied to specific elements, and include concrete action suggestions — not generic recommendations.</div>
+        </div>
+        <div class="lp-feat-card">
+          <div class="lp-feat-icon" style="background:var(--red-bg);">⚡</div>
+          <div class="lp-feat-title">Real-time collaboration</div>
+          <div class="lp-feat-desc">Boards update live across all connected team members via Supabase Realtime. Everyone sees the same canvas state — no version conflicts, no stale screenshots in Slack.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPARISON TABLE -->
+  <div class="lp-compare">
+    <div class="lp-compare-inner">
+      <div class="lp-section-label">How it compares</div>
+      <div class="lp-section-title" style="margin-bottom:24px;">Purpose-built where others are general</div>
+      <div class="lp-compare-wrap">
+        <table class="lp-compare-table">
+          <thead>
+            <tr>
+              <th style="min-width:220px;">Feature</th>
+              <th class="bp-col">Blueprint AI</th>
+              <th>TheyDo</th>
+              <th>Miro</th>
+              <th>Figma</th>
+              <th>Mural</th>
+              <th>UX Pressia</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="td-feat">Service blueprint format</span><span class="td-sub">Structured swimlanes &amp; step columns</span></td>
+              <td class="bp-col"><span class="lp-check">✓</span></td>
+              <td><span class="lp-check">✓</span></td>
+              <td><span class="lp-partial">~</span></td>
+              <td><span class="lp-partial">~</span></td>
+              <td><span class="lp-partial">~</span></td>
+              <td><span class="lp-check">✓</span></td>
+            </tr>
+            <tr>
+              <td><span class="td-feat">AI-powered board analysis</span><span class="td-sub">Agent reads &amp; critiques your specific map</span></td>
+              <td class="bp-col"><span class="lp-check">✓</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+            </tr>
+            <tr>
+              <td><span class="td-feat">Role-specific AI personas</span><span class="td-sub">PM, Designer, Researcher, Dev, Governance</span></td>
+              <td class="bp-col"><span class="lp-check">✓</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+            </tr>
+            <tr>
+              <td><span class="td-feat">AI capability inventory</span><span class="td-sub">Track autonomy, XAI strategy &amp; decisions</span></td>
+              <td class="bp-col"><span class="lp-check">✓</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+            </tr>
+            <tr>
+              <td><span class="td-feat">Governance &amp; compliance tracking</span><span class="td-sub">Audit trail, oversight decisions, harm checks</span></td>
+              <td class="bp-col"><span class="lp-check">✓</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+            </tr>
+            <tr>
+              <td><span class="td-feat">HCAI framework built in</span><span class="td-sub">Transparency, autonomy &amp; harm by design</span></td>
+              <td class="bp-col"><span class="lp-check">✓</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+            </tr>
+            <tr>
+              <td><span class="td-feat">Import from PDF / image</span><span class="td-sub">AI extracts blueprint from existing documents</span></td>
+              <td class="bp-col"><span class="lp-check">✓</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+            </tr>
+            <tr>
+              <td><span class="td-feat">Real-time collaboration</span></td>
+              <td class="bp-col"><span class="lp-check">✓</span></td>
+              <td><span class="lp-check">✓</span></td>
+              <td><span class="lp-check">✓</span></td>
+              <td><span class="lp-check">✓</span></td>
+              <td><span class="lp-check">✓</span></td>
+              <td><span class="lp-partial">~</span></td>
+            </tr>
+            <tr>
+              <td><span class="td-feat">AI-generated insights</span><span class="td-sub">Severity-rated issues &amp; opportunities</span></td>
+              <td class="bp-col"><span class="lp-check">✓</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-cross">—</span></td>
+            </tr>
+            <tr>
+              <td><span class="td-feat">Stakeholder mapping</span></td>
+              <td class="bp-col"><span class="lp-check">✓</span></td>
+              <td><span class="lp-check">✓</span></td>
+              <td><span class="lp-partial">~</span></td>
+              <td><span class="lp-partial">~</span></td>
+              <td><span class="lp-partial">~</span></td>
+              <td><span class="lp-check">✓</span></td>
+            </tr>
+            <tr>
+              <td><span class="td-feat">Free during beta</span></td>
+              <td class="bp-col"><span class="lp-check">✓</span></td>
+              <td><span class="lp-cross">—</span></td>
+              <td><span class="lp-partial">~</span></td>
+              <td><span class="lp-partial">~</span></td>
+              <td><span class="lp-partial">~</span></td>
+              <td><span class="lp-partial">~</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:10px;font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;">~ = limited or partial support &nbsp;&middot;&nbsp; — = not available &nbsp;&middot;&nbsp; ✓ = fully supported</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="lp-footer">
+    <div class="lp-footer-copy">Blueprint AI &middot; AI-native service design &middot; &copy; 2025</div>
+    <div class="lp-footer-links">
+      <a href="#" onclick="lpScrollToAuth('login');return false;">Sign in</a>
+      <a href="#" onclick="lpScrollToAuth('register');return false;">Get started</a>
+    </div>
+  </div>
+</div>
+<!-- ═══ END LANDING ═══ -->
+
+<div class="app" id="app" style="display:none;">
 
 <!-- ═══ SIDEBAR ═══ -->
 <aside class="sidebar">
@@ -1266,11 +1599,12 @@ async function apiFetch(path, opts = {}) {
 // AUTH UI — login / register modal shown before app loads
 // ═══════════════════════════════════════════════════════
 function showAuthModal() {
-  document.getElementById('overlay-auth').classList.add('open');
+  showLanding();
+  lpSwitchTab('login');
 }
 
 function hideAuthModal() {
-  document.getElementById('overlay-auth').classList.remove('open');
+  // no-op — landing page handles its own visibility
 }
 
 async function doLogin() {
@@ -1350,7 +1684,8 @@ function logout() {
   if (authBtn) { authBtn.textContent = 'Sign in'; authBtn.onclick = showAuthModal; }
   boardState.swimlanes = []; boardState.steps = []; boardState.elements = [];
   renderCanvas();
-  showAuthModal();
+  showLanding();
+  lpSwitchTab('login');
 }
 
 async function loadCurrentUser() {
@@ -3373,9 +3708,16 @@ async function initApp() {
   initChatDragDrop();
   renderCanvas();  // show empty state immediately before any board loads
   await loadCurrentUser();
-  if (currentUser) await loadBoardList();
 
-  if (currentUser && !currentUser.has_seen_onboarding) {
+  if (!currentUser) {
+    showLanding();
+    return;
+  }
+
+  hideLanding();
+  await loadBoardList();
+
+  if (!currentUser.has_seen_onboarding) {
     setTimeout(startTour, 600);
   }
 
@@ -4179,6 +4521,148 @@ async function discardImport() {
   if (_importNewBoard) await _cleanupNewBoard();
 }
 
+
+// ═══════════════════════════════════════════════════════
+// LANDING PAGE — auth, Google Sign-In, show/hide
+// ═══════════════════════════════════════════════════════
+
+let _lpTab = 'login';
+let _googleInitDone = false;
+
+function showLanding() {
+  document.getElementById('landing').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  if (!_googleInitDone) { _googleInitDone = true; initGoogleAuth(); }
+}
+
+function hideLanding() {
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+}
+
+function lpScrollToAuth(tab) {
+  lpSwitchTab(tab);
+  document.getElementById('lp-auth-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function lpSwitchTab(tab) {
+  _lpTab = tab;
+  const isReg = tab === 'register';
+  document.getElementById('lp-tab-login').classList.toggle('active', !isReg);
+  document.getElementById('lp-tab-register').classList.toggle('active', isReg);
+  document.getElementById('lp-name-fg').style.display = isReg ? '' : 'none';
+  document.getElementById('lp-role-fg').style.display = isReg ? '' : 'none';
+  document.getElementById('lp-pw-hint').style.display = isReg ? '' : 'none';
+  document.getElementById('lp-submit-btn').textContent = isReg ? 'Create account' : 'Sign in';
+  document.getElementById('lp-error').textContent = '';
+}
+
+async function lpAuthSubmit() {
+  const email    = document.getElementById('lp-email').value.trim();
+  const password = document.getElementById('lp-password').value;
+  const errEl    = document.getElementById('lp-error');
+  const btn      = document.getElementById('lp-submit-btn');
+  errEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Please wait…';
+
+  try {
+    if (_lpTab === 'register') {
+      const full_name = document.getElementById('lp-name').value.trim();
+      const role      = document.getElementById('lp-role').value;
+      const res = await fetch(API_BASE + '/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, full_name, role }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const detail = err.detail;
+        errEl.textContent = Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : (detail || 'Registration failed.');
+        return;
+      }
+      const tokens = await res.json();
+      await _lpStoreAndEnter(tokens);
+    } else {
+      const res = await fetch(API_BASE + '/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        errEl.textContent = err.detail || 'Login failed. Check your credentials.';
+        return;
+      }
+      const tokens = await res.json();
+      await _lpStoreAndEnter(tokens);
+    }
+  } finally {
+    btn.disabled = false;
+    lpSwitchTab(_lpTab); // restore button label
+  }
+}
+
+async function handleGoogleLogin(googleResponse) {
+  const errEl = document.getElementById('lp-error');
+  errEl.textContent = '';
+  try {
+    const res = await fetch(API_BASE + '/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: googleResponse.credential }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      errEl.textContent = err.detail || 'Google sign-in failed.';
+      return;
+    }
+    const tokens = await res.json();
+    await _lpStoreAndEnter(tokens);
+  } catch (e) {
+    errEl.textContent = 'Google sign-in failed. Please try email instead.';
+  }
+}
+
+async function _lpStoreAndEnter(tokens) {
+  authToken    = tokens.access_token;
+  refreshToken = tokens.refresh_token;
+  localStorage.setItem('bp_access_token',  authToken);
+  localStorage.setItem('bp_refresh_token', refreshToken);
+  await loadCurrentUser();
+  hideLanding();
+  await initApp();
+}
+
+async function initGoogleAuth() {
+  try {
+    const res = await fetch(API_BASE + '/api/auth/config');
+    if (!res.ok) { document.getElementById('lp-google-area').style.display = 'none'; return; }
+    const config = await res.json();
+    if (!config.google_client_id) { document.getElementById('lp-google-area').style.display = 'none'; return; }
+
+    const tryRender = () => {
+      if (!window.google?.accounts?.id) return false;
+      window.google.accounts.id.initialize({
+        client_id: config.google_client_id,
+        callback: handleGoogleLogin,
+        auto_select: false,
+      });
+      window.google.accounts.id.renderButton(
+        document.getElementById('lp-google-btn'),
+        { type: 'standard', theme: 'outline', size: 'large', text: 'continue_with', width: 338 }
+      );
+      return true;
+    };
+
+    if (!tryRender()) {
+      // GIS not loaded yet — wait for it
+      window.onGoogleLibraryLoad = tryRender;
+    }
+  } catch (e) {
+    document.getElementById('lp-google-area').style.display = 'none';
+  }
+}
 
 // ── Bootstrap ──────────────────────────────────────────
 showView('blueprint', document.getElementById('nav-blueprint'));

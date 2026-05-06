@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     nim_base_url: str = "https://integrate.api.nvidia.com/v1"
     nim_model: str = "meta/llama-4-scout-17b-16e-instruct"
 
+    # ── Google OAuth (Sign In With Google)
+    # Create credentials at console.cloud.google.com → APIs & Services → Credentials
+    google_client_id: str = ""
+
     # ── CORS
     allowed_origins: str = "http://localhost:3000,http://localhost:8000"
 
