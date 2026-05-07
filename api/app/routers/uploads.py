@@ -26,11 +26,9 @@ async def sign_upload(
     db:   AsyncSession = Depends(get_db),
 ):
     await assert_board_access(db, board_id, user.id)
-    result = await upload_service.sign_upload(
+    return await upload_service.sign_upload(
         db, board_id, user.id, body.filename, body.content_type, body.size
     )
-    await db.commit()
-    return result
 
 
 @router.get("/{board_id}/uploads/{upload_id}/url", response_model=UploadUrlResponse)
@@ -53,4 +51,3 @@ async def delete_upload(
 ):
     await assert_board_access(db, board_id, user.id)
     await upload_service.delete_upload(db, board_id, upload_id, user.id)
-    await db.commit()

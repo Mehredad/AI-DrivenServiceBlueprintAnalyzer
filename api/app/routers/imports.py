@@ -28,7 +28,6 @@ async def start_import(
 ):
     await assert_board_access(db, board_id, user.id)
     job = await import_service.start_import(db, board_id, user.id, body.upload_id)
-    await db.commit()
     return ImportJobOut(
         job_id=str(job.id),
         status=job.status,
@@ -64,7 +63,6 @@ async def accept_import(
 ):
     await assert_board_access(db, board_id, user.id)
     result = await import_service.accept_import(db, board_id, job_id, user.id, body.edits)
-    await db.commit()
     return ImportAcceptResponse(**result)
 
 
@@ -77,4 +75,3 @@ async def discard_import(
 ):
     await assert_board_access(db, board_id, user.id)
     await import_service.discard_import(db, board_id, job_id, user.id)
-    await db.commit()

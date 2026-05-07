@@ -36,6 +36,8 @@ _client = None
 
 def _get_client():
     global _client
+    if genai is None:
+        raise HTTPException(503, "AI service unavailable: google-genai package not installed.")
     if _client is None:
         _client = genai.Client(api_key=settings.gemini_api_key)
     return _client
@@ -104,27 +106,36 @@ def _parse_json(text: str) -> Optional[dict]:
 
 async def _run_extraction(file_bytes: bytes, content_type: str) -> tuple[Optional[dict], int]:
     """Call Gemini with the extraction prompt. Retries once on JSON parse failure."""
+    if types is None:
+        raise HTTPException(503, "AI service unavailable: google-genai package not installed.")
     for attempt in range(2):
-        response = await _get_client().aio.models.generate_content(
-            model=settings.gemini_model,
-            contents=[
-                types.Content(
-                    role="user",
-                    parts=[
-                        types.Part(
-                            inline_data=types.Blob(
-                                mime_type=content_type,
-                                data=file_bytes,
-                            )
-                        ),
-                        types.Part(text=_EXTRACTION_PROMPT),
-                    ],
-                )
-            ],
-            config=types.GenerateContentConfig(
-                max_output_tokens=4096,
-            ),
-        )
+        try:
+            response = await _get_client().aio.models.generate_content(
+                model=settings.gemini_model,
+                contents=[
+                    types.Content(
+                        role="user",
+                        parts=[
+                            types.Part(
+                                inline_data=types.Blob(
+                                    mime_type=content_type,
+                                    data=file_bytes,
+                                )
+                            ),
+                            types.Part(text=_EXTRACTION_PROMPT),
+                        ],
+                    )
+                ],
+                config=types.GenerateContentConfig(
+                    max_output_tokens=4096,
+                ),
+            )
+        except HTTPException:
+            raise
+        except Exception as exc:
+            log.error("Gemini extraction error (attempt %d): %s", attempt + 1, exc)
+            raise HTTPException(502, f"AI extraction failed: {type(exc).__name__}") from exc
+
         tokens = response.usage_metadata.total_token_count if response.usage_metadata else 0
         raw    = response.text or ""
         parsed = _parse_json(raw)
