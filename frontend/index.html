@@ -612,6 +612,57 @@ select.fi{appearance:none;cursor:pointer;}
 .lp-footer-links{display:flex;gap:16px;}
 .lp-footer-links a{font-size:13px;color:var(--text2);text-decoration:none;font-family:'DM Sans',sans-serif;}
 .lp-footer-links a:hover{color:var(--text);}
+
+/* HERO CTAS */
+.lp-hero-ctas{display:flex;gap:10px;margin-top:28px;margin-bottom:32px;flex-wrap:wrap;}
+.lp-btn-primary{padding:11px 22px;background:var(--text);color:white;border:none;border-radius:var(--r);font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .12s;}
+.lp-btn-primary:hover{opacity:.85;}
+.lp-btn-secondary{padding:11px 22px;background:transparent;color:var(--text);border:1.5px solid var(--border2);border-radius:var(--r);font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;}
+.lp-btn-secondary:hover{border-color:var(--text);background:var(--bg2);}
+
+/* WHY SECTION */
+.lp-why{padding:72px 0;border-top:1px solid var(--border);}
+.lp-why-inner{max-width:1160px;margin:0 auto;padding:0 48px;}
+.lp-why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;margin-top:36px;}
+.lp-why-num{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.5px;margin-bottom:10px;}
+.lp-why-text{font-size:16px;color:var(--text2);line-height:1.75;}
+
+/* HOW IT WORKS */
+.lp-how{padding:72px 0;border-top:1px solid var(--border);background:var(--surface);}
+.lp-how-inner{max-width:1160px;margin:0 auto;padding:0 48px;}
+.lp-how-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:36px;}
+.lp-how-step{display:flex;flex-direction:column;gap:14px;}
+.lp-how-img{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);aspect-ratio:4/3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--text3);overflow:hidden;}
+.lp-how-img-icon{font-size:32px;opacity:.35;}
+.lp-how-img-label{font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:.5px;text-transform:uppercase;}
+.lp-how-step-num{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.5px;}
+.lp-how-step-title{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--text);}
+.lp-how-step-desc{font-size:14px;color:var(--text2);line-height:1.65;}
+
+/* RESEARCH SECTION */
+.lp-research{padding:72px 0;border-top:1px solid var(--border);}
+.lp-research-inner{max-width:860px;margin:0 auto;padding:0 48px;text-align:center;}
+.lp-research-icon{width:48px;height:48px;background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 20px;}
+.lp-research-body{font-size:16px;color:var(--text2);line-height:1.75;margin-top:14px;}
+.lp-research-link{color:var(--blue);text-decoration:none;}
+.lp-research-link:hover{text-decoration:underline;}
+
+/* MOBILE RESPONSIVE */
+@media(max-width:1024px){
+  .lp-hero{grid-template-columns:1fr;gap:36px;padding:48px 32px;}
+  .lp-auth-card{max-width:520px;}
+  .lp-why-grid,.lp-how-steps,.lp-feat-grid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:640px){
+  .lp-h1{font-size:34px;letter-spacing:-.8px;}
+  .lp-hero{padding:32px 20px;gap:24px;}
+  .lp-why-grid,.lp-how-steps,.lp-feat-grid{grid-template-columns:1fr;}
+  .lp-why-inner,.lp-how-inner,.lp-features-inner,.lp-compare-inner,.lp-research-inner{padding:0 20px;}
+  .lp-nav{padding:12px 20px;}
+  .lp-footer{padding:16px 20px;flex-direction:column;gap:14px;text-align:center;}
+  .lp-footer-links{flex-wrap:wrap;justify-content:center;}
+  .lp-hero-ctas{flex-direction:column;align-items:flex-start;}
+}
 </style>
 </head>
 <body>
@@ -637,8 +688,8 @@ select.fi{appearance:none;cursor:pointer;}
     <!-- LEFT: pitch -->
     <div>
       <div class="lp-badge">Beta &middot; Free to use</div>
-      <h1 class="lp-h1">Map your service.<br><em>Let AI read the room.</em></h1>
-      <p class="lp-sub">Blueprint AI gives every stakeholder — from Product Managers to Governance teams — a live, AI-analysed view of how your end-to-end service works. Built for complex services that involve AI, or those that should.</p>
+      <h1 class="lp-h1">Service blueprinting<br>for the <em>AI era</em></h1>
+      <p class="lp-sub">Map every actor, step, and AI capability in your service — on one shared canvas built for cross-functional teams.</p>
       <div class="lp-roles">
         <span class="lp-role-chip">PM</span>
         <span class="lp-role-chip">Service Designer</span>
@@ -647,8 +698,14 @@ select.fi{appearance:none;cursor:pointer;}
         <span class="lp-role-chip">Delivery Lead</span>
         <span class="lp-role-chip">Governance</span>
       </div>
+      <!-- Hero CTAs (FR-8) -->
+      <div class="lp-hero-ctas">
+        <button class="lp-btn-primary" onclick="lpScrollToAuth('register')">Get started free</button>
+        <!-- TODO: replace with live read-only demo route when board sharing is implemented -->
+        <button class="lp-btn-secondary" onclick="document.getElementById('lp-example-modal').style.display='flex'">View example board</button>
+      </div>
       <!-- Stat row -->
-      <div style="display:flex;gap:32px;margin-top:8px;">
+      <div style="display:flex;gap:32px;margin-top:4px;">
         <div><div style="font-family:'Fraunces',serif;font-size:28px;font-weight:400;letter-spacing:-1px;color:var(--text);">6</div><div style="font-size:13px;color:var(--text2);margin-top:2px;">stakeholder lenses</div></div>
         <div><div style="font-family:'Fraunces',serif;font-size:28px;font-weight:400;letter-spacing:-1px;color:var(--text);">1</div><div style="font-size:13px;color:var(--text2);margin-top:2px;">shared live canvas</div></div>
         <div><div style="font-family:'Fraunces',serif;font-size:28px;font-weight:400;letter-spacing:-1px;color:var(--blue);">AI</div><div style="font-size:13px;color:var(--text2);margin-top:2px;">reads your blueprint</div></div>
@@ -705,10 +762,72 @@ select.fi{appearance:none;cursor:pointer;}
     </div>
   </div>
 
-  <!-- FEATURES -->
+  <!-- WHY BLUEPRINT AI EXISTS (FR-2) -->
+  <div class="lp-why">
+    <div class="lp-why-inner">
+      <div class="lp-section-label">Why it exists</div>
+      <div class="lp-section-title">Three things that broke when AI entered services</div>
+      <div class="lp-why-grid">
+        <div class="lp-why-item">
+          <div class="lp-why-num">01</div>
+          <div class="lp-why-text">Services increasingly involve AI capabilities — but the tools teams use to design services were built before AI was mainstream.</div>
+        </div>
+        <div class="lp-why-item">
+          <div class="lp-why-num">02</div>
+          <div class="lp-why-text">Without a shared artefact, AI risks, governance decisions, and human-AI interfaces get scattered across Jira tickets, compliance docs, and Slack threads.</div>
+        </div>
+        <div class="lp-why-item">
+          <div class="lp-why-num">03</div>
+          <div class="lp-why-text">Blueprint AI puts every actor, every step, every AI capability, and every governance decision on one canvas — so cross-functional teams design intentionally, not retroactively.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS (FR-3) -->
+  <div class="lp-how">
+    <div class="lp-how-inner">
+      <div class="lp-section-label">How it works</div>
+      <div class="lp-section-title">From blank canvas to reviewed blueprint</div>
+      <div class="lp-how-steps">
+        <div class="lp-how-step">
+          <!-- TODO: replace with real screenshot — empty canvas with swimlane and step controls -->
+          <div class="lp-how-img">
+            <div class="lp-how-img-icon">⊞</div>
+            <div class="lp-how-img-label">Screenshot placeholder</div>
+          </div>
+          <div class="lp-how-step-num">Step 01</div>
+          <div class="lp-how-step-title">Map your service</div>
+          <div class="lp-how-step-desc">Add swimlanes for each actor — customer, staff, system — and define the steps across the top. The grid reveals where hand-offs, data flows, and touchpoints happen.</div>
+        </div>
+        <div class="lp-how-step">
+          <!-- TODO: replace with real screenshot — populated board with AI capability and risk elements -->
+          <div class="lp-how-img">
+            <div class="lp-how-img-icon">🤖</div>
+            <div class="lp-how-img-label">Screenshot placeholder</div>
+          </div>
+          <div class="lp-how-step-num">Step 02</div>
+          <div class="lp-how-step-title">Add AI capabilities and risks</div>
+          <div class="lp-how-step-desc">Tag each cell with element types — AI capabilities, governance checkpoints, human-AI handoffs, risks. Autonomy levels and explainability strategies attach directly to the step where they matter.</div>
+        </div>
+        <div class="lp-how-step">
+          <!-- TODO: replace with real screenshot — agent panel with severity-rated insights -->
+          <div class="lp-how-img">
+            <div class="lp-how-img-icon">✦</div>
+            <div class="lp-how-img-label">Screenshot placeholder</div>
+          </div>
+          <div class="lp-how-step-num">Step 03</div>
+          <div class="lp-how-step-title">Let the agent review it</div>
+          <div class="lp-how-step-desc">The Blueprint Agent reads your actual canvas and returns severity-rated insights — governance gaps, missing oversight, risky autonomy levels — tied to the specific elements that need attention.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES (FR-4) -->
   <div class="lp-features">
     <div class="lp-features-inner">
-      <div class="lp-section-label">Why Blueprint AI</div>
+      <div class="lp-section-label">What it does</div>
       <div class="lp-section-title">Built for the complexity of real services</div>
       <div class="lp-feat-grid">
         <div class="lp-feat-card">
@@ -722,12 +841,12 @@ select.fi{appearance:none;cursor:pointer;}
           <div class="lp-feat-desc">Switch between PM, Service Designer, Researcher, Developer, Delivery, and Governance lenses. Each role gets AI insights and guidance tailored to their specific responsibilities and questions.</div>
         </div>
         <div class="lp-feat-card">
-          <div class="lp-feat-icon" style="background:var(--amber-bg);">🛡</div>
-          <div class="lp-feat-title">Governance built in, not bolted on</div>
-          <div class="lp-feat-desc">Track AI capabilities, XAI strategies, autonomy levels, and oversight decisions on the same canvas where your service is mapped. Compliance, transparency, and harm assessment are part of the workflow — not afterthoughts.</div>
+          <div class="lp-feat-icon" style="background:var(--purple-bg);">⚖️</div>
+          <div class="lp-feat-title">HCAI framework built in</div>
+          <div class="lp-feat-desc">AI in services raises design questions — who explains a decision? What's the autonomy level? Where can humans override? Blueprint AI is the only tool that bakes these into every step of the canvas.</div>
         </div>
         <div class="lp-feat-card">
-          <div class="lp-feat-icon" style="background:var(--purple-bg);">📥</div>
+          <div class="lp-feat-icon" style="background:var(--amber-bg);">📥</div>
           <div class="lp-feat-title">Import from existing blueprints</div>
           <div class="lp-feat-desc">Upload a PDF or image of any existing journey map, service blueprint, or process diagram. Gemini's multimodal AI extracts the structure automatically — swimlanes, steps, and elements — so you can start working immediately.</div>
         </div>
@@ -748,8 +867,8 @@ select.fi{appearance:none;cursor:pointer;}
   <!-- COMPARISON TABLE -->
   <div class="lp-compare">
     <div class="lp-compare-inner">
-      <div class="lp-section-label">How it compares</div>
-      <div class="lp-section-title" style="margin-bottom:24px;">Purpose-built where others are general</div>
+      <div class="lp-section-label">Tool comparison</div>
+      <div class="lp-section-title" style="margin-bottom:24px;">The only tool designed for AI-augmented services.</div>
       <div class="lp-compare-wrap">
         <table class="lp-compare-table">
           <thead>
@@ -870,12 +989,48 @@ select.fi{appearance:none;cursor:pointer;}
     </div>
   </div>
 
-  <!-- FOOTER -->
+  <!-- BUILT ON RESEARCH (FR-7) -->
+  <div class="lp-research">
+    <div class="lp-research-inner">
+      <div class="lp-research-icon">🎓</div>
+      <div class="lp-section-label" style="margin-bottom:8px;">Grounded in academic research</div>
+      <div class="lp-section-title" style="font-size:26px;">Built on peer-reviewed methodology</div>
+      <div class="lp-research-body">Blueprint AI builds on the AI-Driven Service Blueprint methodology presented at CHI 2026, extending the Human-Centred AI (HCAI) framework into a working tool for any cross-functional product team. The research investigates how AI capabilities can be systematically represented, governed, and designed for — across any service journey.
+        <!-- TODO: replace with actual paper URL when available -->
+        <br><br><a href="#" class="lp-research-link" title="TODO: link to paper on ACM DL">Read the research paper →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER (FR-10) -->
   <div class="lp-footer">
-    <div class="lp-footer-copy">Blueprint AI &middot; AI-native service design &middot; &copy; 2025</div>
+    <div class="lp-footer-copy">Blueprint AI &middot; Built on research presented at CHI 2026 &middot; &copy; 2025</div>
     <div class="lp-footer-links">
       <a href="#" onclick="lpScrollToAuth('login');return false;">Sign in</a>
-      <a href="#" onclick="lpScrollToAuth('register');return false;">Get started</a>
+      <a href="#" onclick="lpScrollToAuth('register');return false;">Get started free</a>
+      <!-- TODO: replace with actual links when pages exist -->
+      <a href="#" title="TODO: About page">About</a>
+      <a href="#" title="TODO: Privacy page">Privacy</a>
+      <a href="#" title="TODO: Terms page">Terms</a>
+      <a href="https://github.com/mehrdad-atariani" target="_blank" rel="noopener">GitHub</a>
+      <!-- TODO: replace with actual paper URL -->
+      <a href="#" title="TODO: link to CHI 2026 paper">Paper</a>
+    </div>
+  </div>
+
+  <!-- EXAMPLE BOARD MODAL (FR-8 / AC-6) — TODO: replace static with live read-only demo route -->
+  <div id="lp-example-modal" style="display:none;position:fixed;inset:0;background:rgba(29,28,24,.6);z-index:600;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px);" onclick="if(event.target===this)this.style.display='none'">
+    <div style="background:var(--surface);border-radius:var(--rxl);border:1px solid var(--border);box-shadow:0 24px 64px rgba(0,0,0,.3);max-width:840px;width:100%;overflow:hidden;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);">
+        <span style="font-family:'Fraunces',serif;font-size:16px;font-weight:400;">Example blueprint</span>
+        <button onclick="document.getElementById('lp-example-modal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text2);line-height:1;padding:0;">×</button>
+      </div>
+      <!-- TODO: replace placeholder with real screenshot or embed a read-only demo board -->
+      <div style="background:var(--bg2);aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:var(--text3);padding:32px;text-align:center;">
+        <div style="font-size:48px;opacity:.2;">⊞</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.5px;text-transform:uppercase;">Demo board screenshot placeholder</div>
+        <div style="font-size:13px;line-height:1.65;max-width:340px;">A real example blueprint will appear here. <a href="#" onclick="lpScrollToAuth('register');document.getElementById('lp-example-modal').style.display='none';return false;" style="color:var(--blue);text-decoration:none;font-weight:600;">Get started free</a> to build your own.</div>
+      </div>
     </div>
   </div>
 </div>

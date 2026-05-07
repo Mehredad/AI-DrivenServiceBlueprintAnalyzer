@@ -16,6 +16,7 @@ except ImportError:  # CI / test environment without google-genai installed
     genai = None  # type: ignore[assignment]
     types = None  # type: ignore[assignment]
 
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -30,6 +31,8 @@ _client = None
 
 def _get_client():
     global _client
+    if genai is None:
+        raise HTTPException(503, "AI service unavailable: google-genai package not installed.")
     if _client is None:
         _client = genai.Client(api_key=settings.gemini_api_key)
     return _client
@@ -257,6 +260,9 @@ async def chat(
     Persists both turns to chat_messages.
     Returns (response_text, total_tokens_used, assistant_message_id).
     """
+    if types is None:
+        raise HTTPException(503, "AI service unavailable: google-genai package not installed.")
+
     ctx    = await build_board_context(db, board_id)
     system = build_system_prompt(ctx, role=role)
 
@@ -274,14 +280,20 @@ async def chat(
         types.Content(role="user", parts=user_parts)
     ]
 
-    response = await _get_client().aio.models.generate_content(
-        model=settings.gemini_model,
-        contents=contents,
-        config=types.GenerateContentConfig(
-            system_instruction=system,
-            max_output_tokens=MAX_RESPONSE_TOKENS,
-        ),
-    )
+    try:
+        response = await _get_client().aio.models.generate_content(
+            model=settings.gemini_model,
+            contents=contents,
+            config=types.GenerateContentConfig(
+                system_instruction=system,
+                max_output_tokens=MAX_RESPONSE_TOKENS,
+            ),
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        log.error("Gemini API error (board=%s): %s", board_id, exc)
+        raise HTTPException(502, f"AI service error: {type(exc).__name__}") from exc
 
     text   = response.text or ""
     tokens = response.usage_metadata.total_token_count if response.usage_metadata else 0

@@ -76,18 +76,19 @@ async def sign_upload(
 
     async with httpx.AsyncClient(timeout=15) as client:
         resp = await client.post(
-            f"{settings.supabase_url}/storage/v1/object/sign/upload/{BUCKET}/{storage_path}",
+            f"{settings.supabase_url}/storage/v1/object/upload/sign/{BUCKET}/{storage_path}",
             headers=_svc_headers(),
+            json={"expiresIn": 3600},
         )
         if resp.status_code not in (200, 201):
             raise HTTPException(502, f"Storage signing failed: {resp.text[:200]}")
         data = resp.json()
 
-    # Supabase returns either a full `url` or a relative `signedUrl`
-    upload_url: str = data.get("url") or ""
-    if not upload_url:
-        signed_relative = data.get("signedUrl", "")
-        upload_url = settings.supabase_url + signed_relative
+    # Supabase returns a relative path like /object/upload/sign/...?token=...
+    # We must make it absolute so the browser can PUT directly to Supabase.
+    upload_url: str = data.get("url") or data.get("signedUrl", "")
+    if upload_url and not upload_url.startswith("http"):
+        upload_url = f"{settings.supabase_url}/storage/v1{upload_url}"
 
     upload = Upload(
         id=upload_id,
