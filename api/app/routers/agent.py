@@ -4,9 +4,13 @@ POST /api/agent/chat              → call Anthropic, persist, return response
 GET  /api/agent/boards/{id}/history → paginated chat history
 DELETE /api/agent/boards/{id}/history → clear history
 """
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, delete as sql_delete
 from sqlalchemy.ext.asyncio import AsyncSession
+
+log = logging.getLogger(__name__)
 
 from app.database import get_db
 from app.models import ChatMessage, User
@@ -24,17 +28,22 @@ async def chat(
     user: User = Depends(get_current_user),
     db:   AsyncSession = Depends(get_db),
 ):
-    # Verify board access before spending any Anthropic tokens
+    # Verify board access before spending any Gemini tokens
     await assert_board_access(db, body.board_id, user.id)
 
     history = [{"role": h.role, "content": h.content} for h in body.history]
 
-    text, tokens, msg_id = await agent_service.chat(
-        db, body.board_id, user.id, body.message, history,
-        role=body.role,
-        attachment_ids=body.attachments,
-    )
-    await db.commit()
+    try:
+        text, tokens, msg_id = await agent_service.chat(
+            db, body.board_id, user.id, body.message, history,
+            role=body.role,
+            attachment_ids=body.attachments,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        log.error("Unexpected error in /api/agent/chat: %s", exc, exc_info=True)
+        raise HTTPException(500, f"Chat failed unexpectedly: {type(exc).__name__}")
 
     return ChatResponse(response=text, token_count=tokens, message_id=msg_id)
 

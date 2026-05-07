@@ -127,7 +127,13 @@ async def google_login(body: GoogleAuth, db: AsyncSession = Depends(get_db)):
     except Exception as exc:
         log.exception("DB error during Google login for %s: %s", email, exc)
         await db.rollback()
-        raise HTTPException(500, "Failed to create or retrieve your account")
+        s = get_settings()
+        detail = (
+            f"Failed to create or retrieve your account ({type(exc).__name__}: {exc})"
+            if s.environment == "development"
+            else "Failed to create or retrieve your account"
+        )
+        raise HTTPException(500, detail)
 
 
 @router.post("/register", response_model=TokenResponse, status_code=201)
