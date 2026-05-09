@@ -36,13 +36,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .logo-name{font-family:'Fraunces',serif;font-size:16px;font-weight:400;letter-spacing:-.3px;}
 .logo-ver{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.5px;margin-top:1px;}
 .sb-sec{padding:8px 10px 4px;}
-.sb-label{font-size:9px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);padding:0 6px;margin-bottom:3px;}
+.sb-label{font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);padding:0 6px;margin-bottom:3px;}
 .sb-item{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:var(--r);cursor:pointer;font-size:12px;color:var(--text2);border:none;background:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif;font-weight:500;transition:background .1s;}
 .sb-item:hover{background:var(--bg);}
 .sb-item.active{background:var(--bg2);color:var(--text);font-weight:600;}
 .sb-icon{width:15px;height:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:.5;}
 .sb-item.active .sb-icon{opacity:1;}
-.sb-badge{margin-left:auto;font-size:9px;font-family:'JetBrains Mono',monospace;background:var(--bg2);color:var(--text3);padding:1px 5px;border-radius:8px;}
+.sb-badge{margin-left:auto;font-size:10px;font-family:'JetBrains Mono',monospace;background:var(--bg2);color:var(--text3);padding:1px 5px;border-radius:8px;}
 .sb-badge.warn{background:var(--red-bg);color:var(--red);}
 .agent-sb-btn{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:var(--r);cursor:pointer;font-size:12px;color:var(--text);border:1px solid var(--border);background:var(--bg2);width:100%;text-align:left;font-family:'DM Sans',sans-serif;font-weight:600;transition:all .15s;}
 .agent-sb-btn:hover{background:var(--text);color:white;border-color:var(--text);}
@@ -54,7 +54,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .sb-project{padding:8px;border-top:1px solid var(--border);position:relative;}
 .proj-card{background:var(--bg);border-radius:var(--r);padding:8px 10px;cursor:pointer;border:1px solid var(--border);transition:border-color .12s;}
 .proj-card:hover{border-color:var(--text3);}
-.proj-lbl{font-size:9px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);}
+.proj-lbl{font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);}
 .proj-name{font-size:12px;font-weight:600;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .proj-meta{font-size:10px;color:var(--text3);margin-top:3px;display:flex;align-items:center;gap:3px;}
 .btn-icon{background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;padding:1px 3px;border-radius:3px;line-height:1;transition:color .12s;}
@@ -67,7 +67,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .bp-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;}
 .bp-info{flex:1;overflow:hidden;}
 .bp-title{font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.bp-meta{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);margin-top:1px;}
+.bp-meta{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);margin-top:1px;}
 .bp-new{padding:9px 10px;cursor:pointer;font-size:11px;color:var(--blue);font-weight:700;text-align:center;border-top:1px solid var(--border);}
 .bp-new:hover{background:var(--blue-bg);}
 .btn-danger{background:var(--red)!important;border-color:var(--red)!important;color:white!important;}
@@ -79,13 +79,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 
 /* TOPBAR */
 .topbar{height:48px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:8px;flex-shrink:0;}
-.tb-crumb{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:4px;}
+.tb-crumb{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:4px;}
 .role-sw{display:flex;background:var(--bg2);border-radius:var(--r);padding:2px;border:1px solid var(--border);}
 .role-btn{padding:6px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .13s;white-space:nowrap;min-height:30px;}
 .role-btn.active{background:var(--surface);color:var(--text);box-shadow:var(--sh);}
 .role-select{height:30px;padding:0 8px;border-radius:var(--r);border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-size:11px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;outline:none;}
 .role-select:hover{border-color:var(--border2);color:var(--text);}
-.board-progress{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;white-space:nowrap;display:none;}
+.board-progress{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;white-space:nowrap;display:none;}
 .help-wrap{position:relative;}
 .help-btn{width:24px;height:24px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);color:var(--text2);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;transition:all .12s;}
 .help-btn:hover{background:var(--bg);border-color:var(--border2);}
@@ -170,11 +170,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .empty-state h2{font-family:'Fraunces',serif;font-size:20px;font-weight:500;color:var(--text);}
 .empty-state p{font-size:13px;max-width:380px;line-height:1.6;color:var(--text2);}
 .empty-state em{font-style:normal;font-weight:500;color:var(--text);}
-.bp-meta{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);display:flex;align-items:center;gap:7px;}
+.bp-meta{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);display:flex;align-items:center;gap:7px;}
 
 /* CANVAS GRID — PRD-02 */
 .bp-grid{display:grid;grid-template-columns:160px repeat(var(--step-count,1),minmax(180px,1fr)) 56px;width:max-content;min-width:100%;}
-.bp-corner{position:sticky;top:0;left:0;z-index:10;background:var(--bg2);border-right:1px solid var(--border);border-bottom:1px solid var(--border);height:42px;display:flex;align-items:center;justify-content:center;font-size:9px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);}
+.bp-corner{position:sticky;top:0;left:0;z-index:10;background:var(--bg2);border-right:1px solid var(--border);border-bottom:1px solid var(--border);height:42px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);}
 .bp-step-header{position:sticky;top:0;z-index:9;background:var(--bg);border-right:1px solid var(--border2);border-bottom:1px solid var(--border);height:42px;display:flex;align-items:center;padding:0 10px;gap:4px;font-size:11px;font-weight:600;}
 .bp-step-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .bp-step-actions{display:none;align-items:center;gap:2px;flex-shrink:0;}
@@ -185,7 +185,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .bp-lane-type-icon{font-size:13px;flex-shrink:0;opacity:.45;line-height:1;}
 .bp-lane-actions{display:none;flex-direction:column;gap:2px;flex-shrink:0;}
 .bp-lane-label:hover .bp-lane-actions{display:flex;}
-.bp-cell{min-height:100px;border-right:1px solid var(--border2);border-bottom:1px solid var(--border2);position:relative;background:var(--surface);}
+.bp-cell{min-height:100px;border-right:1px solid var(--border2);border-bottom:1px solid var(--border2);position:relative;background:var(--surface);display:flex;flex-wrap:wrap;align-content:flex-start;padding:4px;overflow:hidden;min-width:0;}
 .bp-cell-spacer{min-height:100px;background:var(--bg);border-bottom:1px solid var(--border2);}
 .bp-cell-add-hint{display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:10px;color:var(--text3);cursor:pointer;gap:3px;}
 .bp-cell:hover .bp-cell-add-hint{display:flex;}
@@ -205,9 +205,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .bp-act-btn.del{color:var(--red);}
 .bp-inline-edit{border:1.5px solid var(--blue);border-radius:4px;padding:2px 5px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;background:white;color:var(--text);outline:none;width:100%;min-width:60px;}
 /* ELEMENTS — PRD-03 */
-.el-card{display:flex;align-items:center;gap:5px;padding:5px 8px;border-radius:6px;border:1.5px solid var(--border);background:var(--surface);margin:4px;cursor:pointer;font-size:11px;line-height:1.3;transition:box-shadow .1s;}
+.el-card{display:flex;align-items:center;gap:4px;padding:10px 6px;border-radius:6px;border:1.5px solid var(--border);background:var(--surface);margin:3px;cursor:pointer;font-size:11px;line-height:1.3;transition:box-shadow .1s;width:calc(50% - 6px);min-height:48px;}
 .el-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.1);}
-.el-icon{font-size:13px;flex-shrink:0;}
+.el-icon{font-size:12px;flex-shrink:0;}
 .el-name{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .el-status{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .el-status-draft{background:var(--text3);}
@@ -237,10 +237,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .role-card:hover{border-color:var(--blue);box-shadow:var(--sh);}
 .role-card-icon{font-size:20px;margin-bottom:5px;}
 .role-card-label{font-size:11px;font-weight:700;color:var(--text);}
-.role-card-desc{font-size:9px;color:var(--text3);margin-top:2px;line-height:1.3;}
-.bp-cell-add-btn{display:none;width:calc(100% - 8px);margin:0 4px 4px;padding:4px 8px;font-size:10px;color:var(--text3);background:none;border:1px dashed var(--border);border-radius:5px;cursor:pointer;text-align:left;font-family:'DM Sans',sans-serif;}
+.role-card-desc{font-size:10px;color:var(--text3);margin-top:2px;line-height:1.3;}
+.bp-cell-add-btn{display:none;position:absolute;bottom:4px;left:4px;right:4px;padding:3px 8px;font-size:10px;color:var(--text3);background:rgba(255,255,255,.92);border:1px dashed var(--border);border-radius:5px;cursor:pointer;text-align:left;font-family:'DM Sans',sans-serif;}
 .bp-cell:hover .bp-cell-add-btn{display:block;}
-.bp-cell:hover .bp-cell-add-btn:hover{background:var(--bg2);}
+.bp-cell:hover .bp-cell-add-btn:hover{background:var(--bg2);color:var(--text);}
 .type-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
 .type-chip{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:10px;text-align:center;line-height:1.2;transition:border-color .1s,background .1s;background:var(--surface);color:var(--text2);}
 .type-chip:hover{border-color:var(--blue);background:var(--blue-bg);color:var(--blue);}
@@ -253,22 +253,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .el-drawer-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
 .el-drawer-foot{padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:6px;flex-shrink:0;}
 .el-drawer-row{display:flex;flex-direction:column;gap:3px;}
-.el-drawer-label{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;}
+.el-drawer-label{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;}
 .el-drawer-val{font-size:12px;color:var(--text);}
 
 /* SWIMLANE */
 .sl-grid{display:grid;grid-template-columns:120px 1fr;}
 .sl-labels{border-right:1px solid var(--border);background:var(--bg);}
-.sl-lhead{height:42px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);}
+.sl-lhead{height:42px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);}
 .sl-label{display:flex;align-items:center;padding:0 9px;font-size:11px;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);gap:6px;}
 .sl-icon{width:16px;height:16px;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;}
 .tl-wrap{overflow-x:auto;}
 .tl-head{display:flex;height:42px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:8;}
 .step-hd{min-width:158px;border-right:1px solid var(--border);padding:0 8px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1px;flex-shrink:0;cursor:pointer;transition:background .1s;}
 .step-hd:hover,.step-hd.cur{background:var(--bg2);}
-.step-num{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);}
+.step-num{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);}
 .step-name{font-size:11px;font-weight:700;}
-.step-sub{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);}
+.step-sub{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);}
 .add-step{min-width:46px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);font-size:10px;transition:background .1s;}
 .add-step:hover{background:var(--bg2);}
 .sl-row{display:flex;border-bottom:1px solid var(--border);}
@@ -303,7 +303,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 
 /* GOV BAR */
 .gov-bar{height:32px;background:var(--bg);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:0;overflow-x:auto;flex-shrink:0;}
-.gov-item{display:flex;align-items:center;gap:4px;padding:0 9px;font-size:9px;color:var(--text2);border-right:1px solid var(--border);height:100%;white-space:nowrap;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:color .1s;}
+.gov-item{display:flex;align-items:center;gap:4px;padding:0 9px;font-size:10px;color:var(--text2);border-right:1px solid var(--border);height:100%;white-space:nowrap;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:color .1s;}
 .gov-item:first-child{padding-left:0;}
 .gov-item:hover{color:var(--text);}
 .gd{width:5px;height:5px;border-radius:50%;}
@@ -313,13 +313,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .view.active{display:flex;}
 .view-title{font-family:'Fraunces',serif;font-size:17px;font-weight:300;}
 .reg-table{width:100%;border-collapse:collapse;}
-.reg-table th{text-align:left;padding:6px 11px;background:var(--bg);border-bottom:1px solid var(--border);font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-family:'JetBrains Mono',monospace;font-weight:400;}
+.reg-table th{text-align:left;padding:6px 11px;background:var(--bg);border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-family:'JetBrains Mono',monospace;font-weight:400;}
 .reg-table td{padding:8px 11px;border-bottom:1px solid var(--border);vertical-align:top;font-size:11px;}
 .reg-table tr:hover td{background:var(--bg);}
 .reg-table tr:last-child td{border-bottom:none;}
 .m-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
 .m-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:12px;}
-.m-label{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.m-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
 .m-val{font-family:'Fraunces',serif;font-size:24px;margin-top:2px;line-height:1;font-weight:300;}
 .m-delta{font-size:10px;margin-top:2px;font-family:'JetBrains Mono',monospace;}
 .m-bar{height:3px;background:var(--bg2);border-radius:2px;margin-top:8px;overflow:hidden;}
@@ -340,7 +340,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .out-head-title{font-size:12px;font-weight:600;flex:1;}
 .out-body{padding:12px 13px;}
 .detail-block{background:var(--bg);border-radius:var(--r);padding:9px 11px;border:1px solid var(--border);margin-bottom:7px;}
-.detail-block-label{font-size:9px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:3px;}
+.detail-block-label{font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:3px;}
 .detail-content{font-size:11px;color:var(--text2);line-height:1.5;}
 
 /* MODALS */
@@ -368,9 +368,9 @@ select.fi{appearance:none;cursor:pointer;}
 .cap-type:hover{border-color:var(--border2);}
 .cap-type.sel{border-color:var(--purple);background:var(--purple-bg);}
 .cap-type-name{font-size:11px;font-weight:700;}
-.cap-type-desc{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.cap-type-desc{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
 .harm-prompt{background:var(--red-bg);border:1px solid var(--red-bd);border-radius:var(--r);padding:9px 11px;}
-.harm-label{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.harm-label{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
 .harm-q{font-size:11px;color:var(--red);font-weight:600;line-height:1.4;}
 .auto-sel{display:flex;gap:5px;}
 .auto-opt{flex:1;border:1.5px solid var(--border);border-radius:var(--r);padding:6px 7px;cursor:pointer;text-align:center;font-size:10px;font-weight:600;transition:all .12s;background:var(--bg);}
@@ -383,7 +383,7 @@ select.fi{appearance:none;cursor:pointer;}
 .domain-card.sel{border-color:var(--blue);background:var(--blue-bg);}
 .domain-card-icon{font-size:18px;margin-bottom:5px;}
 .domain-card-name{font-size:12px;font-weight:700;}
-.domain-card-desc{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:2px;line-height:1.4;}
+.domain-card-desc{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:2px;line-height:1.4;}
 .wiz-steps{display:flex;align-items:center;gap:0;padding:9px 20px;border-bottom:1px solid var(--border);}
 .wiz-step{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);flex:1;}
 .wiz-step.act{color:var(--text);}
@@ -399,7 +399,7 @@ select.fi{appearance:none;cursor:pointer;}
 .agent-head{padding:11px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;background:var(--text);}
 .agent-avatar{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .agent-name{font-family:'Fraunces',serif;font-size:13px;font-weight:300;color:white;flex:1;letter-spacing:-.2px;}
-.agent-status{font-size:9px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,.45);display:flex;align-items:center;gap:3px;}
+.agent-status{font-size:10px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,.45);display:flex;align-items:center;gap:3px;}
 .astd{width:5px;height:5px;border-radius:50%;background:#4ADE80;}
 .agent-close{cursor:pointer;color:rgba(255,255,255,.45);border:none;background:none;font-size:18px;line-height:1;padding:0 2px;font-family:'DM Sans',sans-serif;}
 .agent-close:hover{color:white;}
@@ -407,7 +407,7 @@ select.fi{appearance:none;cursor:pointer;}
 .agent-tab{flex:1;padding:7px 0;text-align:center;font-size:11px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--text3);border-top:none;border-left:none;border-right:none;background:none;font-family:'DM Sans',sans-serif;transition:all .12s;}
 .agent-tab:hover{color:var(--text2);}
 .agent-tab.active{border-bottom-color:var(--text);color:var(--text);}
-.atab-badge{display:inline-block;min-width:15px;height:15px;border-radius:10px;background:var(--amber);color:white;font-size:9px;font-family:'JetBrains Mono',monospace;text-align:center;line-height:15px;margin-left:3px;padding:0 3px;vertical-align:middle;}
+.atab-badge{display:inline-block;min-width:16px;height:16px;border-radius:10px;background:var(--amber);color:white;font-size:10px;font-family:'JetBrains Mono',monospace;text-align:center;line-height:16px;margin-left:3px;padding:0 3px;vertical-align:middle;}
 
 /* CHAT */
 .chat-area{flex:1;overflow-y:auto;padding:11px;display:flex;flex-direction:column;gap:0;}
@@ -416,10 +416,10 @@ select.fi{appearance:none;cursor:pointer;}
 .msg-wrap.agent{align-items:flex-start;}
 .agent-msg{max-width:94%;background:var(--bg);border-radius:0 var(--rl) var(--rl) var(--rl);padding:9px 11px;font-size:12px;line-height:1.6;color:var(--text);}
 .agent-msg-head{display:flex;align-items:center;gap:5px;margin-bottom:4px;}
-.agent-msg-name{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
-.agent-msg-time{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);}
+.agent-msg-name{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
+.agent-msg-time{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);}
 .user-msg{max-width:88%;background:var(--text);color:white;border-radius:var(--rl) 0 var(--rl) var(--rl);padding:9px 11px;font-size:12px;line-height:1.6;}
-.msg-time{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);margin-top:3px;}
+.msg-time{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);margin-top:3px;}
 .typing-ind{display:flex;gap:3px;align-items:center;padding:8px 11px;background:var(--bg);border-radius:0 var(--rl) var(--rl) var(--rl);width:fit-content;}
 .tdot{width:6px;height:6px;border-radius:50%;background:var(--text3);animation:td .8s ease-in-out infinite;}
 .tdot:nth-child(2){animation-delay:.15s;}
@@ -432,13 +432,13 @@ select.fi{appearance:none;cursor:pointer;}
 .qr{padding:3px 9px;border-radius:14px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .12s;white-space:nowrap;}
 .qr:hover{background:var(--text);color:white;border-color:var(--text);}
 .chat-input-wrap{padding:9px 11px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;}
-.chat-input-row{display:flex;gap:5px;align-items:flex-end;}
+.chat-input-row{display:flex;gap:6px;align-items:center;}
 .chat-input{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:var(--rl);font-size:11px;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);resize:none;min-height:34px;max-height:80px;line-height:1.4;}
 .chat-input:focus{outline:none;border-color:var(--border2);background:var(--surface);}
-.chat-send{width:32px;height:32px;border-radius:50%;background:var(--text);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .12s;}
-.chat-send:hover{opacity:.8;}
-.chat-send:disabled{opacity:.3;cursor:not-allowed;}
-.chat-hint{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);margin-top:4px;}
+.chat-send{width:36px;height:36px;border-radius:50%;background:var(--blue);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .12s,background .12s;}
+.chat-send:hover{background:#1240b0;}
+.chat-send:disabled{opacity:.35;cursor:not-allowed;}
+.chat-hint{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);margin-top:4px;}
 .chat-attach-btn{width:26px;height:26px;border-radius:50%;background:none;border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;color:var(--text3);transition:all .12s;padding:0;}
 .chat-attach-btn:hover{background:var(--bg2);border-color:var(--border2);color:var(--text);}
 .chat-attachments{display:none;flex-wrap:wrap;gap:4px;padding:4px 0 6px;}
@@ -512,10 +512,10 @@ select.fi{appearance:none;cursor:pointer;}
 .insight-card.info{border-left:3px solid var(--blue);}
 .ins-sev{display:flex;align-items:center;gap:4px;margin-bottom:5px;}
 .ins-sev-dot{width:6px;height:6px;border-radius:50%;}
-.ins-sev-label{font-size:9px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;font-weight:500;}
+.ins-sev-label{font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;font-weight:500;}
 .ins-title{font-size:12px;font-weight:700;line-height:1.3;margin-bottom:4px;}
 .ins-desc{font-size:11px;color:var(--text2);line-height:1.5;}
-.ins-source{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);margin-top:5px;}
+.ins-source{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);margin-top:5px;}
 .ins-actions{display:flex;gap:5px;margin-top:9px;flex-wrap:wrap;}
 .ins-btn{padding:4px 9px;border-radius:18px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg);color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .12s;}
 .ins-btn:hover,.ins-btn.primary{background:var(--text);color:white;border-color:var(--text);}
@@ -540,7 +540,7 @@ select.fi{appearance:none;cursor:pointer;}
 .ob-icon{font-size:13px;}
 .how-block{border:1px solid var(--border);border-radius:var(--r);padding:9px 11px;background:var(--surface);cursor:pointer;margin-bottom:6px;transition:all .12s;}
 .how-block:hover{border-color:var(--border2);background:var(--bg);}
-.how-block-label{font-size:9px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:3px;}
+.how-block-label{font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:3px;}
 .how-block-text{font-size:11px;color:var(--text2);line-height:1.5;}
 
 /* TOAST */
@@ -1104,7 +1104,7 @@ select.fi{appearance:none;cursor:pointer;}
       <div class="proj-lbl">Active board</div>
       <div class="proj-name" id="proj-name-display">No board open</div>
       <div class="proj-meta">
-        <span id="sb-current-role" style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);">—</span>
+        <span id="sb-current-role" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);">—</span>
         <span style="flex:1;"></span>
         <button class="btn-icon" onclick="event.stopPropagation();openBoardSettings()" title="Board settings">⚙</button>
       </div>
@@ -1113,8 +1113,8 @@ select.fi{appearance:none;cursor:pointer;}
       <!-- populated by renderBoardsList() -->
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:7px;padding:0 2px;">
-      <span id="sidebar-user-name" style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">Not signed in</span>
-      <button id="sidebar-auth-btn" onclick="showAuthModal()" style="font-size:10px;color:var(--text3);background:none;border:none;cursor:pointer;padding:5px 8px;font-family:'DM Sans',sans-serif;min-height:28px;" title="Sign in">Sign in</button>
+      <span id="sidebar-user-name" style="font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">Not signed in</span>
+      <button id="sidebar-auth-btn" onclick="showAuthModal()" style="font-size:11px;font-weight:500;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:4px 8px;font-family:'DM Sans',sans-serif;min-height:28px;flex-shrink:0;" title="Sign in">Sign in</button>
     </div>
   </div>
 </aside>
@@ -1239,7 +1239,7 @@ select.fi{appearance:none;cursor:pointer;}
     <div style="flex:1;"></div>
     <button class="ph-tab" style="font-size:10px;color:var(--text3);" onclick="openAgentPanel('insights')">
       <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1.1"/><line x1="5" y1="4.5" x2="5" y2="7" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><circle cx="5" cy="3.2" r=".5" fill="currentColor"/></svg>
-      <span id="ins-count-badge" style="background:var(--amber);color:white;font-size:9px;padding:0 4px;border-radius:7px;margin-left:1px;display:none;">0</span> Insights
+      <span id="ins-count-badge" style="background:var(--amber);color:white;font-size:10px;padding:0 4px;border-radius:7px;margin-left:1px;display:none;">0</span> Insights
     </button>
   </div>
 
@@ -1261,7 +1261,7 @@ select.fi{appearance:none;cursor:pointer;}
       <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4" stroke="white" stroke-width="1.1"/><line x1="5.5" y1="4.5" x2="5.5" y2="7" stroke="white" stroke-width="1.1" stroke-linecap="round"/><circle cx="5.5" cy="3.3" r=".5" fill="white"/></svg>
     </div>
     <div class="ins-chips" id="ins-chips"></div>
-    <span style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--amber);cursor:pointer;font-weight:600;white-space:nowrap;" onclick="openAgentPanel('insights')">View all →</span>
+    <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--amber);cursor:pointer;font-weight:600;white-space:nowrap;" onclick="openAgentPanel('insights')">View all →</span>
     <button class="ins-strip-dismiss" onclick="document.getElementById('ins-strip').classList.add('hidden')">× Dismiss</button>
   </div>
 
@@ -1314,7 +1314,7 @@ select.fi{appearance:none;cursor:pointer;}
     <div class="view" id="view-outcomes">
       <div style="display:flex;align-items:center;gap:8px;"><div class="view-title">Generated Outcomes</div><button class="btn btn-ghost" style="height:26px;margin-left:auto;" onclick="showToast('Outcomes exported')">Export</button></div>
       <div class="out-tabs"><button class="out-tab active" onclick="showOutTab('inv',this)">Capability Inventory</button><button class="out-tab" onclick="showOutTab('sth',this)">Stakeholders</button><button class="out-tab" onclick="showOutTab('risk',this)">Risk Checklist</button><button class="out-tab" onclick="showOutTab('mon',this)">Monitoring Plan</button></div>
-      <div id="out-inv"><div class="out-card"><div class="out-head" style="background:var(--bg);">🧠<div class="out-head-title">AI Capability Inventory</div><span id="inv-count" style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);">0 capabilities</span></div><div class="out-body"><table class="reg-table"><thead><tr><th>Capability</th><th>Type</th><th>Input → Output</th><th>Autonomy</th><th>XAI</th><th>Risk</th></tr></thead><tbody id="out-inv-body"><tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px;font-size:11px;">No capabilities yet — register one from the Capability Register view.</td></tr></tbody></table></div></div></div>
+      <div id="out-inv"><div class="out-card"><div class="out-head" style="background:var(--bg);">🧠<div class="out-head-title">AI Capability Inventory</div><span id="inv-count" style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);">0 capabilities</span></div><div class="out-body"><table class="reg-table"><thead><tr><th>Capability</th><th>Type</th><th>Input → Output</th><th>Autonomy</th><th>XAI</th><th>Risk</th></tr></thead><tbody id="out-inv-body"><tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px;font-size:11px;">No capabilities yet — register one from the Capability Register view.</td></tr></tbody></table></div></div></div>
       <div id="out-sth" style="display:none;"><div class="out-card"><div class="out-head" style="background:var(--bg);">👥<div class="out-head-title">Stakeholder Map</div><button class="btn btn-ghost" style="height:22px;font-size:10px;margin-left:auto;" onclick="openModal('stakeholders')">Manage</button></div><div class="out-body" id="out-sth-body"><div style="text-align:center;color:var(--text3);padding:20px;font-size:11px;">No stakeholders yet — click Manage to add them.</div></div></div></div>
       <div id="out-risk" style="display:none;"><div class="out-card"><div class="out-head" style="background:var(--bg);">⚠️<div class="out-head-title">Risk &amp; Governance Checklist</div><button class="btn btn-ghost" style="height:22px;font-size:10px;margin-left:auto;" onclick="openAddRiskItem()">+ Add item</button></div><div class="out-body" id="out-risk-body" style="display:flex;flex-direction:column;gap:6px;"><div style="text-align:center;color:var(--text3);padding:20px;font-size:11px;">No checklist items yet — add governance or risk items.</div></div></div></div>
       <div id="out-mon" style="display:none;"><div class="out-card"><div class="out-head" style="background:var(--bg);">📊<div class="out-head-title">Monitoring Plan</div><button class="btn btn-ghost" style="height:22px;font-size:10px;margin-left:auto;" onclick="openModal('add-metric')">+ Add metric</button></div><div class="out-body"><table class="reg-table"><thead><tr><th>Metric</th><th>Capability</th><th>Target</th><th>Alert threshold</th><th>Frequency</th><th>Owner</th><th></th></tr></thead><tbody id="out-mon-body"><tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px;font-size:11px;">No monitoring metrics yet — add one to start your plan.</td></tr></tbody></table></div></div></div>
@@ -1388,8 +1388,8 @@ select.fi{appearance:none;cursor:pointer;}
             <button class="chat-attach-btn" title="Attach file (PDF, PNG, JPG up to 10 MB)" onclick="document.getElementById('chat-file-input').click()">📎</button>
             <input type="file" id="chat-file-input" multiple accept=".pdf,image/png,image/jpeg,image/webp" style="display:none;" onchange="handleChatFiles(this.files);this.value=''">
             <textarea class="chat-input" id="chat-input" placeholder="Ask anything about this blueprint…" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-            <button class="chat-send" id="chat-send-btn" onclick="sendChat()">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 6L11 1L7 6L11 11L1 6Z" fill="white"/></svg>
+            <button class="chat-send" id="chat-send-btn" onclick="sendChat()" title="Send message">
+              <svg width="14" height="14" viewBox="0 0 12 12" fill="none"><path d="M1 6L11 1L7 6L11 11L1 6Z" fill="white"/></svg>
             </button>
           </div>
           <div class="chat-hint">Enter to send · Shift+Enter for new line · 📎 attach PDF or image</div>
@@ -1400,7 +1400,7 @@ select.fi{appearance:none;cursor:pointer;}
       <div id="agent-insights" style="display:none;flex:1;overflow:hidden;flex-direction:column;">
         <div class="insights-panel">
           <div class="insights-panel-hdr">
-            <div style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">Proactive insights</div>
+            <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">Proactive insights</div>
             <button class="ins-gen-btn" id="btn-gen-insights" onclick="generateInsights()">Generate insights</button>
           </div>
           <div id="insights-list"></div>
@@ -1427,7 +1427,7 @@ select.fi{appearance:none;cursor:pointer;}
               <div class="role-card" onclick="startOnboard('governance')"><div class="role-card-icon">🛡️</div><div class="role-card-label">Governance</div><div class="role-card-desc">Risk, compliance &amp; oversight</div></div>
             </div>
           </div>
-          <div style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px;">How this tool works</div>
+          <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px;">How this tool works</div>
           <div class="how-block" onclick="askAgent('Explain the three phases — Understand, Design, and Operate — and what I should do in each one.')"><div class="how-block-label">3 Phases</div><div class="how-block-text"><strong>Understand</strong> → map needs, systems & stakeholders · <strong>Design</strong> → define touchpoints, flows & capabilities · <strong>Operate</strong> → monitor, govern & iterate</div></div>
           <div class="how-block" onclick="askAgent('How do swimlanes and steps work? How should I structure my blueprint?')"><div class="how-block-label">Swimlanes & Steps</div><div class="how-block-text">Swimlanes are the actors in your system (users, teams, systems). Steps are the stages in the journey. Add your own — no defaults imposed.</div></div>
           <div class="how-block" onclick="askAgent('How do I add elements to the blueprint? What types of elements are there?')"><div class="how-block-label">Adding elements</div><div class="how-block-text">Use + Add Element to place touchpoints, systems, data flows, risks, opportunities, or AI capabilities into any cell on the canvas.</div></div>
@@ -1446,7 +1446,7 @@ select.fi{appearance:none;cursor:pointer;}
     <div class="gov-item" onclick="askAgent('Describe the human override points in this blueprint. Are they sufficient, well-designed, and correctly positioned?')"><div class="gd" style="background:var(--amber);"></div>Override points</div>
     <div class="gov-item" onclick="askAgent('Review the XAI touchpoints in this blueprint. Are the explanations appropriate and well-targeted for each audience?')"><div class="gd" style="background:var(--teal);"></div>XAI touchpoints</div>
     <div class="gov-item" onclick="openAgentPanel('insights')"><div class="gd" style="background:var(--red);"></div>Risk hotspots</div>
-    <div style="margin-left:auto;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);padding:0 8px;white-space:nowrap;">Blueprint AI</div>
+    <div style="margin-left:auto;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);padding:0 8px;white-space:nowrap;">Blueprint AI</div>
   </div>
 
 </main>
@@ -1476,7 +1476,7 @@ select.fi{appearance:none;cursor:pointer;}
     <!-- Collaborators -->
     <div id="bs-tab-collabs" class="modal-body" style="display:none;gap:10px;">
       <div id="bs-collab-list" style="display:flex;flex-direction:column;gap:6px;"></div>
-      <div style="margin-top:8px;font-size:9px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);">Invite collaborator</div>
+      <div style="margin-top:8px;font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);">Invite collaborator</div>
       <div style="display:flex;gap:6px;">
         <input class="fi" id="bs-invite-email" type="email" placeholder="Email address" style="flex:1;"/>
         <select class="fi" id="bs-invite-role" style="width:90px;">
@@ -2852,7 +2852,7 @@ function renderTypeMetaFields(type) {
 function renderElementCard(el) {
   const t = ELEMENT_TYPES.find(x => x.type === el.type) || { icon: '📎', label: el.type };
   const dimCls = isElementHighlighted(el) ? '' : ' dimmed';
-  return `<div class="el-card el-${escHtml(el.type)}${dimCls}" data-el-id="${escHtml(el.id)}" onclick="openElementDrawer('${escHtml(el.id)}');event.stopPropagation()">
+  return `<div class="el-card el-${escHtml(el.type)}${dimCls}" data-el-id="${escHtml(el.id)}" title="${escHtml(el.name)}" onclick="openElementDrawer('${escHtml(el.id)}');event.stopPropagation()">
     <span class="el-icon">${t.icon}</span>
     <span class="el-name">${escHtml(el.name)}</span>
     <span class="el-status el-status-${escHtml((el.status||'draft').replace('-','_'))}"></span>
@@ -4082,7 +4082,7 @@ function renderCapRegister() {
   const riskDot = r => ({ High: 'h', Medium: 'm', Low: 'l' }[r] || 'l');
   const rows = capabilities.map(c => `
     <tr>
-      <td><div style="font-weight:600;">${escHtml(c.name)}</div><div style="font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;">${escHtml(c.id)}</div></td>
+      <td><div style="font-weight:600;">${escHtml(c.name)}</div><div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;">${escHtml(c.id)}</div></td>
       <td><span class="tag ta">${escHtml(c.type)}</span></td>
       <td><span class="tag tx">${escHtml(boardState.currentPhase)}</span></td>
       <td style="font-size:10px;">${escHtml(c.input)}${c.input && c.output ? ' → ' : ''}${escHtml(c.output)}</td>
@@ -4093,7 +4093,7 @@ function renderCapRegister() {
 
   const invRows = capabilities.map(c => `
     <tr>
-      <td><div style="font-weight:600;">${escHtml(c.name)}</div><div style="font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;">${escHtml(c.id)} · ${escHtml(c.risk)} risk</div></td>
+      <td><div style="font-weight:600;">${escHtml(c.name)}</div><div style="font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;">${escHtml(c.id)} · ${escHtml(c.risk)} risk</div></td>
       <td><span class="tag ta">${escHtml(c.type)}</span></td>
       <td style="font-size:10px;color:var(--text2);">${escHtml(c.input)}${c.input && c.output ? ' → ' : ''}${escHtml(c.output)}</td>
       <td><span style="font-size:10px;">${escHtml(c.autonomy)}</span></td>
@@ -4199,7 +4199,7 @@ function renderIncidents() {
     listEl.innerHTML = active.length
       ? active.map(i => `
           <div class="risk-chip" style="border-color:${sevBd[i.sev]||'var(--border)'};flex-direction:column;align-items:flex-start;gap:4px;cursor:default;">
-            <div style="display:flex;align-items:center;gap:4px;width:100%;"><div class="rdot ${sevDot[i.sev]||'l'}"></div><span style="font-weight:600;font-size:11px;">INC-${String(i.id).padStart(3,'0')} — ${escHtml(i.title)}</span><span style="margin-left:auto;font-size:9px;color:var(--text3);">${timeAgo(i.date)}</span></div>
+            <div style="display:flex;align-items:center;gap:4px;width:100%;"><div class="rdot ${sevDot[i.sev]||'l'}"></div><span style="font-weight:600;font-size:11px;">INC-${String(i.id).padStart(3,'0')} — ${escHtml(i.title)}</span><span style="margin-left:auto;font-size:10px;color:var(--text3);">${timeAgo(i.date)}</span></div>
             ${i.desc ? `<span style="font-size:10px;color:var(--text2);">${escHtml(i.desc)}</span>` : ''}
             <div style="display:flex;gap:5px;margin-top:3px;">
               <button class="btn btn-ghost" style="height:22px;font-size:10px;" onclick="askAgent('INC-${String(i.id).padStart(3,'0')}: ${escHtml(i.title)}. ${escHtml(i.desc||'')} How should we address this?');closeModal('incidents')">Ask AI</button>
@@ -4212,7 +4212,7 @@ function renderIncidents() {
   if (previewEl) {
     const latest = active.slice(0, 2);
     previewEl.innerHTML = latest.length
-      ? latest.map(i => `<div class="risk-chip" style="border-color:${sevBd[i.sev]||'var(--border)'};flex-direction:column;align-items:flex-start;gap:3px;cursor:pointer;" onclick="openModal('incidents')"><div style="display:flex;align-items:center;gap:4px;width:100%;"><div class="rdot ${sevDot[i.sev]||'l'}"></div><span style="font-weight:600;font-size:11px;">INC-${String(i.id).padStart(3,'0')} — ${escHtml(i.title)}</span><span style="margin-left:auto;font-size:9px;color:var(--text3);">${timeAgo(i.date)}</span></div>${i.desc ? `<span style="font-size:10px;color:var(--text2);">${escHtml(i.desc)}</span>` : ''}</div>`).join('')
+      ? latest.map(i => `<div class="risk-chip" style="border-color:${sevBd[i.sev]||'var(--border)'};flex-direction:column;align-items:flex-start;gap:3px;cursor:pointer;" onclick="openModal('incidents')"><div style="display:flex;align-items:center;gap:4px;width:100%;"><div class="rdot ${sevDot[i.sev]||'l'}"></div><span style="font-weight:600;font-size:11px;">INC-${String(i.id).padStart(3,'0')} — ${escHtml(i.title)}</span><span style="margin-left:auto;font-size:10px;color:var(--text3);">${timeAgo(i.date)}</span></div>${i.desc ? `<span style="font-size:10px;color:var(--text2);">${escHtml(i.desc)}</span>` : ''}</div>`).join('')
       : '<div style="color:var(--text3);font-size:11px;text-align:center;padding:12px;">No incidents reported.</div>';
   }
 }
