@@ -461,6 +461,20 @@ select.fi{appearance:none;cursor:pointer;}
 .import-progress-spinner{width:32px;height:32px;border:3px solid var(--border2);border-top-color:var(--text);border-radius:50%;animation:spin .9s linear infinite;}
 .import-progress-text{font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;color:var(--text);}
 .import-progress-hint{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+/* ── Auth full-page loading screen ── */
+#auth-loading{position:fixed;inset:0;background:var(--bg);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;transition:opacity .22s;}
+.al-mark{width:54px;height:54px;background:var(--text);border-radius:13px;display:flex;align-items:center;justify-content:center;margin-bottom:4px;}
+.al-name{font-family:'Fraunces',serif;font-size:19px;font-weight:400;color:var(--text);letter-spacing:-.3px;}
+.al-sub{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;letter-spacing:.5px;margin-top:2px;}
+@keyframes alPulse{0%,100%{opacity:1}50%{opacity:.15}}
+.al-sq{animation:alPulse 1.3s ease-in-out infinite;}
+/* ── Import progress corner toast (non-blocking) ── */
+#overlay-import-progress{position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);box-shadow:var(--sh2);padding:14px 16px;align-items:center;gap:12px;z-index:600;min-width:260px;max-width:320px;animation:toastSlide .18s ease;}
+@keyframes toastSlide{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+.ipt-spinner{width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--text);border-radius:50%;animation:spin .72s linear infinite;flex-shrink:0;}
+.ipt-title{font-size:12px;font-weight:600;color:var(--text);}
+.ipt-hint{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+.ipt-close{background:none;border:none;cursor:pointer;color:var(--text3);font-size:17px;line-height:1;padding:0 2px;flex-shrink:0;min-height:0;}
 .import-review-grid{overflow:auto;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);min-height:180px;max-height:400px;}
 .import-grid-table{border-collapse:collapse;width:100%;font-size:10px;}
 .import-grid-table th{background:var(--bg);padding:6px 10px;border:1px solid var(--border);font-weight:600;text-align:left;font-size:10px;white-space:nowrap;position:sticky;top:0;z-index:2;}
@@ -1758,6 +1772,24 @@ async function apiFetch(path, opts = {}) {
 }
 
 // ═══════════════════════════════════════════════════════
+// AUTH LOADING SCREEN
+// ═══════════════════════════════════════════════════════
+function showAuthLoading(msg) {
+  const el = document.getElementById('auth-loading');
+  // #app starts display:none — fixed children of hidden parents don't render.
+  // Move to body once so it's always a top-level stacking context.
+  if (el.parentElement !== document.body) document.body.appendChild(el);
+  document.getElementById('auth-loading-status').textContent = msg || 'Signing in…';
+  el.style.opacity = '1';
+  el.style.display = 'flex';
+}
+function hideAuthLoading() {
+  const el = document.getElementById('auth-loading');
+  el.style.opacity = '0';
+  setTimeout(() => { el.style.display = 'none'; el.style.opacity = '1'; }, 220);
+}
+
+// ═══════════════════════════════════════════════════════
 // AUTH UI — login / register modal shown before app loads
 // ═══════════════════════════════════════════════════════
 function showAuthModal() {
@@ -1793,6 +1825,7 @@ async function doLogin() {
   localStorage.setItem('bp_access_token',  authToken);
   localStorage.setItem('bp_refresh_token', refreshToken);
 
+  showAuthLoading('Loading your workspace…');
   await loadCurrentUser();
   hideAuthModal();
   await initApp();
@@ -1827,6 +1860,7 @@ async function doRegister() {
   localStorage.setItem('bp_access_token',  authToken);
   localStorage.setItem('bp_refresh_token', refreshToken);
 
+  showAuthLoading('Setting up your workspace…');
   await loadCurrentUser();
   hideAuthModal();
   await initApp();
@@ -3872,6 +3906,7 @@ async function initApp() {
   await loadCurrentUser();
 
   if (!currentUser) {
+    hideAuthLoading();
     showLanding();
     return;
   }
@@ -3916,6 +3951,7 @@ async function initApp() {
     showBoardListModal();
   }
   showView('blueprint', document.getElementById('nav-blueprint'));
+  hideAuthLoading();
 }
 
 async function loadPersistedInsights() {
@@ -4769,6 +4805,7 @@ async function lpAuthSubmit() {
 async function handleGoogleLogin(googleResponse) {
   const errEl = document.getElementById('lp-error');
   errEl.textContent = '';
+  showAuthLoading('Verifying with Google…');
   try {
     const res = await fetch(API_BASE + '/api/auth/google', {
       method: 'POST',
@@ -4776,13 +4813,16 @@ async function handleGoogleLogin(googleResponse) {
       body: JSON.stringify({ credential: googleResponse.credential }),
     });
     if (!res.ok) {
+      hideAuthLoading();
       const err = await res.json().catch(() => ({}));
       errEl.textContent = err.detail || 'Google sign-in failed.';
       return;
     }
     const tokens = await res.json();
+    document.getElementById('auth-loading-status').textContent = 'Loading your workspace…';
     await _lpStoreAndEnter(tokens);
   } catch (e) {
+    hideAuthLoading();
     errEl.textContent = 'Google sign-in failed. Please try email instead.';
   }
 }
@@ -4845,16 +4885,28 @@ initApp();
 <!-- IMPORT FILE INPUT (hidden) -->
 <input type="file" id="import-file-input" accept=".pdf,image/png,image/jpeg,image/webp" style="display:none;" onchange="handleImportFile(this.files[0]);this.value=''">
 
-<!-- IMPORT PROGRESS OVERLAY -->
-<div class="overlay" id="overlay-import-progress" style="display:none;">
-  <div class="modal sm">
-    <div class="import-progress-body">
-      <div class="import-progress-spinner"></div>
-      <div class="import-progress-text" id="import-progress-text">Reading your blueprint…</div>
-      <div class="import-progress-hint" id="import-progress-hint" style="display:none;">This can take up to a minute</div>
-      <button class="btn btn-ghost" onclick="cancelImport()" style="margin-top:4px;font-size:11px;">Cancel</button>
-    </div>
+<!-- AUTH FULL-PAGE LOADING SCREEN -->
+<div id="auth-loading">
+  <div class="al-mark">
+    <svg width="30" height="30" viewBox="0 0 13 13" fill="none">
+      <rect class="al-sq" style="animation-delay:0s"    x="1"   y="1"   width="4.5" height="4.5" rx=".8" fill="white"/>
+      <rect class="al-sq" style="animation-delay:.22s"  x="7"   y="1"   width="5"   height="4.5" rx=".8" fill="white"/>
+      <rect class="al-sq" style="animation-delay:.44s"  x="1"   y="7.5" width="5"   height="4.5" rx=".8" fill="white"/>
+      <rect class="al-sq" style="animation-delay:.66s"  x="7.5" y="7.5" width="4.5" height="4.5" rx=".8" fill="white"/>
+    </svg>
   </div>
+  <div class="al-name">Blueprint AI</div>
+  <div class="al-sub" id="auth-loading-status">Signing in…</div>
+</div>
+
+<!-- IMPORT PROGRESS TOAST (corner, non-blocking) -->
+<div id="overlay-import-progress" style="display:none;">
+  <div class="ipt-spinner"></div>
+  <div style="flex:1;min-width:0;">
+    <div class="ipt-title" id="import-progress-text">Reading your blueprint…</div>
+    <div class="ipt-hint" id="import-progress-hint" style="display:none;">This can take up to a minute</div>
+  </div>
+  <button class="ipt-close" onclick="cancelImport()" title="Cancel">×</button>
 </div>
 
 <!-- IMPORT REVIEW OVERLAY -->
