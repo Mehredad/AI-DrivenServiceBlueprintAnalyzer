@@ -1880,13 +1880,21 @@ function logout() {
   }
   localStorage.removeItem('bp_access_token');
   localStorage.removeItem('bp_refresh_token');
+  localStorage.removeItem('bp_local_board');
   authToken = ''; refreshToken = ''; currentUser = null;
   currentBoardId = '';
+  chatHistory = [];
+  boardsList = [];
+  const chatArea = document.getElementById('chat-area');
+  if (chatArea) chatArea.innerHTML = '';
+  boardState.id = null; boardState.title = ''; boardState.domain = '';
+  boardState.swimlanes = []; boardState.steps = []; boardState.elements = [];
+  boardState.capabilities = []; boardState.insights = []; boardState.openRisks = [];
+  boardState.positives = []; boardState.incidents = []; boardState.version = 1;
   const nameEl = document.getElementById('sidebar-user-name');
   if (nameEl) nameEl.textContent = 'Not signed in';
   const authBtn = document.getElementById('sidebar-auth-btn');
   if (authBtn) { authBtn.textContent = 'Sign in'; authBtn.onclick = showAuthModal; }
-  boardState.swimlanes = []; boardState.steps = []; boardState.elements = [];
   renderCanvas();
   showLanding();
   lpSwitchTab('login');
