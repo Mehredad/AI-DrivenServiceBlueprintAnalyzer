@@ -254,6 +254,7 @@ class ChatMessageOut(BaseModel):
     content:     str
     attachments: list[Any] = []
     created_at:  datetime
+    author_name: Optional[str] = None
 
     model_config = {"from_attributes": True}
 

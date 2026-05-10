@@ -8,6 +8,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, delete as sql_delete
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 log = logging.getLogger(__name__)
@@ -55,6 +56,7 @@ async def chat(
 async def get_history(
     board_id: str,
     limit:    int = 50,
+    offset:   int = 0,
     user: User = Depends(get_current_user),
     db:   AsyncSession = Depends(get_db),
 ):
@@ -62,14 +64,29 @@ async def get_history(
 
     if not 1 <= limit <= 200:
         raise HTTPException(400, "limit must be between 1 and 200")
+    if offset < 0:
+        raise HTTPException(400, "offset must be >= 0")
 
     result = await db.execute(
         select(ChatMessage)
+        .options(selectinload(ChatMessage.user))
         .where(ChatMessage.board_id == board_id)
         .order_by(ChatMessage.created_at.desc())
         .limit(limit)
+        .offset(offset)
     )
-    return list(reversed(result.scalars().all()))
+    messages = list(reversed(result.scalars().all()))
+    return [
+        ChatMessageOut(
+            id=str(m.id),
+            role=m.role,
+            content=m.content,
+            attachments=m.attachments or [],
+            created_at=m.created_at,
+            author_name=m.user.full_name if m.user else None,
+        )
+        for m in messages
+    ]
 
 
 @router.delete("/boards/{board_id}/history", status_code=204)
