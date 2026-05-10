@@ -146,6 +146,11 @@ class Element(Base):
     created_at  = Column(DateTime(timezone=True), server_default=func.now())
     updated_at  = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
+    created_by_user_id = Column(Uuid(as_uuid=False), ForeignKey("users.id"), nullable=True)
+    created_by_actor   = Column(String(30), nullable=False, server_default="user", default="user")
+    updated_by_user_id = Column(Uuid(as_uuid=False), ForeignKey("users.id"), nullable=True)
+    updated_by_actor   = Column(String(30), nullable=False, server_default="user", default="user")
+
     board = relationship("Board", back_populates="elements")
 
 

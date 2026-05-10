@@ -34,7 +34,7 @@ async def create_element_route(
     db:   AsyncSession = Depends(get_db),
 ):
     await assert_board_access(db, board_id, user.id, require_role="editor")
-    return await create_element(db, board_id, body)
+    return await create_element(db, board_id, body, user_id=str(user.id))
 
 
 @router.get("/{board_id}/elements/{element_id}", response_model=ElementOut)
@@ -57,7 +57,7 @@ async def update_element_route(
     db:   AsyncSession = Depends(get_db),
 ):
     await assert_board_access(db, board_id, user.id, require_role="editor")
-    return await update_element(db, board_id, element_id, body)
+    return await update_element(db, board_id, element_id, body, user_id=str(user.id))
 
 
 @router.delete("/{board_id}/elements/{element_id}", status_code=204)
