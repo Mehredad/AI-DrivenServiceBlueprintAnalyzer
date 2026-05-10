@@ -393,6 +393,26 @@ class AuditLogOut(BaseModel):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# CHANGE EVENTS (PRD-17a)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class ChangeEventOut(BaseModel):
+    id:              str
+    board_id:        str
+    actor_user_id:   Optional[str] = None
+    actor_type:      str
+    entity_type:     str
+    entity_id:       str
+    operation:       str
+    before_snapshot: Optional[dict[str, Any]] = None
+    after_snapshot:  Optional[dict[str, Any]] = None
+    created_at:      datetime
+    actor_name:      Optional[str] = None  # populated by the API endpoint, not from DB
+
+    model_config = {"from_attributes": True}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # ELEMENTS
 # ─────────────────────────────────────────────────────────────────────────────
 

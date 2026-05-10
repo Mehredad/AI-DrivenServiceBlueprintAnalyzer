@@ -83,6 +83,7 @@ class Board(Base):
     exports       = relationship("Export",            back_populates="board", cascade="all, delete-orphan")
     uploads       = relationship("Upload",            back_populates="board", cascade="all, delete-orphan")
     import_jobs   = relationship("ImportJob",         back_populates="board", cascade="all, delete-orphan")
+    change_events = relationship("ChangeEvent",       back_populates="board", cascade="all, delete-orphan")
 
 
 class BoardCollaborator(Base):
@@ -297,3 +298,24 @@ class ImportJob(Base):
     created_at   = Column(DateTime(timezone=True), server_default=func.now())
 
     board = relationship("Board", back_populates="import_jobs")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CHANGE EVENTS (PRD-17a — snapshot-based history)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class ChangeEvent(Base):
+    __tablename__ = "change_events"
+
+    id            = Column(Uuid(as_uuid=False), primary_key=True, default=_uuid)
+    board_id      = Column(Uuid(as_uuid=False), ForeignKey("boards.id", ondelete="CASCADE"), nullable=False, index=True)
+    actor_user_id = Column(Uuid(as_uuid=False), ForeignKey("users.id"), nullable=True)
+    actor_type    = Column(String(30), nullable=False, server_default="user", default="user")
+    entity_type   = Column(String(50), nullable=False)
+    entity_id     = Column(String(50), nullable=False)
+    operation     = Column(String(20), nullable=False)  # create | update | delete | restore
+    before_snapshot = Column(JSON, nullable=True)
+    after_snapshot  = Column(JSON, nullable=True)
+    created_at    = Column(DateTime(timezone=True), server_default=func.now())
+
+    board = relationship("Board", back_populates="change_events")

@@ -325,6 +325,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .reg-table tr:last-child td{border-bottom:none;}
 .m-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
 .m-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:12px;}
+/* HISTORY VIEW */
+.hist-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:11px 14px;display:flex;flex-direction:column;gap:5px;}
+.hist-meta{display:flex;align-items:center;gap:7px;font-size:11px;}
+.hist-actor{font-weight:500;color:var(--text2);}
+.hist-time{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);}
+.hist-summary{font-size:12px;color:var(--text);}
+.hist-footer{display:flex;align-items:center;gap:6px;margin-top:2px;}
+.hist-op{font-size:9px;font-family:'JetBrains Mono',monospace;padding:1px 6px;border-radius:6px;text-transform:uppercase;font-weight:600;}
+.hist-op-create{background:var(--green-bg);color:var(--green);}
+.hist-op-update{background:var(--amber-bg);color:var(--amber);}
+.hist-op-delete{background:var(--red-bg);color:var(--red);}
+.hist-op-restore{background:var(--blue-bg);color:var(--blue);}
+.hist-snap{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.6;overflow:auto;max-height:260px;white-space:pre-wrap;word-break:break-all;}
+.hist-snap-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;font-family:'JetBrains Mono',monospace;}
 .m-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
 .m-val{font-family:'Fraunces',serif;font-size:24px;margin-top:2px;line-height:1;font-weight:300;}
 .m-delta{font-size:10px;margin-top:2px;font-family:'JetBrains Mono',monospace;}
@@ -1128,6 +1142,10 @@ select.fi{appearance:none;cursor:pointer;}
       <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x=".5" y=".5" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.1"/><line x1="5" y1="9.5" x2="8" y2="9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
       Monitor
     </button>
+    <button class="sb-item" id="nav-history" onclick="showView('history',this)">
+      <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.1"/><polyline points="6.5,3.5 6.5,6.5 8.5,8" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" fill="none"/></svg></span>
+      History
+    </button>
   </div>
 
   <div class="sb-sec">
@@ -1389,6 +1407,19 @@ select.fi{appearance:none;cursor:pointer;}
       </div>
     </div>
 
+    <!-- ═══ HISTORY VIEW ═══ -->
+    <div class="view" id="view-history">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="view-title">Change History</div>
+        <button class="btn btn-ghost" style="height:26px;margin-left:auto;" onclick="loadHistory(true)">↻ Refresh</button>
+      </div>
+      <div id="history-empty" style="text-align:center;padding:40px;color:var(--text3);font-size:12px;display:none;">No changes recorded yet. Create or edit elements to start tracking history.</div>
+      <div id="history-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <div id="history-more" style="display:none;text-align:center;padding:8px;">
+        <button class="btn btn-ghost" onclick="loadMoreHistory()">Load more</button>
+      </div>
+    </div>
+
     <!-- ═══════════════════ AGENT PANEL ═══════════════════ -->
     <div class="agent-panel" id="agent-panel" style="position:relative;">
       <div id="chat-drop-overlay" class="drop-overlay">
@@ -1490,6 +1521,21 @@ select.fi{appearance:none;cursor:pointer;}
 
 </main>
 <!-- ═══════════ MODALS ═══════════ -->
+
+<!-- ─── HISTORY EVENT DETAIL ─── -->
+<div class="overlay" id="overlay-history-event">
+  <div class="modal" style="width:680px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;">
+    <div class="modal-head">
+      <div class="modal-icon" style="background:var(--bg2);font-size:15px;">🕐</div>
+      <div style="min-width:0;flex:1;">
+        <div class="modal-title" id="history-event-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Change Event</div>
+        <div class="modal-sub" id="history-event-sub">—</div>
+      </div>
+      <button class="btn-icon btn" onclick="closeModal('history-event')" style="border:none;font-size:15px;margin-left:auto;">×</button>
+    </div>
+    <div class="modal-body" id="history-event-body" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+</div>
 
 <!-- ─── BOARD SETTINGS MODAL ─── -->
 <div class="overlay" id="overlay-board-settings">
@@ -1779,6 +1825,9 @@ let _chatHistoryBoard  = null;
 let _chatHistoryHasMore = false;
 let insightCount   = 0;
 let realtimeChannel = null;
+let _historyOffset  = 0;
+let _historyHasMore = false;
+let _historyEvents  = [];   // cache for the detail modal
 let pendingAttachments = [];   // [{upload_id, tempId, filename, content_type, uploading}]
 
 // ── Authenticated fetch wrapper ────────────────────────
@@ -1919,6 +1968,7 @@ function logout() {
   currentBoardId = '';
   chatHistory = [];
   _chatHistoryOffset = 0; _chatHistoryBoard = null; _chatHistoryHasMore = false;
+  _historyOffset = 0; _historyHasMore = false; _historyEvents = [];
   boardsList = [];
   const chatArea = document.getElementById('chat-area');
   if (chatArea) chatArea.innerHTML = '';
@@ -4152,7 +4202,7 @@ function cardClick(cell, title, detail, capId) {
 // VIEWS / PHASES / ROLES
 // ═══════════════════════════════════════════════════════
 function showView(name, btn) {
-  ['blueprint','outcomes','register','monitor'].forEach(v => {
+  ['blueprint','outcomes','register','monitor','history'].forEach(v => {
     const el = document.getElementById('view-' + v);
     if (el) el.classList.remove('active');
   });
@@ -4160,6 +4210,103 @@ function showView(name, btn) {
   if (target) target.classList.add('active');
   document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
   if (btn) btn.classList.add('active');
+  if (name === 'history') loadHistory(true);
+}
+
+// ═══════════════════════════════════════════════════════
+// HISTORY (PRD-17a)
+// ═══════════════════════════════════════════════════════
+
+function _histActorLabel(ev) {
+  if (ev.actor_type === 'agent')      return '🤖 Blueprint Agent';
+  if (ev.actor_type === 'agent_undo') return '↩ Agent (undo)';
+  if (ev.actor_type === 'restore')    return '⏪ Restore';
+  if (ev.actor_type === 'system')     return '⚙ System';
+  return ev.actor_name ? `👤 ${escHtml(ev.actor_name)}` : '👤 User';
+}
+
+function _histSummary(ev) {
+  const name = (ev.after_snapshot?.name || ev.before_snapshot?.name || 'unknown');
+  const ent  = ev.entity_type;
+  if (ev.operation === 'create') return `Created ${ent} <em>${escHtml(name)}</em>`;
+  if (ev.operation === 'update') return `Updated ${ent} <em>${escHtml(name)}</em>`;
+  if (ev.operation === 'delete') return `Deleted ${ent} <em>${escHtml(name)}</em>`;
+  if (ev.operation === 'restore') return `Restored ${ent} <em>${escHtml(name)}</em>`;
+  return `${ev.operation} on ${ent}`;
+}
+
+function renderHistory(events, reset) {
+  const list  = document.getElementById('history-list');
+  const empty = document.getElementById('history-empty');
+  const more  = document.getElementById('history-more');
+  if (!list) return;
+
+  if (reset) { list.innerHTML = ''; _historyEvents = []; }
+  _historyEvents.push(...events);
+
+  if (_historyEvents.length === 0) {
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    events.forEach(ev => {
+      const div = document.createElement('div');
+      div.className = 'hist-item';
+      div.innerHTML = `
+        <div class="hist-meta">
+          <span class="hist-actor">${_histActorLabel(ev)}</span>
+          <span class="hist-time">${_timeAgo(ev.created_at)}</span>
+        </div>
+        <div class="hist-summary">${_histSummary(ev)}</div>
+        <div class="hist-footer">
+          <span class="hist-op hist-op-${escHtml(ev.operation)}">${escHtml(ev.operation)}</span>
+          <button class="btn btn-ghost" style="height:22px;font-size:10px;margin-left:auto;"
+            onclick="viewChangeEvent('${escHtml(ev.id)}')">View</button>
+        </div>`;
+      list.appendChild(div);
+    });
+  }
+  more.style.display = _historyHasMore ? 'block' : 'none';
+}
+
+async function loadHistory(reset) {
+  if (!currentBoardId) return;
+  if (reset) _historyOffset = 0;
+  const limit = 50;
+  try {
+    const res = await apiFetch(`/api/boards/${currentBoardId}/history?limit=${limit + 1}&offset=${_historyOffset}`);
+    if (!res || !res.ok) return;
+    const data = await res.json();
+    _historyHasMore = data.length > limit;
+    const page = _historyHasMore ? data.slice(0, limit) : data;
+    _historyOffset += page.length;
+    renderHistory(page, reset);
+  } catch (e) {
+    console.warn('loadHistory error', e);
+  }
+}
+
+async function loadMoreHistory() {
+  await loadHistory(false);
+}
+
+function viewChangeEvent(eventId) {
+  const ev = _historyEvents.find(e => e.id === eventId);
+  if (!ev) return;
+
+  const title  = document.getElementById('history-event-title');
+  const sub    = document.getElementById('history-event-sub');
+  const body   = document.getElementById('history-event-body');
+  if (!title || !body) return;
+
+  title.textContent = _histSummary(ev).replace(/<[^>]+>/g, '');
+  sub.textContent   = `${_histActorLabel(ev).replace(/[^\x20-\x7E]/g, '').trim()} · ${new Date(ev.created_at).toLocaleString()}`;
+
+  const fmt = (obj) => obj ? JSON.stringify(obj, null, 2) : '—';
+  body.innerHTML = `
+    ${ev.before_snapshot ? `<div class="hist-snap-label">Before</div><div class="hist-snap">${escHtml(fmt(ev.before_snapshot))}</div>` : ''}
+    ${ev.after_snapshot  ? `<div class="hist-snap-label" style="margin-top:12px;">After</div><div class="hist-snap">${escHtml(fmt(ev.after_snapshot))}</div>` : ''}`;
+
+  openModal('history-event');
 }
 
 function showOutTab(name, btn) {
