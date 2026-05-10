@@ -51,7 +51,7 @@ def _get_client():
 
 
 MAX_HISTORY_MESSAGES = 20
-MAX_RESPONSE_TOKENS  = 1024
+MAX_RESPONSE_TOKENS  = 2048
 
 
 # -- Health counter ------------------------------------------------------------
@@ -232,6 +232,36 @@ def _hcai_section() -> str:
 - **Harm patterns**: Flag potential fairness, accountability, or digital wellbeing concerns proactively."""
 
 
+_ACTIONS_SECTION = """## Board edit actions
+
+When the user asks you to make changes to the board, respond ONLY with a JSON object in this exact format:
+
+{
+  "message": "Your explanation in plain language (Markdown supported)",
+  "actions": [
+    { "type": "create_swimlane", "payload": { "name": "AI Capabilities", "lane_type": "support_processes" } }
+  ]
+}
+
+Allowed action types and their payloads:
+- create_swimlane: { "name": "...", "lane_type": "customer_actions|frontstage_actions|backstage_actions|support_processes|moment_of_truth|touchpoints|systems|data_flow|handoffs|risks|opportunities|pain_points|ai_capability|research_evidence|governance|custom" }
+- create_step: { "name": "..." }
+- create_element: { "type": "customer_action|physical_evidence|frontstage_action|backstage_action|support_process|moment_of_truth|touchpoint|system|data_flow|handoff|risk|opportunity|pain_point|research_evidence|ai_capability|governance_checkpoint", "name": "...", "swimlane_id": "...", "step_id": "...", "notes": "..." }
+- update_element: { "id": "...", "name": "...", "updates": { "name": "...", "notes": "...", "status": "..." } }
+- delete_element: { "id": "...", "name": "..." }
+- update_swimlane: { "id": "...", "name": "..." }
+- delete_swimlane: { "id": "...", "name": "..." }
+- update_step: { "id": "...", "name": "..." }
+- delete_step: { "id": "...", "name": "..." }
+
+Rules:
+- Never claim to have made a change — only propose it. The user must approve each action before it is applied.
+- Put your full explanation in the "message" field. Explain each proposed action.
+- For analysis, questions, or reviews, respond with plain text only (not JSON).
+- Reference real IDs from the board context (board_state.swimlanes[].id, board_state.steps[].id, elements[].id) when updating or deleting.
+- Each action is independent — the user can approve some and reject others."""
+
+
 _ROLE_SECTIONS: dict[str, str] = {
     "pm":         "The user is a Product Manager. Emphasise priorities, risks, open decisions, and opportunities. Ask them about user outcomes and business impact.",
     "designer":   "The user is a Service or UX Designer. Emphasise touchpoints, handoffs, and journey friction. Ask about stakeholder experience.",
@@ -249,6 +279,30 @@ def _role_section(role: str) -> str:
     return f"Role context: {text}"
 
 
+def _parse_agent_response(text: str) -> tuple[str, list[dict]]:
+    """
+    Try to parse agent response as structured JSON {"message": ..., "actions": [...]}.
+    Falls back to (text, []) if not parseable or missing the expected shape.
+    Stores the original text in the DB so history can reconstruct proposal cards.
+    """
+    stripped = text.strip()
+    if not stripped.startswith('{'):
+        return text, []
+    try:
+        data = json.loads(stripped)
+        if isinstance(data, dict) and isinstance(data.get('message'), str):
+            actions = data.get('actions', [])
+            if isinstance(actions, list):
+                valid = [
+                    a for a in actions
+                    if isinstance(a, dict) and isinstance(a.get('type'), str) and isinstance(a.get('payload'), dict)
+                ]
+                return data['message'], valid
+    except (json.JSONDecodeError, ValueError):
+        pass
+    return text, []
+
+
 def build_system_prompt(ctx: dict, role: Optional[str] = None) -> str:
     sections = [_core_section(ctx)]
     if _has_ai_content(ctx):
@@ -257,6 +311,7 @@ def build_system_prompt(ctx: dict, role: Optional[str] = None) -> str:
         section = _role_section(role)
         if section:
             sections.append(section)
+    sections.append(_ACTIONS_SECTION)
     return "\n\n".join(sections)
 
 
@@ -324,7 +379,7 @@ async def chat(
     history:        list[dict],
     role:           Optional[str] = None,
     attachment_ids: list[str] = [],
-) -> tuple[str, int, str]:
+) -> tuple[str, int, str, list[dict]]:
     """
     Call Gemini API with board-aware system prompt.
     Persists user turn immediately; persists assistant turn on success only.
@@ -394,6 +449,10 @@ async def chat(
 
     log.info("Chat tokens used: %d (board=%s, attachments=%d)", tokens, board_id, len(attach_refs))
 
+    # Parse structured JSON response ({message, actions}) if present.
+    # Store the raw text (JSON) in DB so history can reconstruct proposal cards.
+    display_text, actions = _parse_agent_response(text)
+
     asst_msg = ChatMessage(
         board_id=board_id, user_id=None, role="assistant",
         content=text, token_count=tokens,
@@ -401,4 +460,4 @@ async def chat(
     db.add(asst_msg)
     await db.flush()
 
-    return text, tokens, str(asst_msg.id)
+    return display_text, tokens, str(asst_msg.id), actions

@@ -424,6 +424,27 @@ select.fi{appearance:none;cursor:pointer;}
 .chat-load-earlier-btn{font-size:10px;padding:3px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);cursor:pointer;color:var(--text2);font-family:inherit;}
 .chat-load-earlier-btn:hover{background:var(--bg2);}
 .user-msg-author{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);margin-bottom:2px;text-align:right;}
+/* --- Proposal cards (PRD-15) --- */
+.proposal-cards-container{display:flex;flex-direction:column;gap:6px;margin-top:8px;}
+.proposal-card{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:11px;background:var(--surface);}
+.proposal-card.proposal-destructive{border-color:#e74c3c;background:rgba(231,76,60,.05);}
+.proposal-card.proposal-applied{border-color:#1abc9c;background:rgba(26,188,156,.06);opacity:.95;}
+.proposal-card.proposal-rejected,.proposal-card.proposal-undone{opacity:.42;}
+.proposal-card-header{display:flex;align-items:flex-start;gap:7px;margin-bottom:6px;}
+.proposal-card-badge{flex-shrink:0;font-size:9px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;padding:2px 6px;border-radius:4px;background:var(--bg2);color:var(--text3);}
+.proposal-badge-applied{background:#d4edda;color:#155724;}
+.proposal-badge-rejected,.proposal-badge-undone{background:var(--bg2);color:var(--text3);}
+.proposal-badge-invalid{background:#f8d7da;color:#721c24;}
+.proposal-card-desc{color:var(--text);line-height:1.4;font-size:11px;}
+.proposal-card-error{color:#e74c3c;font-size:10px;margin-top:3px;}
+.proposal-card-btns{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.proposal-card-warning{font-size:10px;color:#e74c3c;flex-basis:100%;margin-bottom:3px;}
+.proposal-applying{color:var(--text3);font-style:italic;font-size:10px;}
+.proposal-approve-btn{font-size:10px;padding:3px 10px;border-radius:5px;border:1px solid #1abc9c;background:#1abc9c;color:white;cursor:pointer;font-family:inherit;}
+.proposal-approve-btn.proposal-approve-confirm{border-color:#e74c3c;background:#e74c3c;}
+.proposal-approve-btn:disabled{opacity:.5;cursor:not-allowed;}
+.proposal-reject-btn,.proposal-retry-btn{font-size:10px;padding:3px 10px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-family:inherit;}
+.proposal-undo-link{font-size:10px;color:var(--text3);cursor:pointer;text-decoration:underline;background:none;border:none;padding:0;font-family:inherit;}
 .typing-ind{display:flex;gap:3px;align-items:center;padding:8px 11px;background:var(--bg);border-radius:0 var(--rl) var(--rl) var(--rl);width:fit-content;}
 .tdot{width:6px;height:6px;border-radius:50%;background:var(--text3);animation:td .8s ease-in-out infinite;}
 .tdot:nth-child(2){animation-delay:.15s;}
@@ -3203,8 +3224,10 @@ async function callBackendAgent(userMsg, attachments = []) {
     }
 
     const text = data.response || '';
+    const proposedActions = Array.isArray(data.actions) ? data.actions : [];
     chatHistory.push({ role: 'assistant', content: text });
-    addAgentMsg(text, getContextActions(userMsg));
+    const agentWrap = addAgentMsg(text, getContextActions(userMsg));
+    if (proposedActions.length) appendProposalCards(agentWrap, proposedActions, currentBoardId);
 
   } catch (err) {
     removeTyping(typingId);
@@ -3582,8 +3605,15 @@ async function loadChatHistory(boardId) {
         addUserMsg(msg.content, msg.attachments || [], msg.created_at, msg.author_name);
         chatHistory.push({ role: 'user', content: msg.content });
       } else {
-        addAgentMsg(msg.content, [], msg.created_at);
-        chatHistory.push({ role: 'assistant', content: msg.content });
+        let displayContent = msg.content;
+        let msgProposals = [];
+        try {
+          const _p = JSON.parse(msg.content);
+          if (_p && typeof _p.message === 'string') { displayContent = _p.message; msgProposals = Array.isArray(_p.actions) ? _p.actions : []; }
+        } catch (_) {}
+        const agentWrap = addAgentMsg(displayContent, [], msg.created_at);
+        if (msgProposals.length) appendProposalCards(agentWrap, msgProposals, boardId);
+        chatHistory.push({ role: 'assistant', content: displayContent });
       }
     }
     chatHistory = chatHistory.slice(-20);
@@ -3638,7 +3668,14 @@ async function loadEarlierMessages() {
         temp.innerHTML = `${chipsHtml}${authorHtml}<div class="user-msg">${escHtml(msg.content)}</div><div class="msg-time">${formatMsgTime(msg.created_at)}</div>`;
       } else {
         temp.className = 'msg-wrap agent';
-        temp.innerHTML = `<div class="agent-msg-head"><div class="agent-msg-name">Blueprint Agent</div><div class="agent-msg-time">${formatMsgTime(msg.created_at)}</div></div><div class="agent-msg">${escHtml(msg.content)}</div>`;
+        let displayContent = msg.content;
+        let msgProposals = [];
+        try {
+          const _p = JSON.parse(msg.content);
+          if (_p && typeof _p.message === 'string') { displayContent = _p.message; msgProposals = Array.isArray(_p.actions) ? _p.actions : []; }
+        } catch (_) {}
+        temp.innerHTML = `<div class="agent-msg-head"><div class="agent-msg-name">Blueprint Agent</div><div class="agent-msg-time">${formatMsgTime(msg.created_at)}</div></div><div class="agent-msg">${_formatAgentText(displayContent)}</div>`;
+        if (msgProposals.length) appendProposalCards(temp, msgProposals, _chatHistoryBoard);
       }
       frag.appendChild(temp);
     }
@@ -3688,12 +3725,8 @@ function addUserMsg(text, attachments = [], ts = null, author = null) {
   area.scrollTop = area.scrollHeight;
 }
 
-function addAgentMsg(text, actions = [], ts = null) {
-  const area = document.getElementById('chat-area');
-  const wrap = document.createElement('div');
-  wrap.className = 'msg-wrap agent';
-
-  const formatted = text
+function _formatAgentText(text) {
+  return text
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
@@ -3701,6 +3734,14 @@ function addAgentMsg(text, actions = [], ts = null) {
     .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
     .replace(/\n\n/g, '<br><br>')
     .replace(/\n/g, '<br>');
+}
+
+function addAgentMsg(text, actions = [], ts = null) {
+  const area = document.getElementById('chat-area');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-wrap agent';
+
+  const formatted = _formatAgentText(text);
 
   let actHtml = '';
   if (actions.length) {
@@ -3713,7 +3754,7 @@ function addAgentMsg(text, actions = [], ts = null) {
     <div class="agent-msg-head"><div class="agent-msg-name">Blueprint Agent</div><div class="agent-msg-time">${formatMsgTime(ts)}</div></div>
     <div class="agent-msg">${formatted}${actHtml}</div>`;
 
-  // Wire action buttons
+  // Wire context-action chips
   actions.forEach((a, i) => {
     const btn = wrap.querySelector(`[data-action-idx="${i}"]`);
     if (btn) btn.addEventListener('click', a.fn);
@@ -3721,6 +3762,269 @@ function addAgentMsg(text, actions = [], ts = null) {
 
   area.appendChild(wrap);
   area.scrollTop = area.scrollHeight;
+  return wrap;  // callers use this to append proposal cards
+}
+
+// ═══════════════════════════════════════════════════════
+// PROPOSAL CARDS — agent-driven board edits (PRD-15)
+// ═══════════════════════════════════════════════════════
+
+function _actionTypeLabel(type) {
+  return {
+    create_swimlane: 'Add swimlane', create_step: 'Add step', create_element: 'Add element',
+    update_element: 'Update element', delete_element: 'Delete element',
+    update_swimlane: 'Rename swimlane', delete_swimlane: 'Delete swimlane',
+    update_step: 'Rename step', delete_step: 'Delete step',
+  }[type] || type;
+}
+
+function _actionDescription(action) {
+  const { type, payload } = action;
+  if (!payload) return type;
+  switch (type) {
+    case 'create_swimlane': return `Add swimlane "${payload.name}"${payload.lane_type && payload.lane_type !== 'custom' ? ` (${payload.lane_type.replace(/_/g,' ')})` : ''}`;
+    case 'create_step':     return `Add step "${payload.name}"`;
+    case 'create_element':  return `Add ${(payload.type||'element').replace(/_/g,' ')} "${payload.name}"`;
+    case 'update_element':  return `Update "${payload.name || payload.id}" — fields: ${Object.keys(payload.updates||{}).join(', ') || 'none'}`;
+    case 'delete_element':  return `Delete element "${payload.name || payload.id}"`;
+    case 'update_swimlane': return `Rename swimlane to "${payload.name}"`;
+    case 'delete_swimlane': return `Delete swimlane "${payload.name || payload.id}"`;
+    case 'update_step':     return `Rename step to "${payload.name}"`;
+    case 'delete_step':     return `Delete step "${payload.name || payload.id}"`;
+    default: return `${type}: ${JSON.stringify(payload).substring(0, 60)}`;
+  }
+}
+
+function _isDestructiveAction(type) {
+  return type === 'delete_element' || type === 'delete_swimlane' || type === 'delete_step';
+}
+
+function _validateProposedAction(action) {
+  const { type, payload } = action;
+  if (!payload) return 'Missing action payload';
+  if ((type === 'update_swimlane' || type === 'delete_swimlane') && payload.id) {
+    if (!boardState.swimlanes.find(s => s.id === payload.id)) return 'This swimlane no longer exists on the board';
+  }
+  if ((type === 'update_step' || type === 'delete_step') && payload.id) {
+    if (!boardState.steps.find(s => s.id === payload.id)) return 'This step no longer exists on the board';
+  }
+  if ((type === 'update_element' || type === 'delete_element') && payload.id) {
+    if (!boardState.elements.find(e => e.id === payload.id)) return 'This element no longer exists on the board';
+  }
+  return null;
+}
+
+async function _applyProposedAction(action, boardId) {
+  const { type, payload } = action;
+  switch (type) {
+    case 'create_swimlane': {
+      const lane = { id: crypto.randomUUID(), name: payload.name, order: boardState.swimlanes.length, lane_type: payload.lane_type || 'custom' };
+      boardState.swimlanes.push(lane);
+      renderCanvas(); persistStructure();
+      return { created_id: lane.id };
+    }
+    case 'create_step': {
+      const step = { id: crypto.randomUUID(), name: payload.name, order: boardState.steps.length };
+      boardState.steps.push(step);
+      renderCanvas(); persistStructure();
+      return { created_id: step.id };
+    }
+    case 'update_swimlane': {
+      const lane = boardState.swimlanes.find(s => s.id === payload.id);
+      if (!lane) throw new Error('Swimlane not found');
+      const old_name = lane.name;
+      lane.name = payload.name;
+      renderCanvas(); persistStructure();
+      return { old_name };
+    }
+    case 'delete_swimlane': {
+      const idx = boardState.swimlanes.findIndex(s => s.id === payload.id);
+      if (idx === -1) throw new Error('Swimlane not found');
+      const [snapshot] = boardState.swimlanes.splice(idx, 1);
+      renderCanvas(); persistStructure();
+      return { snapshot, idx };
+    }
+    case 'update_step': {
+      const step = boardState.steps.find(s => s.id === payload.id);
+      if (!step) throw new Error('Step not found');
+      const old_name = step.name;
+      step.name = payload.name;
+      renderCanvas(); persistStructure();
+      return { old_name };
+    }
+    case 'delete_step': {
+      const idx = boardState.steps.findIndex(s => s.id === payload.id);
+      if (idx === -1) throw new Error('Step not found');
+      const [snapshot] = boardState.steps.splice(idx, 1);
+      renderCanvas(); persistStructure();
+      return { snapshot, idx };
+    }
+    case 'create_element': {
+      const body = {
+        type: payload.type || 'touchpoint',
+        name: payload.name,
+        swimlane_id: payload.swimlane_id || null,
+        step_id:     payload.step_id     || null,
+        notes:       payload.notes       || null,
+        owner:       payload.owner       || null,
+        status: 'draft',
+      };
+      const res = await apiFetch(`/api/boards/${boardId}/elements`, { method: 'POST', body: JSON.stringify(body) });
+      if (!res || !res.ok) { const e = await res?.json().catch(()=>({})); throw new Error(e?.detail || `API ${res?.status}`); }
+      const elem = await res.json();
+      boardState.elements.push(elem);
+      renderCanvas();
+      return { created_id: elem.id };
+    }
+    case 'update_element': {
+      const existing = boardState.elements.find(e => e.id === payload.id);
+      const old_snapshot = existing ? { ...existing } : null;
+      const res = await apiFetch(`/api/boards/${boardId}/elements/${payload.id}`, { method: 'PATCH', body: JSON.stringify(payload.updates || {}) });
+      if (!res || !res.ok) { const e = await res?.json().catch(()=>({})); throw new Error(e?.detail || `API ${res?.status}`); }
+      const updated = await res.json();
+      const idx = boardState.elements.findIndex(e => e.id === payload.id);
+      if (idx >= 0) boardState.elements[idx] = updated;
+      renderCanvas();
+      return { old_snapshot };
+    }
+    case 'delete_element': {
+      const existing = boardState.elements.find(e => e.id === payload.id);
+      const snapshot = existing ? { ...existing } : null;
+      const res = await apiFetch(`/api/boards/${boardId}/elements/${payload.id}`, { method: 'DELETE' });
+      if (!res || !res.ok) { const e = await res?.json().catch(()=>({})); throw new Error(e?.detail || `API ${res?.status}`); }
+      boardState.elements = boardState.elements.filter(e => e.id !== payload.id);
+      renderCanvas();
+      return { snapshot };
+    }
+    default:
+      throw new Error(`Unknown action type: ${type}`);
+  }
+}
+
+async function _undoProposedAction(action, applyResult, boardId) {
+  const { type, payload } = action;
+  switch (type) {
+    case 'create_swimlane':
+      boardState.swimlanes = boardState.swimlanes.filter(s => s.id !== applyResult.created_id);
+      renderCanvas(); persistStructure(); return;
+    case 'create_step':
+      boardState.steps = boardState.steps.filter(s => s.id !== applyResult.created_id);
+      renderCanvas(); persistStructure(); return;
+    case 'update_swimlane': {
+      const lane = boardState.swimlanes.find(s => s.id === payload.id);
+      if (lane) { lane.name = applyResult.old_name; renderCanvas(); persistStructure(); }
+      return;
+    }
+    case 'delete_swimlane':
+      boardState.swimlanes.splice(applyResult.idx ?? boardState.swimlanes.length, 0, applyResult.snapshot);
+      renderCanvas(); persistStructure(); return;
+    case 'update_step': {
+      const step = boardState.steps.find(s => s.id === payload.id);
+      if (step) { step.name = applyResult.old_name; renderCanvas(); persistStructure(); }
+      return;
+    }
+    case 'delete_step':
+      boardState.steps.splice(applyResult.idx ?? boardState.steps.length, 0, applyResult.snapshot);
+      renderCanvas(); persistStructure(); return;
+    case 'create_element':
+      await apiFetch(`/api/boards/${boardId}/elements/${applyResult.created_id}`, { method: 'DELETE' });
+      boardState.elements = boardState.elements.filter(e => e.id !== applyResult.created_id);
+      renderCanvas(); return;
+    case 'update_element': {
+      if (!applyResult.old_snapshot) return;
+      const { id, board_id, created_at, updated_at, ...updates } = applyResult.old_snapshot;
+      const res = await apiFetch(`/api/boards/${boardId}/elements/${payload.id}`, { method: 'PATCH', body: JSON.stringify(updates) });
+      if (res && res.ok) {
+        const restored = await res.json();
+        const i = boardState.elements.findIndex(e => e.id === payload.id);
+        if (i >= 0) boardState.elements[i] = restored;
+        renderCanvas();
+      }
+      return;
+    }
+    case 'delete_element': {
+      if (!applyResult.snapshot) return;
+      const snap = applyResult.snapshot;
+      const res = await apiFetch(`/api/boards/${boardId}/elements`, {
+        method: 'POST',
+        body: JSON.stringify({ type: snap.type, name: snap.name, notes: snap.notes, swimlane_id: snap.swimlane_id, step_id: snap.step_id, owner: snap.owner, status: snap.status || 'draft' }),
+      });
+      if (res && res.ok) { const elem = await res.json(); boardState.elements.push(elem); renderCanvas(); }
+      return;
+    }
+    default:
+      throw new Error(`Cannot undo ${type}`);
+  }
+}
+
+function _renderProposalCardBody(card, action, boardId) {
+  const { type, payload } = action;
+  const isDestructive = _isDestructiveAction(type);
+  const label = _actionTypeLabel(type);
+  const desc  = _actionDescription(action);
+
+  const validationError = _validateProposedAction(action);
+  if (validationError) {
+    card.className = 'proposal-card';
+    card.innerHTML = `<div class="proposal-card-header"><span class="proposal-card-badge proposal-badge-invalid">⚠ Invalid</span><span class="proposal-card-desc">${escHtml(desc)}</span></div><div class="proposal-card-error">${escHtml(validationError)} — proposal cannot be applied</div>`;
+    return;
+  }
+
+  card.className = 'proposal-card' + (isDestructive ? ' proposal-destructive' : '');
+  card.innerHTML = `<div class="proposal-card-header"><span class="proposal-card-badge">${escHtml(label)}</span><span class="proposal-card-desc">${escHtml(desc)}</span></div><div class="proposal-card-btns">${isDestructive ? '<span class="proposal-card-warning">⚠ This is a destructive action — difficult to reverse</span>' : ''}<button class="proposal-approve-btn">${isDestructive ? 'Approve (destructive)' : 'Approve'}</button><button class="proposal-reject-btn">Reject</button></div>`;
+
+  let needsConfirm = isDestructive;
+
+  card.querySelector('.proposal-approve-btn').addEventListener('click', async function() {
+    if (needsConfirm) {
+      needsConfirm = false;
+      this.textContent = 'Yes, proceed';
+      this.classList.add('proposal-approve-confirm');
+      return;
+    }
+    card.querySelector('.proposal-card-btns').innerHTML = '<span class="proposal-applying">Applying…</span>';
+    try {
+      const applyResult = await _applyProposedAction(action, boardId);
+      const approvedAt = Date.now();
+      card.className = 'proposal-card proposal-applied';
+      card.innerHTML = `<div class="proposal-card-header"><span class="proposal-card-badge proposal-badge-applied">✓ Applied</span><span class="proposal-card-desc">${escHtml(desc)}</span></div><div class="proposal-card-btns"><button class="proposal-undo-link">Undo</button></div>`;
+      card.querySelector('.proposal-undo-link').addEventListener('click', async function() {
+        if (Date.now() - approvedAt > 86400000) { this.remove(); return; }
+        this.textContent = 'Undoing…'; this.disabled = true;
+        try {
+          await _undoProposedAction(action, applyResult, boardId);
+          card.className = 'proposal-card proposal-undone';
+          card.innerHTML = `<div class="proposal-card-header"><span class="proposal-card-badge proposal-badge-undone">↩ Undone</span><span class="proposal-card-desc">${escHtml(desc)}</span></div>`;
+        } catch (e) { this.textContent = 'Undo failed'; this.disabled = false; }
+      });
+    } catch (err) {
+      card.querySelector('.proposal-card-btns').innerHTML = `<span class="proposal-card-error">${escHtml(String(err.message || 'Apply failed'))}</span> <button class="proposal-retry-btn">Retry</button> <button class="proposal-reject-btn">Reject</button>`;
+      card.querySelector('.proposal-retry-btn').addEventListener('click', () => _renderProposalCardBody(card, action, boardId));
+      card.querySelector('.proposal-reject-btn').addEventListener('click', () => {
+        card.className = 'proposal-card proposal-rejected';
+        card.innerHTML = `<div class="proposal-card-header"><span class="proposal-card-badge proposal-badge-rejected">Rejected</span><span class="proposal-card-desc">${escHtml(desc)}</span></div>`;
+      });
+    }
+  });
+
+  card.querySelector('.proposal-reject-btn').addEventListener('click', () => {
+    card.className = 'proposal-card proposal-rejected';
+    card.innerHTML = `<div class="proposal-card-header"><span class="proposal-card-badge proposal-badge-rejected">Rejected</span><span class="proposal-card-desc">${escHtml(desc)}</span></div>`;
+  });
+}
+
+function _buildProposalCard(action, boardId) {
+  const card = document.createElement('div');
+  _renderProposalCardBody(card, action, boardId);
+  return card;
+}
+
+function appendProposalCards(wrap, proposedActions, boardId) {
+  if (!proposedActions || !proposedActions.length) return;
+  const container = document.createElement('div');
+  container.className = 'proposal-cards-container';
+  proposedActions.forEach(action => container.appendChild(_buildProposalCard(action, boardId)));
+  wrap.appendChild(container);
 }
 
 let typingCounter = 0;
