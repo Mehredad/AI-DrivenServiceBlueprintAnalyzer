@@ -303,3 +303,86 @@ async def test_health_agent_down_after_five_failures(client):
 
     svc._consecutive_failures = 0
     svc._last_error_code = None
+
+
+# ── History endpoint: persistence, author_name, pagination (PRD-14) ──────────
+
+@pytest.mark.asyncio
+async def test_history_returns_persisted_messages(client, auth_headers, board):
+    """Messages sent via /chat must appear in /history with correct fields."""
+    with patch("app.services.agent_service.types", _make_types_mock()), \
+         patch("app.services.agent_service._get_client",
+               return_value=_make_client_mock("Agent reply.")):
+        await client.post(
+            "/api/agent/chat",
+            json={"board_id": board["id"], "message": "hello history", "history": []},
+            headers=auth_headers,
+        )
+
+    r = await client.get(f"/api/agent/boards/{board['id']}/history", headers=auth_headers)
+    assert r.status_code == 200
+    msgs = r.json()
+    assert len(msgs) == 2
+    roles = {m["role"] for m in msgs}
+    assert roles == {"user", "assistant"}
+    user_msg = next(m for m in msgs if m["role"] == "user")
+    agent_msg = next(m for m in msgs if m["role"] == "assistant")
+    assert user_msg["content"] == "hello history"
+    assert agent_msg["content"] == "Agent reply."
+    assert "created_at" in user_msg
+    assert "id" in user_msg
+
+
+@pytest.mark.asyncio
+async def test_history_includes_author_name_for_user_messages(client, auth_headers, board):
+    """User messages must carry the sender's full_name in author_name."""
+    with patch("app.services.agent_service.types", _make_types_mock()), \
+         patch("app.services.agent_service._get_client",
+               return_value=_make_client_mock("ok")):
+        await client.post(
+            "/api/agent/chat",
+            json={"board_id": board["id"], "message": "who am i", "history": []},
+            headers=auth_headers,
+        )
+
+    r = await client.get(f"/api/agent/boards/{board['id']}/history", headers=auth_headers)
+    msgs = r.json()
+    user_msg = next(m for m in msgs if m["role"] == "user")
+    assert user_msg["author_name"] is not None
+    assert len(user_msg["author_name"]) > 0
+    agent_msg = next(m for m in msgs if m["role"] == "assistant")
+    assert agent_msg["author_name"] is None
+
+
+@pytest.mark.asyncio
+async def test_history_offset_pagination(client, auth_headers, board):
+    """offset parameter shifts the window — offset=2 skips the 2 oldest messages."""
+    with patch("app.services.agent_service.types", _make_types_mock()), \
+         patch("app.services.agent_service._get_client",
+               return_value=_make_client_mock("reply")):
+        for i in range(3):
+            await client.post(
+                "/api/agent/chat",
+                json={"board_id": board["id"], "message": f"msg{i}", "history": []},
+                headers=auth_headers,
+            )
+
+    full = await client.get(
+        f"/api/agent/boards/{board['id']}/history?limit=6", headers=auth_headers
+    )
+    with_offset = await client.get(
+        f"/api/agent/boards/{board['id']}/history?limit=6&offset=2", headers=auth_headers
+    )
+    assert full.status_code == 200
+    assert with_offset.status_code == 200
+    assert len(full.json()) == 6          # 3 user + 3 assistant messages
+    assert len(with_offset.json()) == 4   # 6 total - 2 skipped
+
+
+@pytest.mark.asyncio
+async def test_history_invalid_offset_rejected(client, auth_headers, board):
+    """offset < 0 must return 400."""
+    r = await client.get(
+        f"/api/agent/boards/{board['id']}/history?offset=-1", headers=auth_headers
+    )
+    assert r.status_code == 400
