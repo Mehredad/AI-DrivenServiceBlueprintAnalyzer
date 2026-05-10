@@ -33,8 +33,18 @@ async def get_element(db: AsyncSession, board_id: str, element_id: str) -> Eleme
     return el
 
 
-async def create_element(db: AsyncSession, board_id: str, data: ElementCreate) -> Element:
-    el = Element(board_id=board_id, **data.model_dump(exclude_none=True))
+async def create_element(
+    db: AsyncSession, board_id: str, data: ElementCreate, user_id: Optional[str] = None
+) -> Element:
+    actor = data.actor
+    el = Element(
+        board_id=board_id,
+        created_by_user_id=user_id,
+        created_by_actor=actor,
+        updated_by_user_id=user_id,
+        updated_by_actor=actor,
+        **data.model_dump(exclude_none=True, exclude={"actor"}),
+    )
     db.add(el)
     await db.flush()
 
@@ -47,13 +57,18 @@ async def create_element(db: AsyncSession, board_id: str, data: ElementCreate) -
 
 
 async def update_element(
-    db: AsyncSession, board_id: str, element_id: str, data: ElementUpdate
+    db: AsyncSession, board_id: str, element_id: str, data: ElementUpdate,
+    user_id: Optional[str] = None,
 ) -> Element:
     el = await get_element(db, board_id, element_id)
+    actor = data.actor
     old_type = el.type
 
-    for k, v in data.model_dump(exclude_unset=True).items():
+    for k, v in data.model_dump(exclude_unset=True, exclude={"actor"}).items():
         setattr(el, k, v)
+
+    el.updated_by_user_id = user_id
+    el.updated_by_actor = actor
 
     new_type = el.type
     if old_type == "ai_capability" and new_type != "ai_capability":

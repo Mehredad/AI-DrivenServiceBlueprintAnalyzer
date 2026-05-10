@@ -414,6 +414,7 @@ class ElementCreate(BaseModel):
     swimlane_id: Optional[str] = None
     step_id:     Optional[str] = None
     meta:        Optional[dict[str, Any]] = None
+    actor:       str = Field("user", max_length=30)
 
     @field_validator("type")
     @classmethod
@@ -429,6 +430,13 @@ class ElementCreate(BaseModel):
             raise ValueError("status must be draft|in-progress|live|deprecated")
         return v
 
+    @field_validator("actor")
+    @classmethod
+    def validate_actor(cls, v: str) -> str:
+        if v not in {"user", "agent", "agent_undo", "system"}:
+            raise ValueError("actor must be user|agent|agent_undo|system")
+        return v
+
 
 class ElementUpdate(BaseModel):
     type:        Optional[str] = Field(None, max_length=50)
@@ -439,6 +447,7 @@ class ElementUpdate(BaseModel):
     swimlane_id: Optional[str] = None
     step_id:     Optional[str] = None
     meta:        Optional[dict[str, Any]] = None
+    actor:       str = Field("user", max_length=30)
 
     @field_validator("type")
     @classmethod
@@ -452,6 +461,13 @@ class ElementUpdate(BaseModel):
     def validate_status(cls, v: Optional[str]) -> Optional[str]:
         if v is not None and v not in _ELEMENT_STATUSES:
             raise ValueError("status must be draft|in-progress|live|deprecated")
+        return v
+
+    @field_validator("actor")
+    @classmethod
+    def validate_actor(cls, v: str) -> str:
+        if v not in {"user", "agent", "agent_undo", "system"}:
+            raise ValueError("actor must be user|agent|agent_undo|system")
         return v
 
 
@@ -468,5 +484,7 @@ class ElementOut(BaseModel):
     meta:        dict[str, Any] = {}
     created_at:  datetime
     updated_at:  datetime
+    created_by_actor: Optional[str] = None
+    updated_by_actor: Optional[str] = None
 
     model_config = {"from_attributes": True}

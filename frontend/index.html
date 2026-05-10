@@ -231,6 +231,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .el-support_process{border-color:var(--amber);background:var(--amber-bg);}
 .el-moment_of_truth{border-color:var(--red);background:var(--red-bg);}
 .el-card.dimmed{opacity:0.3;filter:grayscale(0.5);}
+.el-ai-badge{font-size:8px;font-weight:700;background:rgba(139,92,246,.13);color:#7c3aed;border-radius:3px;padding:1px 4px;flex-shrink:0;line-height:1.5;}
+.el-prov-section{border-top:1px solid var(--border);margin-top:12px;padding-top:10px;}
+.el-prov-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
+.el-prov-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px;}
+.el-prov-actor{font-size:11px;color:var(--text2);}
+.el-prov-time{font-size:10px;color:var(--text3);white-space:nowrap;}
 /* ROLE CARDS — PRD-04 */
 .role-card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;}
 .role-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 8px;cursor:pointer;text-align:center;transition:all .13s;}
@@ -2897,9 +2903,13 @@ function renderTypeMetaFields(type) {
 function renderElementCard(el) {
   const t = ELEMENT_TYPES.find(x => x.type === el.type) || { icon: '📎', label: el.type };
   const dimCls = isElementHighlighted(el) ? '' : ' dimmed';
+  const recentAgent = el.updated_by_actor === 'agent' && el.updated_at &&
+    (Date.now() - new Date(el.updated_at).getTime() < 86400000);
+  const aiBadge = recentAgent ? '<span class="el-ai-badge">AI</span>' : '';
   return `<div class="el-card el-${escHtml(el.type)}${dimCls}" data-el-id="${escHtml(el.id)}" title="${escHtml(el.name)}" onclick="openElementDrawer('${escHtml(el.id)}');event.stopPropagation()">
     <span class="el-icon">${t.icon}</span>
     <span class="el-name">${escHtml(el.name)}</span>
+    ${aiBadge}
     <span class="el-status el-status-${escHtml((el.status||'draft').replace('-','_'))}"></span>
   </div>`;
 }
@@ -2989,6 +2999,12 @@ function openElementDrawer(id) {
     <div class="fg"><div class="fl">Swimlane</div><select class="fi" id="eld-swimlane">${lanesOpts}</select></div>
     <div class="fg"><div class="fl">Step</div><select class="fi" id="eld-step">${stepsOpts}</select></div>
     ${metaFieldsHtml ? `<div style="border-top:1px solid var(--border);padding-top:10px;margin-top:2px;display:flex;flex-direction:column;gap:10px;">${metaFieldsHtml}</div>` : ''}
+    ${(el.created_by_actor || el.updated_by_actor) ? `
+    <div class="el-prov-section">
+      <div class="el-prov-label">Edit history</div>
+      ${el.created_by_actor ? `<div class="el-prov-row"><span class="el-prov-actor">${el.created_by_actor === 'agent' ? '🤖 Created by AI agent' : '👤 Created by user'}</span><span class="el-prov-time">${_timeAgo(el.created_at)}</span></div>` : ''}
+      ${el.updated_by_actor && el.updated_at !== el.created_at ? `<div class="el-prov-row"><span class="el-prov-actor">${el.updated_by_actor === 'agent' ? '🤖 Last edited by AI agent' : el.updated_by_actor === 'agent_undo' ? '↩ Undone by AI agent' : '👤 Last edited by user'}</span><span class="el-prov-time">${_timeAgo(el.updated_at)}</span></div>` : ''}
+    </div>` : ''}
   `;
 
   // Pre-fill type-specific meta fields with saved values
@@ -3868,6 +3884,7 @@ async function _applyProposedAction(action, boardId) {
         notes:       payload.notes       || null,
         owner:       payload.owner       || null,
         status: 'draft',
+        actor: 'agent',
       };
       const res = await apiFetch(`/api/boards/${boardId}/elements`, { method: 'POST', body: JSON.stringify(body) });
       if (!res || !res.ok) { const e = await res?.json().catch(()=>({})); throw new Error(e?.detail || `API ${res?.status}`); }
@@ -3879,7 +3896,7 @@ async function _applyProposedAction(action, boardId) {
     case 'update_element': {
       const existing = boardState.elements.find(e => e.id === payload.id);
       const old_snapshot = existing ? { ...existing } : null;
-      const res = await apiFetch(`/api/boards/${boardId}/elements/${payload.id}`, { method: 'PATCH', body: JSON.stringify(payload.updates || {}) });
+      const res = await apiFetch(`/api/boards/${boardId}/elements/${payload.id}`, { method: 'PATCH', body: JSON.stringify({ ...(payload.updates || {}), actor: 'agent' }) });
       if (!res || !res.ok) { const e = await res?.json().catch(()=>({})); throw new Error(e?.detail || `API ${res?.status}`); }
       const updated = await res.json();
       const idx = boardState.elements.findIndex(e => e.id === payload.id);
@@ -3932,8 +3949,8 @@ async function _undoProposedAction(action, applyResult, boardId) {
       renderCanvas(); return;
     case 'update_element': {
       if (!applyResult.old_snapshot) return;
-      const { id, board_id, created_at, updated_at, ...updates } = applyResult.old_snapshot;
-      const res = await apiFetch(`/api/boards/${boardId}/elements/${payload.id}`, { method: 'PATCH', body: JSON.stringify(updates) });
+      const { id, board_id, created_at, updated_at, created_by_actor, updated_by_actor, created_by_user_id, updated_by_user_id, ...updates } = applyResult.old_snapshot;
+      const res = await apiFetch(`/api/boards/${boardId}/elements/${payload.id}`, { method: 'PATCH', body: JSON.stringify({ ...updates, actor: 'agent_undo' }) });
       if (res && res.ok) {
         const restored = await res.json();
         const i = boardState.elements.findIndex(e => e.id === payload.id);
@@ -3947,7 +3964,7 @@ async function _undoProposedAction(action, applyResult, boardId) {
       const snap = applyResult.snapshot;
       const res = await apiFetch(`/api/boards/${boardId}/elements`, {
         method: 'POST',
-        body: JSON.stringify({ type: snap.type, name: snap.name, notes: snap.notes, swimlane_id: snap.swimlane_id, step_id: snap.step_id, owner: snap.owner, status: snap.status || 'draft' }),
+        body: JSON.stringify({ type: snap.type, name: snap.name, notes: snap.notes, swimlane_id: snap.swimlane_id, step_id: snap.step_id, owner: snap.owner, status: snap.status || 'draft', actor: 'agent_undo' }),
       });
       if (res && res.ok) { const elem = await res.json(); boardState.elements.push(elem); renderCanvas(); }
       return;
