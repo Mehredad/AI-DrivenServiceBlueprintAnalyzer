@@ -169,6 +169,12 @@ async def serve_template(filename: str):
     return JSONResponse({"detail": "Template not found"}, status_code=404)
 
 
+@app.get("/health/agent", tags=["health"])
+async def health_agent():
+    from app.services.agent_service import get_health_state
+    return JSONResponse(status_code=200, content=get_health_state())
+
+
 @app.get("/health", tags=["health"])
 async def health():
     if not _db_ready:
