@@ -438,6 +438,14 @@ select.fi{appearance:none;cursor:pointer;}
 .chat-send{width:36px;height:36px;border-radius:50%;background:var(--blue);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .12s,background .12s;}
 .chat-send:hover{background:#1240b0;}
 .chat-send:disabled{opacity:.35;cursor:not-allowed;}
+.chat-error-card{padding:10px 12px;border-radius:8px;background:#fff5f5;border:1.5px solid #ffcccc;margin:4px 0;display:flex;flex-direction:column;gap:4px;}
+.chat-error-icon{color:#d94040;margin-right:5px;}
+.chat-error-msg{font-size:11px;color:var(--text);line-height:1.5;}
+.chat-error-reqid{font-size:9px;color:var(--text3);}
+.chat-error-hint{font-size:9px;color:var(--text3);margin-left:6px;}
+.chat-error-action{margin-top:4px;}
+.chat-error-btn{font-size:10px;padding:4px 10px;border-radius:5px;border:1px solid var(--border);background:var(--surface);cursor:pointer;color:var(--text2);font-family:inherit;}
+.chat-error-btn:hover{background:var(--bg2);}
 .chat-hint{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);margin-top:4px;}
 .chat-attach-btn{width:26px;height:26px;border-radius:50%;background:none;border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;color:var(--text3);transition:all .12s;padding:0;}
 .chat-attach-btn:hover{background:var(--bg2);border-color:var(--border2);color:var(--text);}
@@ -1389,7 +1397,7 @@ select.fi{appearance:none;cursor:pointer;}
             <input type="file" id="chat-file-input" multiple accept=".pdf,image/png,image/jpeg,image/webp" style="display:none;" onchange="handleChatFiles(this.files);this.value=''">
             <textarea class="chat-input" id="chat-input" placeholder="Ask anything about this blueprint…" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
             <button class="chat-send" id="chat-send-btn" onclick="sendChat()" title="Send message">
-              <svg width="14" height="14" viewBox="0 0 12 12" fill="none"><path d="M1 6L11 1L7 6L11 11L1 6Z" fill="white"/></svg>
+              <svg width="14" height="14" viewBox="0 0 12 12" fill="none"><path d="M11 6L1 1L5 6L1 11L11 6Z" fill="white"/></svg>
             </button>
           </div>
           <div class="chat-hint">Enter to send · Shift+Enter for new line · 📎 attach PDF or image</div>
@@ -3134,6 +3142,8 @@ function initRealtime(boardId) {
 // ═══════════════════════════════════════════════════════
 // BACKEND AGENT CHAT (replaces direct Anthropic call)
 // ═══════════════════════════════════════════════════════
+const _retryContexts = new Map();
+
 async function callBackendAgent(userMsg, attachments = []) {
   if (!authToken) { showAuthModal(); return; }
   if (!currentBoardId) {
@@ -3169,6 +3179,13 @@ async function callBackendAgent(userMsg, attachments = []) {
     }
 
     const data = await res.json();
+
+    if (data.error) {
+      addErrorCard(data.error, userMsg, attachments);
+      chatHistory.pop();
+      return;
+    }
+
     const text = data.response || '';
     chatHistory.push({ role: 'assistant', content: text });
     addAgentMsg(text, getContextActions(userMsg));
@@ -3181,6 +3198,51 @@ async function callBackendAgent(userMsg, attachments = []) {
     sendBtn.disabled = false;
     isStreaming = false;
   }
+}
+
+function addErrorCard(error, userMsg, attachments = []) {
+  const area = document.getElementById('chat-area');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-wrap agent';
+  const ctxId = Math.random().toString(36).slice(2);
+  _retryContexts.set(ctxId, { userMsg, attachments });
+
+  const advice = error.retry_advice;
+  let actionHtml = '';
+  if (advice === 'retry_now' || advice === 'wait_1m') {
+    const hint = advice === 'wait_1m' ? '<span class="chat-error-hint">Wait a moment first</span>' : '';
+    actionHtml = `<div class="chat-error-action"><button class="chat-error-btn" onclick="_doRetry('${ctxId}',this)">Try again</button>${hint}</div>`;
+  } else if (advice === 'edit_request') {
+    actionHtml = `<div class="chat-error-action"><button class="chat-error-btn" onclick="_doEditRetry('${ctxId}',this)">Edit and retry</button></div>`;
+  } else if (advice === 'contact_admin') {
+    actionHtml = '<div class="chat-error-action"><a href="mailto:support@blueprint.ai" class="chat-error-btn" style="text-decoration:none;display:inline-block;">Contact support</a></div>';
+  }
+
+  wrap.innerHTML = `<div class="chat-error-card"><div><span class="chat-error-icon">⚠</span><span class="chat-error-msg">${escHtml(error.user_message)}</span></div>${actionHtml}<div class="chat-error-reqid">ID: ${escHtml(error.request_id)}</div></div><div class="msg-time">${getTime()}</div>`;
+  area.appendChild(wrap);
+  area.scrollTop = area.scrollHeight;
+}
+
+function _doRetry(ctxId, btn) {
+  const ctx = _retryContexts.get(ctxId);
+  if (!ctx) return;
+  _retryContexts.delete(ctxId);
+  btn.closest('.msg-wrap').remove();
+  addUserMsg(ctx.userMsg, ctx.attachments);
+  callBackendAgent(ctx.userMsg, ctx.attachments);
+}
+
+function _doEditRetry(ctxId, btn) {
+  const ctx = _retryContexts.get(ctxId);
+  if (!ctx) return;
+  _retryContexts.delete(ctxId);
+  btn.closest('.msg-wrap').remove();
+  const input = document.getElementById('chat-input');
+  input.value = ctx.userMsg;
+  input.focus();
+  autoResize(input);
+  pendingAttachments = [...ctx.attachments];
+  renderPendingChips();
 }
 
 function getContextActions(userMsg) {

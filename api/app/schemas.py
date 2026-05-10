@@ -228,10 +228,24 @@ class ChatRequest(BaseModel):
     attachments: list[str] = Field(default_factory=list, max_length=3)  # list of upload UUIDs
 
 
+class AgentError(BaseModel):
+    code:         str
+    user_message: str
+    retry_advice: str
+    request_id:   str
+
+
+class AgentCallError(Exception):
+    def __init__(self, error: AgentError) -> None:
+        self.error = error
+        super().__init__(error.code)
+
+
 class ChatResponse(BaseModel):
-    response:    str
-    token_count: int
-    message_id:  str
+    response:    Optional[str] = None
+    token_count: Optional[int] = None
+    message_id:  Optional[str] = None
+    error:       Optional[AgentError] = None
 
 
 class ChatMessageOut(BaseModel):

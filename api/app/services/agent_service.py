@@ -1,5 +1,5 @@
 """
-Agent service — builds a board-aware system prompt from live DB state,
+Agent service -- builds a board-aware system prompt from live DB state,
 calls the Google Gemini API server-side (key never leaves server),
 persists both turns of the conversation.
 """
@@ -7,14 +7,18 @@ from __future__ import annotations
 
 import json
 import logging
+import uuid
+from datetime import datetime, timezone
 from typing import Optional
 
 try:
     from google import genai
     from google.genai import types
+    from google.genai import errors as genai_errors
 except ImportError:  # CI / test environment without google-genai installed
-    genai = None  # type: ignore[assignment]
-    types = None  # type: ignore[assignment]
+    genai         = None  # type: ignore[assignment]
+    types         = None  # type: ignore[assignment]
+    genai_errors  = None  # type: ignore[assignment]
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -22,11 +26,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.models import Board, Capability, Element, Insight, GovernanceDecision, ChatMessage, Upload
+from app.schemas import AgentError, AgentCallError
+from app.services.error_messages import USER_MESSAGES, RETRY_ADVICE
 
 log = logging.getLogger(__name__)
 
 settings = get_settings()
 _client = None
+
+# In-memory consecutive-failure counter for /health/agent.
+# NOTE: Resets on cold start -- each Vercel invocation may be a fresh process,
+# so this counter is only meaningful within a warm instance.
+_consecutive_failures: int = 0
+_last_error_code: Optional[str] = None
 
 
 def _get_client():
@@ -42,7 +54,65 @@ MAX_HISTORY_MESSAGES = 20
 MAX_RESPONSE_TOKENS  = 1024
 
 
-# ── Board context builder ─────────────────────────────────────────────────────
+# -- Health counter ------------------------------------------------------------
+
+def get_health_state() -> dict:
+    """Return current health status for GET /health/agent."""
+    global _consecutive_failures, _last_error_code
+    if _consecutive_failures == 0:
+        status = "ok"
+    elif _consecutive_failures < 5:
+        status = "degraded"
+    else:
+        status = "down"
+    return {
+        "status":     status,
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+        "last_error": _last_error_code,
+    }
+
+
+# -- Error classification ------------------------------------------------------
+
+def _classify_error(exc: Exception, request_id: str) -> AgentError:
+    """
+    Map a google-genai SDK exception to a user-facing AgentError.
+
+    The SDK (google-genai >= 1.0) raises google.genai.errors.ClientError for
+    4xx responses and google.genai.errors.ServerError for 5xx -- NOT the
+    google.api_core.exceptions hierarchy referenced in older SDK docs.
+    Each exception has .code (int HTTP status) and .status (str e.g. RESOURCE_EXHAUSTED).
+    """
+    code = "unknown"
+
+    if genai_errors is not None:
+        if isinstance(exc, genai_errors.ClientError):
+            http_code  = getattr(exc, "code", 0)
+            status_str = str(getattr(exc, "status", "") or "").upper()
+            if http_code == 429:
+                # RESOURCE_EXHAUSTED on free tier = daily quota; other 429 = rate limit
+                if "RESOURCE_EXHAUSTED" in status_str or "QUOTA" in status_str:
+                    code = "quota_exhausted"
+                else:
+                    code = "rate_limited"
+            elif http_code in (401, 403):
+                code = "auth_failure"
+            elif http_code == 400:
+                code = "invalid_request"
+            else:
+                code = "unknown"
+        elif isinstance(exc, genai_errors.ServerError):
+            code = "service_unavailable"
+
+    return AgentError(
+        code=code,
+        user_message=USER_MESSAGES[code],
+        retry_advice=RETRY_ADVICE[code],
+        request_id=request_id,
+    )
+
+
+# -- Board context builder -----------------------------------------------------
 
 async def build_board_context(db: AsyncSession, board_id: str) -> dict:
     """Pull live board state from every relevant table and return as a dict."""
@@ -126,7 +196,7 @@ async def build_board_context(db: AsyncSession, board_id: str) -> dict:
     }
 
 
-# ── System prompt builder ─────────────────────────────────────────────────────
+# -- System prompt builder -----------------------------------------------------
 
 def _has_ai_content(ctx: dict) -> bool:
     if ctx.get("capabilities"):
@@ -136,7 +206,7 @@ def _has_ai_content(ctx: dict) -> bool:
 
 def _core_section(ctx: dict) -> str:
     ctx_json = json.dumps(ctx, indent=2, default=str)
-    return f"""You are the Blueprint Agent — an expert collaborator embedded in Blueprint AI, a tool for mapping end-to-end system journeys across stakeholders, services, and systems.
+    return f"""You are the Blueprint Agent -- an expert collaborator embedded in Blueprint AI, a tool for mapping end-to-end system journeys across stakeholders, services, and systems.
 
 You have real-time access to the current board:
 
@@ -144,14 +214,14 @@ You have real-time access to the current board:
 
 Your responsibilities:
 1. Help users understand and improve this specific board. Always reference actual elements, swimlanes, and steps by name.
-2. Identify gaps, risks, and opportunities grounded in what's actually on the board.
-3. Suggest concrete, actionable next steps — not generic best practices.
-4. When asked, draft governance notes, risk summaries, or documentation based on the board's content.
-5. This board may or may not involve AI. Don't assume AI is present unless you see AI capabilities or AI-tagged elements in the board state.
+2. Identify gaps, risks, and opportunities grounded in what is actually on the board.
+3. Suggest concrete, actionable next steps -- not generic best practices.
+4. When asked, draft governance notes, risk summaries, or documentation based on the board content.
+5. This board may or may not involve AI. Do not assume AI is present unless you see AI capabilities or AI-tagged elements in the board state.
 
 Communication:
 - Be specific. Reference element IDs and names.
-- Be brief. 150–300 words unless asked for more.
+- Be brief. 150-300 words unless asked for more.
 - Use bullets for multiple items, **bold** for key terms."""
 
 
@@ -190,7 +260,7 @@ def build_system_prompt(ctx: dict, role: Optional[str] = None) -> str:
     return "\n\n".join(sections)
 
 
-# ── Message format helpers ────────────────────────────────────────────────────
+# -- Message format helpers ----------------------------------------------------
 
 def _history_to_gemini(history: list[dict]) -> list[types.Content]:
     """Convert stored message history to Gemini Content objects."""
@@ -244,7 +314,7 @@ async def _build_user_parts(
     return parts, attach_refs
 
 
-# ── Main chat function ────────────────────────────────────────────────────────
+# -- Main chat function --------------------------------------------------------
 
 async def chat(
     db:             AsyncSession,
@@ -257,15 +327,19 @@ async def chat(
 ) -> tuple[str, int, str]:
     """
     Call Gemini API with board-aware system prompt.
-    Persists both turns to chat_messages.
+    Persists user turn immediately; persists assistant turn on success only.
     Returns (response_text, total_tokens_used, assistant_message_id).
+    Raises AgentCallError on any AI service failure.
     """
+    global _consecutive_failures, _last_error_code
+
     if types is None:
         raise HTTPException(503, "AI service unavailable: google-genai package not installed.")
 
-    ctx    = await build_board_context(db, board_id)
-    system = build_system_prompt(ctx, role=role)
+    request_id = str(uuid.uuid4())
 
+    ctx     = await build_board_context(db, board_id)
+    system  = build_system_prompt(ctx, role=role)
     trimmed = history[-MAX_HISTORY_MESSAGES:]
 
     if attachment_ids:
@@ -275,6 +349,16 @@ async def chat(
     else:
         user_parts  = [types.Part(text=message)]
         attach_refs = []
+
+    # Persist user message before LLM call (FR-7: user message survives AI errors).
+    # commit() not flush() so the row is durable even when the LLM call fails and
+    # the session never reaches its end-of-request commit.
+    user_msg = ChatMessage(
+        board_id=board_id, user_id=user_id, role="user",
+        content=message, attachments=attach_refs,
+    )
+    db.add(user_msg)
+    await db.commit()
 
     contents = _history_to_gemini(trimmed) + [
         types.Content(role="user", parts=user_parts)
@@ -292,23 +376,28 @@ async def chat(
     except HTTPException:
         raise
     except Exception as exc:
-        log.error("Gemini API error (board=%s): %s", board_id, exc)
-        raise HTTPException(502, f"AI service error: {type(exc).__name__}") from exc
+        _consecutive_failures += 1
+        agent_error = _classify_error(exc, request_id)
+        _last_error_code = agent_error.code
+        log.error(
+            "Gemini API error (request_id=%s board=%s user=%s code=%s): %s: %s",
+            request_id, board_id, user_id, agent_error.code,
+            type(exc).__name__, exc,
+        )
+        raise AgentCallError(error=agent_error) from exc
+
+    _consecutive_failures = 0
+    _last_error_code = None
 
     text   = response.text or ""
     tokens = response.usage_metadata.total_token_count if response.usage_metadata else 0
 
     log.info("Chat tokens used: %d (board=%s, attachments=%d)", tokens, board_id, len(attach_refs))
 
-    user_msg = ChatMessage(
-        board_id=board_id, user_id=user_id, role="user",
-        content=message, attachments=attach_refs,
-    )
     asst_msg = ChatMessage(
         board_id=board_id, user_id=None, role="assistant",
         content=text, token_count=tokens,
     )
-    db.add(user_msg)
     db.add(asst_msg)
     await db.flush()
 

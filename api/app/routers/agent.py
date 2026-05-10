@@ -1,8 +1,8 @@
 """
-Agent router — /api/agent/*
-POST /api/agent/chat              → call Anthropic, persist, return response
-GET  /api/agent/boards/{id}/history → paginated chat history
-DELETE /api/agent/boards/{id}/history → clear history
+Agent router -- /api/agent/*
+POST /api/agent/chat              -> call Gemini, persist, return response
+GET  /api/agent/boards/{id}/history -> paginated chat history
+DELETE /api/agent/boards/{id}/history -> clear history
 """
 import logging
 
@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 from app.database import get_db
 from app.models import ChatMessage, User
-from app.schemas import ChatRequest, ChatResponse, ChatMessageOut
+from app.schemas import ChatRequest, ChatResponse, ChatMessageOut, AgentCallError
 from app.services import agent_service
 from app.services.board_service import assert_board_access
 from app.middleware.auth_middleware import get_current_user
@@ -28,7 +28,6 @@ async def chat(
     user: User = Depends(get_current_user),
     db:   AsyncSession = Depends(get_db),
 ):
-    # Verify board access before spending any Gemini tokens
     await assert_board_access(db, body.board_id, user.id)
 
     history = [{"role": h.role, "content": h.content} for h in body.history]
@@ -39,6 +38,10 @@ async def chat(
             role=body.role,
             attachment_ids=body.attachments,
         )
+    except AgentCallError as exc:
+        # Return a structured 200 so the client renders an inline error card
+        # rather than treating it as a network failure.
+        return ChatResponse(error=exc.error)
     except HTTPException:
         raise
     except Exception as exc:
@@ -66,7 +69,6 @@ async def get_history(
         .order_by(ChatMessage.created_at.desc())
         .limit(limit)
     )
-    # Return in chronological order (oldest first)
     return list(reversed(result.scalars().all()))
 
 
