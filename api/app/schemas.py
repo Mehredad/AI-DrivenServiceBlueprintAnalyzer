@@ -220,6 +220,11 @@ class ChatHistoryItem(BaseModel):
     content: str
 
 
+class ProposedAction(BaseModel):
+    type:    str
+    payload: dict[str, Any]
+
+
 class ChatRequest(BaseModel):
     board_id:    str
     message:     str = Field(min_length=1, max_length=4000)
@@ -246,6 +251,7 @@ class ChatResponse(BaseModel):
     token_count: Optional[int] = None
     message_id:  Optional[str] = None
     error:       Optional[AgentError] = None
+    actions:     list[ProposedAction] = []
 
 
 class ChatMessageOut(BaseModel):

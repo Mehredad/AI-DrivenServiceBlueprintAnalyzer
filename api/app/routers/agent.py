@@ -34,7 +34,7 @@ async def chat(
     history = [{"role": h.role, "content": h.content} for h in body.history]
 
     try:
-        text, tokens, msg_id = await agent_service.chat(
+        text, tokens, msg_id, actions = await agent_service.chat(
             db, body.board_id, user.id, body.message, history,
             role=body.role,
             attachment_ids=body.attachments,
@@ -49,7 +49,7 @@ async def chat(
         log.error("Unexpected error in /api/agent/chat: %s", exc, exc_info=True)
         raise HTTPException(500, f"Chat failed unexpectedly: {type(exc).__name__}")
 
-    return ChatResponse(response=text, token_count=tokens, message_id=msg_id)
+    return ChatResponse(response=text, token_count=tokens, message_id=msg_id, actions=actions)
 
 
 @router.get("/boards/{board_id}/history", response_model=list[ChatMessageOut])
