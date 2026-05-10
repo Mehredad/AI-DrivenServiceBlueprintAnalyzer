@@ -10,6 +10,7 @@ from fastapi import HTTPException
 
 from app.models import Element, Capability
 from app.schemas import ElementCreate, ElementUpdate
+from app.services.history_service import record_change_event, _element_snapshot
 
 log = logging.getLogger(__name__)
 
@@ -53,6 +54,14 @@ async def create_element(
 
     await db.commit()
     await db.refresh(el)
+
+    try:
+        snap = _element_snapshot(el)
+        await record_change_event(db, board_id, user_id, actor, "element", str(el.id), "create", None, snap)
+        await db.commit()
+    except Exception as exc:
+        log.warning("history event failed (create) for element %s: %s", el.id, exc)
+
     return el
 
 
@@ -61,6 +70,7 @@ async def update_element(
     user_id: Optional[str] = None,
 ) -> Element:
     el = await get_element(db, board_id, element_id)
+    before_snap = _element_snapshot(el)
     actor = data.actor
     old_type = el.type
 
@@ -78,15 +88,32 @@ async def update_element(
 
     await db.commit()
     await db.refresh(el)
+
+    try:
+        after_snap = _element_snapshot(el)
+        await record_change_event(db, board_id, user_id, actor, "element", str(el.id), "update", before_snap, after_snap)
+        await db.commit()
+    except Exception as exc:
+        log.warning("history event failed (update) for element %s: %s", el.id, exc)
+
     return el
 
 
-async def delete_element(db: AsyncSession, board_id: str, element_id: str) -> None:
+async def delete_element(
+    db: AsyncSession, board_id: str, element_id: str, user_id: Optional[str] = None
+) -> None:
     el = await get_element(db, board_id, element_id)
+    before_snap = _element_snapshot(el)
     if el.type == "ai_capability":
         await _sync_capability_delete(db, board_id, element_id)
     await db.delete(el)
     await db.commit()
+
+    try:
+        await record_change_event(db, board_id, user_id, "user", "element", element_id, "delete", before_snap, None)
+        await db.commit()
+    except Exception as exc:
+        log.warning("history event failed (delete) for element %s: %s", element_id, exc)
 
 
 # ── Capability sync helpers (best-effort) ─────────────────────────────────────

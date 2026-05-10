@@ -68,4 +68,4 @@ async def delete_element_route(
     db:   AsyncSession = Depends(get_db),
 ):
     await assert_board_access(db, board_id, user.id, require_role="editor")
-    await delete_element(db, board_id, element_id)
+    await delete_element(db, board_id, element_id, user_id=str(user.id))

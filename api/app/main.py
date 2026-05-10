@@ -36,6 +36,7 @@ from app.routers.exports      import router as exports_router
 from app.routers.audit        import router as audit_router
 from app.routers.uploads      import router as uploads_router
 from app.routers.imports      import router as imports_router
+from app.routers.history      import router as history_router
 
 settings = get_settings()
 logging.basicConfig(level=getattr(logging, settings.log_level.upper(), logging.INFO))
@@ -111,6 +112,7 @@ app.include_router(exports_router)
 app.include_router(audit_router)
 app.include_router(uploads_router)
 app.include_router(imports_router)
+app.include_router(history_router)
 
 
 class _AnalyzeRequest(pydantic.BaseModel):
