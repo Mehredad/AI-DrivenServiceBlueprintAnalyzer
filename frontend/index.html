@@ -4261,6 +4261,8 @@ function renderHistory(events, reset) {
           <span class="hist-op hist-op-${escHtml(ev.operation)}">${escHtml(ev.operation)}</span>
           <button class="btn btn-ghost" style="height:22px;font-size:10px;margin-left:auto;"
             onclick="viewChangeEvent('${escHtml(ev.id)}')">View</button>
+          <button class="btn btn-ghost" style="height:22px;font-size:10px;"
+            onclick="restoreChangeEvent('${escHtml(ev.id)}')">Restore</button>
         </div>`;
       list.appendChild(div);
     });
@@ -4307,6 +4309,39 @@ function viewChangeEvent(eventId) {
     ${ev.after_snapshot  ? `<div class="hist-snap-label" style="margin-top:12px;">After</div><div class="hist-snap">${escHtml(fmt(ev.after_snapshot))}</div>` : ''}`;
 
   openModal('history-event');
+}
+
+async function restoreChangeEvent(eventId) {
+  const ev = _historyEvents.find(e => e.id === eventId);
+  if (!ev) return;
+
+  const name = ev.after_snapshot?.name || ev.before_snapshot?.name || 'this element';
+  const ts   = new Date(ev.created_at).toLocaleString();
+  const verb = ev.operation === 'delete' ? 'Recreate' : 'Restore';
+  if (!confirm(`${verb} "${name}" to its state from ${ts}?\nAny changes since will be overwritten.`)) return;
+
+  try {
+    const res = await apiFetch(`/api/boards/${currentBoardId}/history/${eventId}/restore`, { method: 'POST' });
+    if (!res || !res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showToast(err.detail || 'Restore failed');
+      return;
+    }
+    const data = await res.json();
+
+    const elRes = await apiFetch(`/api/boards/${currentBoardId}/elements`);
+    if (elRes && elRes.ok) { boardState.elements = await elRes.json(); renderCanvas(); }
+
+    loadHistory(true);
+
+    const warn = data.warnings?.includes('swimlane_not_found')
+      ? ' Note: original swimlane no longer exists — restored without swimlane.'
+      : '';
+    showToast(`${verb === 'Recreate' ? 'Recreated' : 'Restored'} "${name}"` + warn);
+  } catch (e) {
+    console.warn('restoreChangeEvent error', e);
+    showToast('Restore failed');
+  }
 }
 
 function showOutTab(name, btn) {
