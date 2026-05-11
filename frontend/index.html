@@ -350,6 +350,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .diff-row-removed{background:var(--red-bg);}
 .diff-row-changed{background:var(--amber-bg);}
 .diff-unch-btn{font-size:10px;color:var(--text3);cursor:pointer;text-decoration:underline;border:none;background:none;font-family:'DM Sans',sans-serif;padding:4px 0;}
+/* Commit groups (PRD-17e) */
+.hist-commit{border-left:3px solid var(--blue-bd);}
+.hist-sub-events{display:none;flex-direction:column;gap:4px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+.hist-sub-ev{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:11px;flex-wrap:wrap;}
+.hist-ev-cb{cursor:pointer;accent-color:var(--blue);width:13px;height:13px;flex-shrink:0;}
 .m-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
 .m-val{font-family:'Fraunces',serif;font-size:24px;margin-top:2px;line-height:1;font-weight:300;}
 .m-delta{font-size:10px;margin-top:2px;font-family:'JetBrains Mono',monospace;}
@@ -1420,9 +1425,14 @@ select.fi{appearance:none;cursor:pointer;}
 
     <!-- ═══ HISTORY VIEW ═══ -->
     <div class="view" id="view-history">
-      <div style="display:flex;align-items:center;gap:8px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <div class="view-title">Change History</div>
-        <button class="btn btn-ghost" style="height:26px;margin-left:auto;" onclick="loadHistory(true)">↻ Refresh</button>
+        <div id="history-group-bar" style="display:none;align-items:center;gap:6px;margin-left:auto;">
+          <span id="history-sel-count" style="font-size:11px;color:var(--text3);"></span>
+          <button class="btn btn-ghost" style="height:26px;font-size:11px;" onclick="groupSelectedEvents()">Group into commit</button>
+          <button class="btn btn-ghost" style="height:26px;font-size:11px;" onclick="_clearHistorySelection()">Cancel</button>
+        </div>
+        <button class="btn btn-ghost" style="height:26px;margin-left:auto;" onclick="loadHistory(true)" id="history-refresh-btn">↻ Refresh</button>
       </div>
       <div id="history-empty" style="text-align:center;padding:40px;color:var(--text3);font-size:12px;display:none;">No changes recorded yet. Create or edit elements to start tracking history.</div>
       <div id="history-list" style="display:flex;flex-direction:column;gap:8px;"></div>
@@ -1843,8 +1853,9 @@ let realtimeChannel = null;
 let _historyOffset  = 0;
 let _historyHasMore = false;
 let _historyEvents  = [];   // cache for the detail modal
-let _histCurrentEv  = null;
-let _histShowRaw    = false;
+let _histCurrentEv      = null;
+let _histShowRaw        = false;
+let _histSelectedIds    = new Set();  // event IDs selected for grouping (e-5)
 let pendingAttachments = [];   // [{upload_id, tempId, filename, content_type, uploading}]
 
 // ── Authenticated fetch wrapper ────────────────────────
@@ -1985,7 +1996,7 @@ function logout() {
   currentBoardId = '';
   chatHistory = [];
   _chatHistoryOffset = 0; _chatHistoryBoard = null; _chatHistoryHasMore = false;
-  _historyOffset = 0; _historyHasMore = false; _historyEvents = [];
+  _historyOffset = 0; _historyHasMore = false; _historyEvents = []; _histSelectedIds = new Set();
   boardsList = [];
   const chatArea = document.getElementById('chat-area');
   if (chatArea) chatArea.innerHTML = '';
@@ -4252,6 +4263,26 @@ function _histSummary(ev) {
   return `${ev.operation} on ${ent}`;
 }
 
+function _singleEventHtml(ev, inCommit) {
+  const cbHtml = inCommit ? '' :
+    `<input type="checkbox" class="hist-ev-cb" id="cb-${escHtml(ev.id)}"
+       onchange="_histToggleSelect('${escHtml(ev.id)}',this.checked)">`;
+  return `
+    <div class="hist-meta">
+      ${cbHtml}
+      <span class="hist-actor">${_histActorLabel(ev)}</span>
+      <span class="hist-time">${_timeAgo(ev.created_at)}</span>
+    </div>
+    <div class="hist-summary">${_histSummary(ev)}</div>
+    <div class="hist-footer">
+      <span class="hist-op hist-op-${escHtml(ev.operation)}">${escHtml(ev.operation)}</span>
+      <button class="btn btn-ghost" style="height:22px;font-size:10px;margin-left:auto;"
+        onclick="viewChangeEvent('${escHtml(ev.id)}')">View</button>
+      <button class="btn btn-ghost" style="height:22px;font-size:10px;"
+        onclick="restoreChangeEvent('${escHtml(ev.id)}')">Restore</button>
+    </div>`;
+}
+
 function renderHistory(events, reset) {
   const list  = document.getElementById('history-list');
   const empty = document.getElementById('history-empty');
@@ -4263,28 +4294,115 @@ function renderHistory(events, reset) {
 
   if (_historyEvents.length === 0) {
     empty.style.display = 'block';
-  } else {
-    empty.style.display = 'none';
-    events.forEach(ev => {
-      const div = document.createElement('div');
-      div.className = 'hist-item';
+    more.style.display  = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+
+  // Group consecutive events sharing the same commit_id
+  const groups = [];
+  const seenCommit = {};
+  events.forEach(ev => {
+    if (ev.commit_id) {
+      if (seenCommit[ev.commit_id]) {
+        seenCommit[ev.commit_id].events.push(ev);
+      } else {
+        const g = { type: 'commit', commit_id: ev.commit_id, message: ev.commit_message,
+                    actor_type: ev.actor_type, actor_name: ev.actor_name,
+                    created_at: ev.created_at, events: [ev] };
+        seenCommit[ev.commit_id] = g;
+        groups.push(g);
+      }
+    } else {
+      groups.push({ type: 'event', ev });
+    }
+  });
+
+  groups.forEach(g => {
+    const div = document.createElement('div');
+    div.className = 'hist-item';
+    if (g.type === 'commit') {
+      div.classList.add('hist-commit');
+      const uid = 'cg' + Math.random().toString(36).slice(2, 8);
+      const evCount = g.events.length;
+      const subHtml = g.events.map(ev =>
+        `<div class="hist-sub-ev">
+          <span class="hist-op hist-op-${escHtml(ev.operation)}">${escHtml(ev.operation)}</span>
+          <span style="flex:1;color:var(--text2);">${_histSummary(ev)}</span>
+          <button class="btn btn-ghost" style="height:20px;font-size:10px;"
+            onclick="viewChangeEvent('${escHtml(ev.id)}')">View</button>
+          <button class="btn btn-ghost" style="height:20px;font-size:10px;"
+            onclick="restoreChangeEvent('${escHtml(ev.id)}')">Restore</button>
+        </div>`
+      ).join('');
       div.innerHTML = `
         <div class="hist-meta">
-          <span class="hist-actor">${_histActorLabel(ev)}</span>
-          <span class="hist-time">${_timeAgo(ev.created_at)}</span>
+          <span class="hist-actor">${_histActorLabel({actor_type: g.actor_type, actor_name: g.actor_name})}</span>
+          <span class="hist-time">${_timeAgo(g.created_at)}</span>
         </div>
-        <div class="hist-summary">${_histSummary(ev)}</div>
+        <div class="hist-summary" style="font-weight:500;">${escHtml(g.message || 'Commit')}</div>
         <div class="hist-footer">
-          <span class="hist-op hist-op-${escHtml(ev.operation)}">${escHtml(ev.operation)}</span>
-          <button class="btn btn-ghost" style="height:22px;font-size:10px;margin-left:auto;"
-            onclick="viewChangeEvent('${escHtml(ev.id)}')">View</button>
-          <button class="btn btn-ghost" style="height:22px;font-size:10px;"
-            onclick="restoreChangeEvent('${escHtml(ev.id)}')">Restore</button>
-        </div>`;
-      list.appendChild(div);
-    });
-  }
+          <span class="hist-op hist-op-update">${evCount} change${evCount !== 1 ? 's' : ''}</span>
+          <button class="btn btn-ghost" id="expand-${uid}" style="height:22px;font-size:10px;margin-left:auto;"
+            onclick="_toggleCommitExpand('${uid}')">▶ Expand</button>
+        </div>
+        <div class="hist-sub-events" id="${uid}">${subHtml}</div>`;
+    } else {
+      div.innerHTML = _singleEventHtml(g.ev, false);
+    }
+    list.appendChild(div);
+  });
+
   more.style.display = _historyHasMore ? 'block' : 'none';
+}
+
+function _toggleCommitExpand(uid) {
+  const el  = document.getElementById(uid);
+  const btn = document.getElementById('expand-' + uid);
+  if (!el) return;
+  const open = el.style.display === 'flex';
+  el.style.display  = open ? 'none' : 'flex';
+  if (btn) btn.textContent = open ? '▶ Expand' : '▼ Collapse';
+}
+
+function _histToggleSelect(eventId, checked) {
+  if (checked) _histSelectedIds.add(eventId); else _histSelectedIds.delete(eventId);
+  const bar     = document.getElementById('history-group-bar');
+  const refBtn  = document.getElementById('history-refresh-btn');
+  const cnt     = document.getElementById('history-sel-count');
+  const n       = _histSelectedIds.size;
+  const hasAny  = n > 0;
+  if (bar)    bar.style.display    = hasAny ? 'flex' : 'none';
+  if (refBtn) refBtn.style.display = hasAny ? 'none' : '';
+  if (cnt)    cnt.textContent      = n + ' selected';
+}
+
+function _clearHistorySelection() {
+  _histSelectedIds.clear();
+  document.querySelectorAll('.hist-ev-cb').forEach(cb => { cb.checked = false; });
+  const bar    = document.getElementById('history-group-bar');
+  const refBtn = document.getElementById('history-refresh-btn');
+  if (bar)    bar.style.display    = 'none';
+  if (refBtn) refBtn.style.display = '';
+}
+
+async function groupSelectedEvents() {
+  if (_histSelectedIds.size === 0) return;
+  const msg = prompt('Enter a commit message for these ' + _histSelectedIds.size + ' changes:');
+  if (!msg || !msg.trim()) return;
+  try {
+    const res = await apiFetch(`/api/boards/${currentBoardId}/commits`, {
+      method: 'POST',
+      body: JSON.stringify({ event_ids: [..._histSelectedIds], message: msg.trim() }),
+    });
+    if (!res || !res.ok) { showToast('Grouping failed'); return; }
+    _clearHistorySelection();
+    loadHistory(true);
+    showToast('Grouped into commit');
+  } catch (e) {
+    console.warn('groupSelectedEvents error', e);
+    showToast('Grouping failed');
+  }
 }
 
 async function loadHistory(reset) {

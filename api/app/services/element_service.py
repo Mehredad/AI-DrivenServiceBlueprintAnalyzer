@@ -57,7 +57,10 @@ async def create_element(
 
     try:
         snap = _element_snapshot(el)
-        await record_change_event(db, board_id, user_id, actor, "element", str(el.id), "create", None, snap)
+        await record_change_event(
+            db, board_id, user_id, actor, "element", str(el.id), "create", None, snap,
+            commit_message=f"Created element '{el.name}'",
+        )
         await db.commit()
     except Exception as exc:
         log.warning("history event failed (create) for element %s: %s", el.id, exc)
@@ -91,7 +94,10 @@ async def update_element(
 
     try:
         after_snap = _element_snapshot(el)
-        await record_change_event(db, board_id, user_id, actor, "element", str(el.id), "update", before_snap, after_snap)
+        await record_change_event(
+            db, board_id, user_id, actor, "element", str(el.id), "update", before_snap, after_snap,
+            commit_message=f"Updated element '{el.name}'",
+        )
         await db.commit()
     except Exception as exc:
         log.warning("history event failed (update) for element %s: %s", el.id, exc)
@@ -109,8 +115,12 @@ async def delete_element(
     await db.delete(el)
     await db.commit()
 
+    el_name = before_snap.get("name", element_id) if before_snap else element_id
     try:
-        await record_change_event(db, board_id, user_id, "user", "element", element_id, "delete", before_snap, None)
+        await record_change_event(
+            db, board_id, user_id, "user", "element", element_id, "delete", before_snap, None,
+            commit_message=f"Deleted element '{el_name}'",
+        )
         await db.commit()
     except Exception as exc:
         log.warning("history event failed (delete) for element %s: %s", element_id, exc)
