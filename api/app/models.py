@@ -84,6 +84,7 @@ class Board(Base):
     uploads       = relationship("Upload",            back_populates="board", cascade="all, delete-orphan")
     import_jobs   = relationship("ImportJob",         back_populates="board", cascade="all, delete-orphan")
     change_events = relationship("ChangeEvent",       back_populates="board", cascade="all, delete-orphan")
+    commits       = relationship("Commit",            back_populates="board", cascade="all, delete-orphan")
 
 
 class BoardCollaborator(Base):
@@ -304,6 +305,24 @@ class ImportJob(Base):
 # CHANGE EVENTS (PRD-17a — snapshot-based history)
 # ─────────────────────────────────────────────────────────────────────────────
 
+# ─────────────────────────────────────────────────────────────────────────────
+# COMMITS (PRD-17e — semantic grouping of change events)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class Commit(Base):
+    __tablename__ = "commits"
+
+    id             = Column(Uuid(as_uuid=False), primary_key=True, default=_uuid)
+    board_id       = Column(Uuid(as_uuid=False), ForeignKey("boards.id", ondelete="CASCADE"), nullable=False, index=True)
+    author_user_id = Column(Uuid(as_uuid=False), ForeignKey("users.id"), nullable=True)
+    actor_type     = Column(String(30), nullable=False, server_default="user", default="user")
+    message        = Column(Text, nullable=False)
+    created_at     = Column(DateTime(timezone=True), server_default=func.now())
+
+    board  = relationship("Board", back_populates="commits")
+    events = relationship("ChangeEvent", back_populates="commit")
+
+
 class ChangeEvent(Base):
     __tablename__ = "change_events"
 
@@ -316,6 +335,8 @@ class ChangeEvent(Base):
     operation     = Column(String(20), nullable=False)  # create | update | delete | restore
     before_snapshot = Column(JSON, nullable=True)
     after_snapshot  = Column(JSON, nullable=True)
+    commit_id     = Column(Uuid(as_uuid=False), ForeignKey("commits.id", ondelete="SET NULL"), nullable=True)
     created_at    = Column(DateTime(timezone=True), server_default=func.now())
 
-    board = relationship("Board", back_populates="change_events")
+    board  = relationship("Board",  back_populates="change_events")
+    commit = relationship("Commit", back_populates="events")

@@ -1,11 +1,11 @@
-"""History service — PRD-17a/17c snapshot-based change event log and restore."""
+"""History service — PRD-17a/17c/17e snapshot-based change event log, restore, and commits."""
 import logging
 from typing import Any, Optional
-from sqlalchemy import select
+from sqlalchemy import select, func, update as sql_update
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 
-from app.models import Board, ChangeEvent, Element
+from app.models import Board, ChangeEvent, Commit, Element
 
 log = logging.getLogger(__name__)
 
@@ -14,6 +14,24 @@ def _element_snapshot(el) -> dict[str, Any]:
     """Serialize an Element ORM object to a JSON-safe dict for snapshotting."""
     from app.schemas import ElementOut
     return ElementOut.model_validate(el).model_dump(mode="json")
+
+
+async def create_commit(
+    db: AsyncSession,
+    board_id: str,
+    author_user_id: Optional[str],
+    actor_type: str,
+    message: str,
+) -> Commit:
+    c = Commit(
+        board_id=board_id,
+        author_user_id=author_user_id,
+        actor_type=actor_type,
+        message=message,
+    )
+    db.add(c)
+    await db.flush()  # materialise id before ChangeEvent references it
+    return c
 
 
 async def record_change_event(
@@ -26,7 +44,13 @@ async def record_change_event(
     operation: str,
     before_snapshot: Optional[dict[str, Any]],
     after_snapshot: Optional[dict[str, Any]],
+    commit_id: Optional[str] = None,
+    commit_message: Optional[str] = None,
 ) -> None:
+    if commit_message and not commit_id:
+        c = await create_commit(db, board_id, actor_user_id, actor_type, commit_message)
+        commit_id = str(c.id)
+
     ev = ChangeEvent(
         board_id=board_id,
         actor_user_id=actor_user_id,
@@ -36,6 +60,7 @@ async def record_change_event(
         operation=operation,
         before_snapshot=before_snapshot,
         after_snapshot=after_snapshot,
+        commit_id=commit_id,
     )
     db.add(ev)
 
@@ -156,14 +181,56 @@ async def restore_element(
     await db.commit()
     await db.refresh(el)
 
+    snap_name = snap.get("name", entity_id)
     try:
         after_snap = _element_snapshot(el)
         await record_change_event(
             db, board_id, actor_user_id, "restore",
             "element", entity_id, "restore", None, after_snap,
+            commit_message=f"Restored element '{snap_name}'",
         )
         await db.commit()
     except Exception as exc:
         log.warning("history restore event failed for element %s: %s", entity_id, exc)
 
     return el, warnings
+
+
+async def list_commits(
+    db: AsyncSession,
+    board_id: str,
+    limit: int = 50,
+    offset: int = 0,
+) -> list[tuple]:
+    """Return (Commit, event_count) tuples in reverse chronological order."""
+    result = await db.execute(
+        select(Commit, func.count(ChangeEvent.id).label("event_count"))
+        .outerjoin(ChangeEvent, ChangeEvent.commit_id == Commit.id)
+        .where(Commit.board_id == board_id)
+        .group_by(Commit.id)
+        .order_by(Commit.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    return result.all()
+
+
+async def group_events_into_commit(
+    db: AsyncSession,
+    board_id: str,
+    event_ids: list[str],
+    message: str,
+    actor_user_id: Optional[str],
+) -> Commit:
+    """Create a commit and link the given ungrouped events to it (e-5)."""
+    c = await create_commit(db, board_id, actor_user_id, "user", message)
+    await db.execute(
+        sql_update(ChangeEvent)
+        .where(
+            ChangeEvent.board_id == board_id,
+            ChangeEvent.id.in_(event_ids),
+            ChangeEvent.commit_id.is_(None),
+        )
+        .values(commit_id=str(c.id))
+    )
+    return c

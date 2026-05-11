@@ -406,10 +406,35 @@ class ChangeEventOut(BaseModel):
     operation:       str
     before_snapshot: Optional[dict[str, Any]] = None
     after_snapshot:  Optional[dict[str, Any]] = None
+    commit_id:       Optional[str] = None
     created_at:      datetime
-    actor_name:      Optional[str] = None  # populated by the API endpoint, not from DB
+    # Populated by the API layer, not stored in the DB:
+    actor_name:      Optional[str] = None
+    commit_message:  Optional[str] = None
 
     model_config = {"from_attributes": True}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# COMMITS (PRD-17e)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class CommitOut(BaseModel):
+    id:             str
+    board_id:       str
+    author_user_id: Optional[str] = None
+    actor_type:     str
+    message:        str
+    created_at:     datetime
+    author_name:    Optional[str] = None   # populated by API layer
+    event_count:    int = 0                # populated by API layer
+
+    model_config = {"from_attributes": True}
+
+
+class GroupCommitRequest(BaseModel):
+    event_ids: list[str] = Field(min_length=1)
+    message:   str       = Field(min_length=1, max_length=500)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
