@@ -339,6 +339,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .hist-op-restore{background:var(--blue-bg);color:var(--blue);}
 .hist-snap{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.6;overflow:auto;max-height:260px;white-space:pre-wrap;word-break:break-all;}
 .hist-snap-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;font-family:'JetBrains Mono',monospace;}
+/* Diff view (PRD-17b) */
+.diff-tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.diff-tbl td{padding:4px 8px;vertical-align:top;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;line-height:1.5;}
+.diff-tbl tr:last-child td{border-bottom:none;}
+.diff-key{color:var(--text3);width:28%;word-break:break-word;font-size:10px;}
+.diff-val-old{color:var(--red);width:36%;word-break:break-all;white-space:pre-wrap;}
+.diff-val-new{color:var(--green);width:36%;word-break:break-all;white-space:pre-wrap;}
+.diff-row-added{background:var(--green-bg);}
+.diff-row-removed{background:var(--red-bg);}
+.diff-row-changed{background:var(--amber-bg);}
+.diff-unch-btn{font-size:10px;color:var(--text3);cursor:pointer;text-decoration:underline;border:none;background:none;font-family:'DM Sans',sans-serif;padding:4px 0;}
 .m-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
 .m-val{font-family:'Fraunces',serif;font-size:24px;margin-top:2px;line-height:1;font-weight:300;}
 .m-delta{font-size:10px;margin-top:2px;font-family:'JetBrains Mono',monospace;}
@@ -1533,6 +1544,10 @@ select.fi{appearance:none;cursor:pointer;}
       </div>
       <button class="btn-icon btn" onclick="closeModal('history-event')" style="border:none;font-size:15px;margin-left:auto;">×</button>
     </div>
+    <div id="history-event-toolbar" style="padding:6px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+      <span id="hist-view-label" style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.5px;">DIFF</span>
+      <button class="btn btn-ghost" id="hist-raw-btn" onclick="_histToggleRaw()" style="height:22px;font-size:10px;margin-left:auto;">View raw JSON</button>
+    </div>
     <div class="modal-body" id="history-event-body" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px;"></div>
   </div>
 </div>
@@ -1828,6 +1843,8 @@ let realtimeChannel = null;
 let _historyOffset  = 0;
 let _historyHasMore = false;
 let _historyEvents  = [];   // cache for the detail modal
+let _histCurrentEv  = null;
+let _histShowRaw    = false;
 let pendingAttachments = [];   // [{upload_id, tempId, filename, content_type, uploading}]
 
 // ── Authenticated fetch wrapper ────────────────────────
@@ -4291,23 +4308,144 @@ async function loadMoreHistory() {
   await loadHistory(false);
 }
 
+// ── PRD-17b: Diff view helpers ────────────────────────────────────────────────
+
+const _DIFF_SKIP = new Set(['id', 'board_id', 'created_at', 'updated_at']);
+
+function _buildDiff(before, after, prefix) {
+  prefix = prefix || '';
+  const rows = [];
+  const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+  const isNul = v => v === null || v === undefined || v === '';
+
+  if (!before && !after) return rows;
+
+  if (!before) {
+    Object.keys(after).forEach(k => {
+      if (!prefix && _DIFF_SKIP.has(k)) return;
+      rows.push({ key: prefix ? prefix + '.' + k : k, status: 'added', oldVal: undefined, newVal: after[k] });
+    });
+    return rows;
+  }
+  if (!after) {
+    Object.keys(before).forEach(k => {
+      if (!prefix && _DIFF_SKIP.has(k)) return;
+      rows.push({ key: prefix ? prefix + '.' + k : k, status: 'removed', oldVal: before[k], newVal: undefined });
+    });
+    return rows;
+  }
+
+  const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
+  keys.forEach(k => {
+    if (!prefix && _DIFF_SKIP.has(k)) return;
+    const fk  = prefix ? prefix + '.' + k : k;
+    const ov  = before[k];
+    const nv  = after[k];
+    if (isObj(ov) && isObj(nv)) { rows.push(..._buildDiff(ov, nv, fk)); return; }
+    const os  = JSON.stringify(ov !== undefined ? ov : null);
+    const ns  = JSON.stringify(nv !== undefined ? nv : null);
+    let status;
+    if (!(k in before))   status = 'added';
+    else if (!(k in after)) status = 'removed';
+    else if (os === ns)   status = 'unchanged';
+    else if (isNul(ov))   status = 'added';
+    else if (isNul(nv))   status = 'removed';
+    else                  status = 'changed';
+    rows.push({ key: fk, status, oldVal: ov, newVal: nv });
+  });
+  return rows;
+}
+
+function _fmtDiffVal(key, val) {
+  if (val === null || val === undefined) return '—';
+  const bare = key.split('.').pop();
+  if (bare === 'swimlane_id') {
+    const sl = (boardState.swimlanes || []).find(s => String(s.id) === String(val));
+    return sl ? sl.name + ' (' + val + ')' : String(val);
+  }
+  if (typeof val === 'object') return JSON.stringify(val, null, 2);
+  return String(val);
+}
+
+function _toggleDiffUnchanged(btn) {
+  const uid   = btn.dataset.uid;
+  const rows  = document.querySelectorAll('.' + uid);
+  const show  = rows[0] && rows[0].style.display === 'none';
+  rows.forEach(r => r.style.display = show ? '' : 'none');
+  btn.textContent = show ? 'Hide unchanged' : 'Show ' + rows.length + ' unchanged';
+}
+
+function _renderDiff(before, after) {
+  const all       = _buildDiff(before, after, '');
+  const changed   = all.filter(r => r.status !== 'unchanged');
+  const unchanged = all.filter(r => r.status === 'unchanged');
+  if (all.length === 0) return '<p style="color:var(--text3);font-size:12px;text-align:center;padding:24px;">No snapshot data</p>';
+
+  const mkRow = (r, extraCls, extraStyle) => {
+    const cls  = extraCls || ('diff-row-' + r.status);
+    const lbl  = escHtml(r.key.replace(/_/g, ' '));
+    const old  = r.status === 'added'   ? '' : escHtml(_fmtDiffVal(r.key, r.oldVal));
+    const nw   = r.status === 'removed' ? '' : escHtml(_fmtDiffVal(r.key, r.newVal));
+    return '<tr class="' + cls + '"' + (extraStyle ? ' style="' + extraStyle + '"' : '') + '>'
+      + '<td class="diff-key">' + lbl + '</td>'
+      + '<td class="diff-val-old">' + old + '</td>'
+      + '<td class="diff-val-new">' + nw  + '</td></tr>';
+  };
+
+  let html = '<table class="diff-tbl">';
+  changed.forEach(r => { html += mkRow(r); });
+
+  if (unchanged.length > 0) {
+    const uid = 'du' + Math.random().toString(36).slice(2, 8);
+    html += '<tr><td colspan="3"><button class="diff-unch-btn" data-uid="' + uid + '" onclick="_toggleDiffUnchanged(this)">Show ' + unchanged.length + ' unchanged</button></td></tr>';
+    unchanged.forEach(r => { html += mkRow(r, uid, 'display:none;opacity:.55'); });
+  }
+  html += '</table>';
+  return html;
+}
+
+function _renderHistEventBody(ev) {
+  const body = document.getElementById('history-event-body');
+  if (!body) return;
+  if (_histShowRaw) {
+    const fmt = o => o ? JSON.stringify(o, null, 2) : '—';
+    body.innerHTML =
+      (ev.before_snapshot ? '<div class="hist-snap-label">Before</div><div class="hist-snap">' + escHtml(fmt(ev.before_snapshot)) + '</div>' : '') +
+      (ev.after_snapshot  ? '<div class="hist-snap-label" style="margin-top:12px;">After</div><div class="hist-snap">'  + escHtml(fmt(ev.after_snapshot))  + '</div>' : '');
+  } else {
+    body.innerHTML = _renderDiff(ev.before_snapshot, ev.after_snapshot);
+  }
+}
+
+function _histToggleRaw() {
+  if (!_histCurrentEv) return;
+  _histShowRaw = !_histShowRaw;
+  const btn = document.getElementById('hist-raw-btn');
+  const lbl = document.getElementById('hist-view-label');
+  if (btn) btn.textContent = _histShowRaw ? 'View diff'  : 'View raw JSON';
+  if (lbl) lbl.textContent = _histShowRaw ? 'RAW JSON'   : 'DIFF';
+  _renderHistEventBody(_histCurrentEv);
+}
+
 function viewChangeEvent(eventId) {
   const ev = _historyEvents.find(e => e.id === eventId);
   if (!ev) return;
 
+  _histCurrentEv = ev;
+  _histShowRaw   = false;
+
   const title  = document.getElementById('history-event-title');
   const sub    = document.getElementById('history-event-sub');
-  const body   = document.getElementById('history-event-body');
-  if (!title || !body) return;
+  const btn    = document.getElementById('hist-raw-btn');
+  const lbl    = document.getElementById('hist-view-label');
+  if (!title) return;
 
   title.textContent = _histSummary(ev).replace(/<[^>]+>/g, '');
   sub.textContent   = `${_histActorLabel(ev).replace(/[^\x20-\x7E]/g, '').trim()} · ${new Date(ev.created_at).toLocaleString()}`;
+  if (btn) btn.textContent = 'View raw JSON';
+  if (lbl) lbl.textContent = 'DIFF';
 
-  const fmt = (obj) => obj ? JSON.stringify(obj, null, 2) : '—';
-  body.innerHTML = `
-    ${ev.before_snapshot ? `<div class="hist-snap-label">Before</div><div class="hist-snap">${escHtml(fmt(ev.before_snapshot))}</div>` : ''}
-    ${ev.after_snapshot  ? `<div class="hist-snap-label" style="margin-top:12px;">After</div><div class="hist-snap">${escHtml(fmt(ev.after_snapshot))}</div>` : ''}`;
-
+  _renderHistEventBody(ev);
   openModal('history-event');
 }
 
