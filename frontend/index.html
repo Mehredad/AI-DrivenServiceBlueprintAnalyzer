@@ -86,6 +86,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .role-select{height:30px;padding:0 8px;border-radius:var(--r);border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-size:11px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;outline:none;}
 .role-select:hover{border-color:var(--border2);color:var(--text);}
 .board-progress{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;white-space:nowrap;display:none;}
+/* BRANCH SWITCHER */
+.branch-wrap{position:relative;}
+.branch-btn{display:flex;align-items:center;gap:5px;height:28px;padding:0 9px;border-radius:var(--r);border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .12s;}
+.branch-btn:hover{border-color:var(--border2);color:var(--text);}
+.branch-btn svg{flex-shrink:0;}
+.branch-popover{position:absolute;top:34px;right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);box-shadow:var(--sh);min-width:200px;z-index:250;overflow:hidden;}
+.branch-popover-head{padding:8px 10px 6px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-family:'DM Sans',sans-serif;}
+.branch-item{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--text2);cursor:pointer;transition:background .1s;gap:8px;}
+.branch-item:hover{background:var(--bg2);color:var(--text);}
+.branch-item.active{color:var(--text);font-weight:700;}
+.branch-item-check{color:var(--accent);flex-shrink:0;}
+.branch-del-btn{display:none;width:18px;height:18px;align-items:center;justify-content:center;border-radius:4px;border:none;background:transparent;color:var(--text3);cursor:pointer;font-size:13px;line-height:1;transition:all .1s;padding:0;}
+.branch-item:hover .branch-del-btn{display:flex;}
+.branch-del-btn:hover{background:var(--danger,#f44);color:#fff;}
+.branch-popover-footer{padding:6px 8px;border-top:1px solid var(--border);}
+.branch-new-row{display:flex;gap:6px;align-items:center;}
+.branch-new-input{flex:1;height:26px;padding:0 7px;border-radius:var(--r);border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:11px;font-family:'JetBrains Mono',monospace;outline:none;}
+.branch-new-input:focus{border-color:var(--accent);}
+.branch-new-add{height:26px;padding:0 9px;border-radius:var(--r);border:none;background:var(--accent);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .help-wrap{position:relative;}
 .help-btn{width:24px;height:24px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);color:var(--text2);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;transition:all .12s;}
 .help-btn:hover{background:var(--bg);border-color:var(--border2);}
@@ -205,7 +224,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .bp-act-btn.del{color:var(--red);}
 .bp-inline-edit{border:1.5px solid var(--blue);border-radius:4px;padding:2px 5px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;background:white;color:var(--text);outline:none;width:100%;min-width:60px;}
 /* ELEMENTS — PRD-03 */
-.el-card{display:flex;align-items:center;gap:4px;padding:10px 6px;border-radius:6px;border:1.5px solid var(--border);background:var(--surface);margin:3px;cursor:pointer;font-size:11px;line-height:1.3;transition:box-shadow .1s;width:calc(50% - 6px);min-height:48px;}
+.el-card{display:flex;align-items:center;gap:4px;padding:10px 6px;border-radius:6px;border:1.5px solid var(--border);background:var(--surface);margin:3px;cursor:pointer;font-size:11px;line-height:1.3;transition:box-shadow .1s;width:calc(50% - 6px);min-height:48px;position:relative;overflow:visible;}
 .el-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.1);}
 .el-icon{font-size:12px;flex-shrink:0;}
 .el-name{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -247,6 +266,37 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .bp-cell-add-btn{display:none;position:absolute;bottom:4px;left:4px;right:4px;padding:3px 8px;font-size:10px;color:var(--text3);background:rgba(255,255,255,.92);border:1px dashed var(--border);border-radius:5px;cursor:pointer;text-align:left;font-family:'DM Sans',sans-serif;}
 .bp-cell:hover .bp-cell-add-btn{display:block;}
 .bp-cell:hover .bp-cell-add-btn:hover{background:var(--bg2);color:var(--text);}
+/* PRD-19 — Connector SVG overlay */
+.bp-canvas-wrap{position:relative;display:inline-block;min-width:100%;}
+.connector-svg{position:absolute;top:0;left:0;pointer-events:none;overflow:visible;will-change:transform;}
+.conn-path{pointer-events:stroke;cursor:pointer;transition:filter .1s;}
+.conn-tooltip{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 9px;font-size:11px;pointer-events:none;z-index:900;box-shadow:0 4px 14px rgba(0,0,0,.12);display:none;max-width:200px;line-height:1.4;}
+.ct-type{font-weight:600;color:var(--text);}
+.ct-label{color:var(--text2);margin-top:2px;font-size:10px;}
+.conn-toggle-btn{height:30px;padding:0 8px;border-radius:var(--r);border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-size:11px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .12s;display:flex;align-items:center;gap:5px;}
+.conn-toggle-btn:hover{border-color:var(--border2);color:var(--text);}
+.conn-toggle-btn.active{background:var(--blue-bg);border-color:var(--blue-bd);color:var(--blue);}
+/* PRD-20 — Connector ports (drag-to-connect) */
+.conn-port{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--blue);border:2.5px solid white;opacity:0;pointer-events:none;z-index:15;cursor:crosshair;box-shadow:0 0 0 1.5px var(--blue);transition:opacity .12s,box-shadow .12s;}
+.el-card:hover .conn-port{opacity:1;pointer-events:auto;}
+.conn-port:hover{box-shadow:0 0 0 4px var(--blue-bd);}
+.conn-port-n{top:-5px;left:50%;transform:translateX(-50%);}
+.conn-port-e{right:-5px;top:50%;transform:translateY(-50%);}
+.conn-port-s{bottom:-5px;left:50%;transform:translateX(-50%);}
+.conn-port-w{left:-5px;top:50%;transform:translateY(-50%);}
+.bp-step-header{overflow:visible;}
+.bp-canvas-wrap.conn-dragging{cursor:crosshair!important;user-select:none;}
+.bp-canvas-wrap.conn-dragging .el-card{outline:1.5px dashed var(--border2);outline-offset:2px;}
+.bp-canvas-wrap.conn-dragging .el-card:hover{outline:2px solid var(--blue);outline-offset:2px;}
+.conn-source-highlight{outline:2.5px solid var(--blue)!important;outline-offset:2px!important;background:var(--blue-bg)!important;}
+/* Context menu */
+.ctx-menu{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh2);z-index:800;min-width:140px;overflow:hidden;display:none;}
+.ctx-item{padding:7px 12px;font-size:12px;cursor:pointer;color:var(--text2);transition:background .1s;font-family:'DM Sans',sans-serif;}
+.ctx-item:hover{background:var(--bg2);color:var(--text);}
+.ctx-item.danger{color:var(--red);}
+.ctx-item.danger:hover{background:var(--red-bg);}
+/* Connector drawer extras */
+.conn-prov{border-top:1px solid var(--border);margin-top:10px;padding-top:10px;}
 .type-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
 .type-chip{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:10px;text-align:center;line-height:1.2;transition:border-color .1s,background .1s;background:var(--surface);color:var(--text2);}
 .type-chip:hover{border-color:var(--blue);background:var(--blue-bg);color:var(--blue);}
@@ -627,6 +677,19 @@ select.fi{appearance:none;cursor:pointer;}
 .agent-msg ul{margin:6px 0 6px 14px;}
 .agent-msg li{margin-bottom:3px;}
 .agent-msg code{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--bg2);padding:1px 4px;border-radius:3px;}
+/* PRD-21 — connector reference tokens in agent responses */
+.connector-ref{display:inline-flex;align-items:center;gap:2px;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);border-radius:4px;padding:1px 6px;font-size:10px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:background .1s,color .1s;}
+.connector-ref:hover{background:var(--blue);color:#fff;}
+.connector-ref-unknown{display:inline-flex;align-items:center;background:var(--bg2);color:var(--text2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:10px;font-family:'JetBrains Mono',monospace;}
+/* PRD-22 — connector proposal cards */
+.proposal-conn-preview{margin:6px 0 4px;line-height:0;}
+.proposal-conn-path{font-size:11px;color:var(--text);font-weight:500;margin-bottom:3px;}
+.proposal-conn-type{display:inline-block;font-size:9px;font-family:'JetBrains Mono',monospace;background:var(--bg2);color:var(--text3);border-radius:3px;padding:1px 5px;margin-left:4px;text-transform:uppercase;letter-spacing:.4px;}
+.proposal-conn-label{font-size:10px;color:var(--text2);margin-bottom:3px;}
+.proposal-conn-rationale{font-size:10px;color:var(--text3);font-style:italic;border-left:2px solid var(--border);padding-left:6px;margin-top:4px;line-height:1.4;}
+.proposal-conn-diff{font-size:10px;color:var(--text2);margin-bottom:4px;display:flex;flex-direction:column;gap:2px;}
+.proposal-diff-old{text-decoration:line-through;color:var(--text3);}
+.proposal-diff-new{color:#166534;font-weight:600;}
 
 /* ── LANDING PAGE ──────────────────────────────────────────────────────────── */
 #landing{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;}
@@ -1276,6 +1339,27 @@ select.fi{appearance:none;cursor:pointer;}
     <div class="board-progress" id="board-progress">
       <span id="bp-elements">0 elements</span> · <span id="bp-lanes">0 lanes</span> · <span id="bp-steps">0 steps</span>
     </div>
+    <div class="branch-wrap" id="branch-wrap" style="display:none;">
+      <button class="branch-btn" onclick="toggleBranchPicker()" title="Switch branch">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 1v4M3 9v2M9 1v2M3 5a2 2 0 0 0 2 2h2a2 2 0 0 1 2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="3" cy="1" r="1" fill="currentColor"/><circle cx="3" cy="10" r="1" fill="currentColor"/><circle cx="9" cy="1" r="1" fill="currentColor"/><circle cx="9" cy="9" r="1.2" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>
+        <span id="branch-label">main</span>
+      </button>
+      <div class="branch-popover" id="branch-popover" style="display:none;">
+        <div class="branch-popover-head">Branches</div>
+        <div id="branch-list"></div>
+        <div class="branch-popover-footer">
+          <div class="branch-new-row">
+            <input class="branch-new-input" id="branch-new-input" placeholder="New branch name" maxlength="100"
+              onkeydown="if(event.key==='Enter')createNewBranch()">
+            <button class="branch-new-add" onclick="createNewBranch()">Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button id="conn-toggle-btn" class="conn-toggle-btn active" onclick="toggleElementConnectors()" title="Toggle element-level connectors">
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><line x1="1" y1="5.5" x2="10" y2="5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><polygon points="7,2.5 10,5.5 7,8.5" fill="currentColor"/></svg>
+      Connectors
+    </button>
     <select id="role-select" class="role-select" onchange="setRole(this.value)" title="View as role">
       <option value="pm">PM</option>
       <option value="designer">Designer</option>
@@ -1378,7 +1462,10 @@ select.fi{appearance:none;cursor:pointer;}
 
         <!-- Dynamic canvas grid — populated by renderCanvas() in PRD-02 -->
         <div class="bp-grid-scroll">
-          <div id="canvas-grid" class="bp-grid" style="display:none;"></div>
+          <div class="bp-canvas-wrap" id="bp-canvas-wrap">
+            <div id="canvas-grid" class="bp-grid" style="display:none;"></div>
+            <svg id="connector-svg" class="connector-svg" width="0" height="0" aria-hidden="true"></svg>
+          </div>
         </div>
       </div>
     </div><!-- /blueprint view -->
@@ -1856,7 +1943,14 @@ let _historyEvents  = [];   // cache for the detail modal
 let _histCurrentEv      = null;
 let _histShowRaw        = false;
 let _histSelectedIds    = new Set();  // event IDs selected for grouping (e-5)
+let _branches          = [];          // PRD-17d: loaded branch list for the current board
+let _currentBranchId   = null;        // PRD-17d: active branch id
 let pendingAttachments = [];   // [{upload_id, tempId, filename, content_type, uploading}]
+// PRD-19: connector rendering state
+let boardConnectors       = [];
+let selectedConnectorId   = null;
+let showElementConnectors = localStorage.getItem('bp_show_el_conn') !== 'false';
+let _connRenderTimer      = null;
 
 // ── Authenticated fetch wrapper ────────────────────────
 async function apiFetch(path, opts = {}) {
@@ -1997,6 +2091,10 @@ function logout() {
   chatHistory = [];
   _chatHistoryOffset = 0; _chatHistoryBoard = null; _chatHistoryHasMore = false;
   _historyOffset = 0; _historyHasMore = false; _historyEvents = []; _histSelectedIds = new Set();
+  _branches = []; _currentBranchId = null;
+  boardConnectors = []; selectedConnectorId = null;
+  const bw = document.getElementById('branch-wrap');
+  if (bw) bw.style.display = 'none';
   boardsList = [];
   const chatArea = document.getElementById('chat-area');
   if (chatArea) chatArea.innerHTML = '';
@@ -2115,10 +2213,27 @@ async function persistBoard(statePatch) {
     return;
   }
   savePending = true;
-  const res = await apiFetch(`/api/boards/${currentBoardId}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ state: statePatch }),
-  });
+  const activeBranch = _branches.find(b => b.id === _currentBranchId);
+  const isMainBranch = !activeBranch || activeBranch.is_default;
+  let res;
+  if (isMainBranch) {
+    res = await apiFetch(`/api/boards/${currentBoardId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ state: statePatch }),
+    });
+  } else {
+    res = await apiFetch(`/api/boards/${currentBoardId}/branches/${_currentBranchId}/state`, {
+      method: 'PATCH',
+      body: JSON.stringify(statePatch),
+    });
+    // Update local state_snapshot so switchBranch reads fresh data
+    if (res && res.ok && activeBranch) {
+      const snap = await res.json();
+      activeBranch.state_snapshot = snap.state_snapshot;
+    }
+    savePending = false;
+    return;
+  }
   savePending = false;
   if (res && res.ok) {
     const board = await res.json();
@@ -2170,6 +2285,10 @@ async function loadBoard(boardId) {
   // Load elements from API (stored in elements table, not board.state)
   const elRes = await apiFetch(`/api/boards/${boardId}/elements`);
   if (elRes && elRes.ok) boardState.elements = await elRes.json();
+  // PRD-19: load connectors
+  const connRes = await apiFetch(`/api/boards/${boardId}/connectors`);
+  boardConnectors = (connRes && connRes.ok) ? await connRes.json() : [];
+  await loadBranches(boardId);
   renderCanvas();
   updateAiBadge();
   updateRegistryNavVisibility();
@@ -2424,7 +2543,12 @@ function renderCanvas() {
   if (emptyEl)      emptyEl.style.display      = noLanes ? 'flex' : 'none';
   if (emptyStepsEl) emptyStepsEl.style.display  = (!noLanes && noSteps) ? 'flex' : 'none';
   if (gridEl)       gridEl.style.display        = isEmpty ? 'none' : 'grid';
-  if (!isEmpty) renderGrid();
+  if (!isEmpty) {
+    renderGrid();
+    renderConnectors();
+  } else {
+    _clearConnectorSvg();
+  }
 
   updateCanvasMeta();
   updateAiBadge();
@@ -2467,14 +2591,15 @@ function renderGrid() {
     const isLast   = i === steps.length - 1;
     const dotColor = step.emotion ? _emotionDot[step.emotion] || 'transparent' : 'transparent';
     const motIcon  = step.is_moment_of_truth ? '⭐ ' : '';
-    html += `<div class="bp-step-header" data-id="${escHtml(step.id)}">
-      <span style="width:7px;height:7px;border-radius:50%;background:${dotColor};flex-shrink:0;cursor:pointer;border:1px solid var(--border2);transition:background .1s;" onclick="setStepEmotion('${escHtml(step.id)}')" title="Set customer emotion at this step"></span>
-      <span class="bp-step-name" ondblclick="renameStep('${escHtml(step.id)}')">${motIcon}${escHtml(step.name)}</span>
+    const _sid = escHtml(step.id);
+    html += `<div class="bp-step-header" data-id="${_sid}">
+      <span style="width:7px;height:7px;border-radius:50%;background:${dotColor};flex-shrink:0;cursor:pointer;border:1px solid var(--border2);transition:background .1s;" onclick="setStepEmotion('${_sid}')" title="Set customer emotion at this step"></span>
+      <span class="bp-step-name" ondblclick="renameStep('${_sid}')">${motIcon}${escHtml(step.name)}</span>
       <span class="bp-step-actions">
-        <button class="bp-act-btn" onclick="toggleMomentOfTruth('${escHtml(step.id)}')" title="Toggle moment of truth" style="${step.is_moment_of_truth ? 'color:var(--amber);' : ''}">&#9733;</button>
-        <button class="bp-act-btn" onclick="moveStep('${escHtml(step.id)}',-1)" ${isFirst ? 'disabled' : ''} title="Move left">&#8592;</button>
-        <button class="bp-act-btn" onclick="moveStep('${escHtml(step.id)}',1)"  ${isLast  ? 'disabled' : ''} title="Move right">&#8594;</button>
-        <button class="bp-act-btn del" onclick="deleteStep('${escHtml(step.id)}')" title="Delete step">&#215;</button>
+        <button class="bp-act-btn" onclick="toggleMomentOfTruth('${_sid}')" title="Toggle moment of truth" style="${step.is_moment_of_truth ? 'color:var(--amber);' : ''}">&#9733;</button>
+        <button class="bp-act-btn" onclick="moveStep('${_sid}',-1)" ${isFirst ? 'disabled' : ''} title="Move left">&#8592;</button>
+        <button class="bp-act-btn" onclick="moveStep('${_sid}',1)"  ${isLast  ? 'disabled' : ''} title="Move right">&#8594;</button>
+        <button class="bp-act-btn del" onclick="deleteStep('${_sid}')" title="Delete step">&#215;</button>
       </span>
     </div>`;
   });
@@ -2948,7 +3073,13 @@ function renderTypePickerUI(selectedType) {
     </div>`
   ).join('');
 
-  renderTypeMetaFields(selectedType);
+  // When a single type is locked by the swimlane, meta sub-fields add no value
+  if (isSingleLocked) {
+    const tf = document.getElementById('el-type-fields');
+    if (tf) tf.innerHTML = '';
+  } else {
+    renderTypeMetaFields(selectedType);
+  }
 
   const lbl = document.getElementById('el-type-label');
   if (lbl) {
@@ -2984,11 +3115,16 @@ function renderElementCard(el) {
   const recentAgent = el.updated_by_actor === 'agent' && el.updated_at &&
     (Date.now() - new Date(el.updated_at).getTime() < 86400000);
   const aiBadge = recentAgent ? '<span class="el-ai-badge">AI</span>' : '';
-  return `<div class="el-card el-${escHtml(el.type)}${dimCls}" data-el-id="${escHtml(el.id)}" title="${escHtml(el.name)}" onclick="openElementDrawer('${escHtml(el.id)}');event.stopPropagation()">
+  const _eid = escHtml(el.id);
+  return `<div class="el-card el-${escHtml(el.type)}${dimCls}" data-el-id="${_eid}" title="${escHtml(el.name)}" onclick="elCardClicked('${_eid}',event)" oncontextmenu="elCardContextMenu(event,'${_eid}')">
     <span class="el-icon">${t.icon}</span>
     <span class="el-name">${escHtml(el.name)}</span>
     ${aiBadge}
     <span class="el-status el-status-${escHtml((el.status||'draft').replace('-','_'))}"></span>
+    <span class="conn-port conn-port-n" onmousedown="event.stopPropagation();_portMouseDown('element','${_eid}',event)" onclick="event.stopPropagation()"></span>
+    <span class="conn-port conn-port-e" onmousedown="event.stopPropagation();_portMouseDown('element','${_eid}',event)" onclick="event.stopPropagation()"></span>
+    <span class="conn-port conn-port-s" onmousedown="event.stopPropagation();_portMouseDown('element','${_eid}',event)" onclick="event.stopPropagation()"></span>
+    <span class="conn-port conn-port-w" onmousedown="event.stopPropagation();_portMouseDown('element','${_eid}',event)" onclick="event.stopPropagation()"></span>
   </div>`;
 }
 
@@ -3007,6 +3143,7 @@ async function submitNewElement() {
     if (val !== '' && val !== undefined) meta[key] = val;
   });
 
+  const activeBranch = _branches.find(b => b.id === _currentBranchId);
   const body = {
     type: _selectedElType,
     name,
@@ -3015,6 +3152,7 @@ async function submitNewElement() {
     status: document.getElementById('el-status')?.value || 'draft',
     swimlane_id: document.getElementById('el-swimlane')?.value || null,
     step_id: document.getElementById('el-step')?.value || null,
+    branch_id: (activeBranch && !activeBranch.is_default) ? _currentBranchId : null,
     meta,
   };
 
@@ -3249,6 +3387,12 @@ function initRealtime(boardId) {
           renderCanvas();
           showToast(`${payload.author || 'A collaborator'} updated the board`);
         }
+      })
+      .on('broadcast', { event: 'connector_changed' }, async () => {
+        // PRD-19: server broadcast when a connector is created/updated/deleted
+        if (!currentBoardId) return;
+        const res = await apiFetch(`/api/boards/${currentBoardId}/connectors`);
+        if (res && res.ok) { boardConnectors = await res.json(); renderConnectors(); }
       })
       .on('presence', { event: 'join' }, ({ newPresences }) => {
         newPresences.forEach(p => showToast(`${p.name || 'Someone'} joined the board`));
@@ -3819,15 +3963,104 @@ function addUserMsg(text, attachments = [], ts = null, author = null) {
   area.scrollTop = area.scrollHeight;
 }
 
-function _formatAgentText(text) {
+// PRD-21 — look up a connector by resolved source/target names and type.
+// Returns the connector id string or null if not found.
+function _findConnectorId(srcName, tgtName, connType) {
+  const elMap = {};
+  boardState.elements.forEach(e => { elMap[e.name] = e.id; });
+  const stepMap = {};
+  (boardState.steps || []).forEach(s => { stepMap[s.name] = s.id; });
+
+  const srcId = elMap[srcName] || stepMap[srcName];
+  const tgtId = elMap[tgtName] || stepMap[tgtName];
+  if (!srcId && !tgtId) return null;
+
+  for (const c of boardConnectors) {
+    const cSrc = c.source_element_id || c.source_step_id;
+    const cTgt = c.target_element_id || c.target_step_id;
+    const typeMatch = !connType || c.connector_type === connType;
+    if (cSrc === srcId && cTgt === tgtId && typeMatch) return c.id;
+  }
+  return null;
+}
+
+function selectConnectorRef(connId) {
+  selectedConnectorId = connId;
+  renderConnectors();
+  // Switch to canvas tab so the connector is visible
+  const canvasTab = document.querySelector('[data-tab="canvas"]');
+  if (canvasTab) canvasTab.click();
+}
+
+function _formatAgentText(raw) {
+  // Strip fenced code blocks (```lang\n...\n```) — agent shouldn't produce them but defensively remove
+  let text = raw.replace(/```[\s\S]*?```/g, '').trim();
+
+  // Process line by line to handle headers and lists correctly
+  const lines = text.split('\n');
+  const out = [];
+  let inList = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+
+    // Headers — ### H3, ## H2
+    if (/^### (.+)/.test(line)) {
+      if (inList) { out.push('</ul>'); inList = false; }
+      out.push(`<h4 style="margin:12px 0 4px;font-size:12px;font-weight:700;color:var(--text)">${escHtml(line.replace(/^### /, ''))}</h4>`);
+      continue;
+    }
+    if (/^## (.+)/.test(line)) {
+      if (inList) { out.push('</ul>'); inList = false; }
+      out.push(`<h3 style="margin:14px 0 5px;font-size:13px;font-weight:700;color:var(--text)">${escHtml(line.replace(/^## /, ''))}</h3>`);
+      continue;
+    }
+
+    // Horizontal rule
+    if (/^---+$/.test(line.trim())) {
+      if (inList) { out.push('</ul>'); inList = false; }
+      out.push('<hr style="border:none;border-top:1px solid var(--border);margin:10px 0;">');
+      continue;
+    }
+
+    // List items — "- " or "* "
+    if (/^[*-] (.+)/.test(line)) {
+      if (!inList) { out.push('<ul style="margin:4px 0;padding-left:16px;">'); inList = true; }
+      const itemContent = line.replace(/^[*-] /, '');
+      out.push(`<li>${_inlineFormat(itemContent)}</li>`);
+      continue;
+    }
+
+    // Blank line closes a list
+    if (line.trim() === '') {
+      if (inList) { out.push('</ul>'); inList = false; }
+      out.push('<br>');
+      continue;
+    }
+
+    // Normal paragraph line
+    if (inList) { out.push('</ul>'); inList = false; }
+    out.push(_inlineFormat(line) + '<br>');
+  }
+
+  if (inList) out.push('</ul>');
+  return out.join('');
+}
+
+function _inlineFormat(text) {
   return text
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
-    .replace(/\n\n/g, '<br><br>')
-    .replace(/\n/g, '<br>');
+    .replace(/`([^`]+)`/g, '<code style="background:var(--bg2);padding:1px 4px;border-radius:3px;font-size:10px">$1</code>')
+    // PRD-21 — parse [connector: Source → Target (type)] tokens
+    .replace(/\[connector:\s*(.+?)\s*→\s*(.+?)\s*\((.+?)\)\]/g, (match, src, tgt, type) => {
+      const cId = _findConnectorId(src.trim(), tgt.trim(), type.trim());
+      const label = `${src.trim()} → ${tgt.trim()} (${type.trim()})`;
+      if (cId) {
+        return `<span class="connector-ref" onclick="selectConnectorRef('${cId}')" title="Click to highlight on canvas">${label}</span>`;
+      }
+      return `<span class="connector-ref-unknown" title="Connector not found on canvas">${label}</span>`;
+    });
 }
 
 function addAgentMsg(text, actions = [], ts = null) {
@@ -3863,12 +4096,104 @@ function addAgentMsg(text, actions = [], ts = null) {
 // PROPOSAL CARDS — agent-driven board edits (PRD-15)
 // ═══════════════════════════════════════════════════════
 
+// PRD-22 — connector proposal helpers
+
+function _resolveEndpointName(endpoint) {
+  if (!endpoint) return '?';
+  if (endpoint.kind === 'element') {
+    const el = boardState.elements.find(e => e.id === endpoint.id);
+    return el ? el.name : endpoint.id;
+  }
+  if (endpoint.kind === 'step') {
+    const st = boardState.steps.find(s => s.id === endpoint.id);
+    return st ? st.name : endpoint.id;
+  }
+  return endpoint.id || '?';
+}
+
+function _connectorMiniPreview(connType, srcName, tgtName) {
+  const style = _CONN_STYLES[connType] || _CONN_STYLES.sequence;
+  const W = 200, H = 44, pillW = 64, pillH = 20, pillR = 4;
+  const cy = H / 2;
+  const lineX1 = pillW + 3, lineX2 = W - pillW - 9;
+  const src = srcName.length > 9 ? srcName.slice(0, 8) + '…' : srcName;
+  const tgt = tgtName.length > 9 ? tgtName.slice(0, 8) + '…' : tgtName;
+  const dashAttr = style.dash ? `stroke-dasharray="${style.dash}"` : '';
+  const mid = `M${lineX1},${cy} L${lineX2},${cy}`;
+  const arrowId = `apr-${connType}-${Math.random().toString(36).slice(2,6)}`;
+  const arrowPath = style.arrow === 'open'
+    ? `<path d="M0,0 L7,3.5 L0,7" fill="none" stroke="${style.stroke}" stroke-width="1.5"/>`
+    : `<path d="M0,0 L8,3.5 L0,7 Z" fill="${style.stroke}"/>`;
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
+    <defs><marker id="${arrowId}" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto">${arrowPath}</marker></defs>
+    <rect x="0" y="${cy - pillH/2}" width="${pillW}" height="${pillH}" rx="${pillR}" fill="var(--bg2)" stroke="var(--border)" stroke-width="1"/>
+    <text x="${pillW/2}" y="${cy + 4}" text-anchor="middle" font-size="8" fill="var(--text2)" font-family="DM Sans,sans-serif">${escHtml(src)}</text>
+    <path d="${mid}" stroke="${style.stroke}" stroke-width="1.5" fill="none" ${dashAttr} marker-end="url(#${arrowId})"/>
+    <rect x="${W-pillW}" y="${cy - pillH/2}" width="${pillW}" height="${pillH}" rx="${pillR}" fill="var(--bg2)" stroke="var(--border)" stroke-width="1"/>
+    <text x="${W - pillW/2}" y="${cy + 4}" text-anchor="middle" font-size="8" fill="var(--text2)" font-family="DM Sans,sans-serif">${escHtml(tgt)}</text>
+  </svg>`;
+}
+
+function _connectorExtraHtml(action) {
+  const { type, payload } = action;
+  if (!payload) return '';
+
+  if (type === 'create_connector') {
+    const srcName = _resolveEndpointName(payload.source);
+    const tgtName = _resolveEndpointName(payload.target);
+    const preview = _connectorMiniPreview(payload.connector_type || 'sequence', srcName, tgtName);
+    const labelHtml = payload.label
+      ? `<div class="proposal-conn-label">Label: <strong>${escHtml(payload.label)}</strong></div>` : '';
+    const rationale = payload.rationale
+      ? `<div class="proposal-conn-rationale">${escHtml(payload.rationale)}</div>` : '';
+    return `<div class="proposal-conn-preview">${preview}</div>`
+      + `<div class="proposal-conn-path">${escHtml(srcName)} → ${escHtml(tgtName)}<span class="proposal-conn-type">${escHtml(payload.connector_type || '')}</span></div>`
+      + labelHtml + rationale;
+  }
+
+  if (type === 'update_connector') {
+    const existing = boardConnectors.find(c => c.id === payload.connector_id);
+    const updates  = payload.updates || {};
+    let diffHtml = '<div class="proposal-conn-diff">';
+    if (updates.connector_type && existing) {
+      diffHtml += `<div>Type: <span class="proposal-diff-old">${escHtml(existing.connector_type)}</span> → <span class="proposal-diff-new">${escHtml(updates.connector_type)}</span></div>`;
+    }
+    if ('label' in updates) {
+      diffHtml += `<div>Label: <span class="proposal-diff-old">${escHtml(existing?.label || '—')}</span> → <span class="proposal-diff-new">${escHtml(updates.label || '—')}</span></div>`;
+    }
+    if ('notes' in updates) diffHtml += `<div>Notes: updated</div>`;
+    diffHtml += '</div>';
+    const rationale = payload.rationale
+      ? `<div class="proposal-conn-rationale">${escHtml(payload.rationale)}</div>` : '';
+    return diffHtml + rationale;
+  }
+
+  if (type === 'delete_connector') {
+    const c = boardConnectors.find(conn => conn.id === payload.connector_id);
+    const rationale = payload.rationale
+      ? `<div class="proposal-conn-rationale">${escHtml(payload.rationale)}</div>` : '';
+    if (c) {
+      const srcName = c.source_element_id
+        ? (boardState.elements.find(e => e.id === c.source_element_id)?.name || c.source_element_id)
+        : (boardState.steps.find(s => s.id === c.source_step_id)?.name || c.source_step_id || '?');
+      const tgtName = c.target_element_id
+        ? (boardState.elements.find(e => e.id === c.target_element_id)?.name || c.target_element_id)
+        : (boardState.steps.find(s => s.id === c.target_step_id)?.name || c.target_step_id || '?');
+      return `<div class="proposal-conn-path">${escHtml(srcName)} → ${escHtml(tgtName)}<span class="proposal-conn-type">${escHtml(c.connector_type)}</span></div>${rationale}`;
+    }
+    return rationale;
+  }
+
+  return '';
+}
+
 function _actionTypeLabel(type) {
   return {
     create_swimlane: 'Add swimlane', create_step: 'Add step', create_element: 'Add element',
     update_element: 'Update element', delete_element: 'Delete element',
     update_swimlane: 'Rename swimlane', delete_swimlane: 'Delete swimlane',
     update_step: 'Rename step', delete_step: 'Delete step',
+    create_connector: 'Add connector', update_connector: 'Update connector', delete_connector: 'Delete connector',
   }[type] || type;
 }
 
@@ -3885,12 +4210,28 @@ function _actionDescription(action) {
     case 'delete_swimlane': return `Delete swimlane "${payload.name || payload.id}"`;
     case 'update_step':     return `Rename step to "${payload.name}"`;
     case 'delete_step':     return `Delete step "${payload.name || payload.id}"`;
+    case 'create_connector': {
+      const src = _resolveEndpointName(payload.source);
+      const tgt = _resolveEndpointName(payload.target);
+      return `Add ${payload.connector_type || ''} connector: ${src} → ${tgt}`;
+    }
+    case 'update_connector': {
+      const c = boardConnectors.find(x => x.id === payload.connector_id);
+      return c
+        ? `Update connector: ${c.connector_type} — fields: ${Object.keys(payload.updates||{}).join(', ')}`
+        : `Update connector ${payload.connector_id}`;
+    }
+    case 'delete_connector': {
+      const c = boardConnectors.find(x => x.id === payload.connector_id);
+      return c ? `Delete ${c.connector_type} connector` : `Delete connector ${payload.connector_id}`;
+    }
     default: return `${type}: ${JSON.stringify(payload).substring(0, 60)}`;
   }
 }
 
 function _isDestructiveAction(type) {
-  return type === 'delete_element' || type === 'delete_swimlane' || type === 'delete_step';
+  return type === 'delete_element' || type === 'delete_swimlane' || type === 'delete_step'
+    || type === 'delete_connector';
 }
 
 function _validateProposedAction(action) {
@@ -3904,6 +4245,24 @@ function _validateProposedAction(action) {
   }
   if ((type === 'update_element' || type === 'delete_element') && payload.id) {
     if (!boardState.elements.find(e => e.id === payload.id)) return 'This element no longer exists on the board';
+  }
+  if (type === 'create_connector') {
+    const src = payload.source;
+    const tgt = payload.target;
+    if (!src || !tgt) return 'Missing source or target endpoint';
+    const srcExists = src.kind === 'element'
+      ? boardState.elements.find(e => e.id === src.id)
+      : boardState.steps.find(s => s.id === src.id);
+    const tgtExists = tgt.kind === 'element'
+      ? boardState.elements.find(e => e.id === tgt.id)
+      : boardState.steps.find(s => s.id === tgt.id);
+    if (!srcExists || !tgtExists) return 'This proposal references entities that no longer exist on the board';
+  }
+  if (type === 'update_connector' || type === 'delete_connector') {
+    const cId = payload.connector_id;
+    if (!cId || !boardConnectors.find(c => c.id === cId)) {
+      return 'This proposal references a connector that no longer exists on the board';
+    }
   }
   return null;
 }
@@ -3991,6 +4350,47 @@ async function _applyProposedAction(action, boardId) {
       renderCanvas();
       return { snapshot };
     }
+    case 'create_connector': {
+      const body = {
+        source_step_id:    payload.source?.kind === 'step'    ? payload.source.id    : null,
+        source_element_id: payload.source?.kind === 'element' ? payload.source.id    : null,
+        target_step_id:    payload.target?.kind === 'step'    ? payload.target.id    : null,
+        target_element_id: payload.target?.kind === 'element' ? payload.target.id    : null,
+        connector_type:    payload.connector_type,
+        label:             payload.label  || null,
+        notes:             payload.notes  || null,
+        actor:             'agent',
+      };
+      const res = await apiFetch(`/api/boards/${boardId}/connectors`, { method: 'POST', body: JSON.stringify(body) });
+      if (!res || !res.ok) { const e = await res?.json().catch(()=>({})); throw new Error(e?.detail || `API ${res?.status}`); }
+      const conn = await res.json();
+      boardConnectors.push(conn);
+      renderConnectors();
+      return { created_id: conn.id };
+    }
+    case 'update_connector': {
+      const existing = boardConnectors.find(c => c.id === payload.connector_id);
+      const old_snapshot = existing ? { ...existing } : null;
+      const res = await apiFetch(`/api/boards/${boardId}/connectors/${payload.connector_id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ ...(payload.updates || {}), actor: 'agent' }),
+      });
+      if (!res || !res.ok) { const e = await res?.json().catch(()=>({})); throw new Error(e?.detail || `API ${res?.status}`); }
+      const updated = await res.json();
+      const idx = boardConnectors.findIndex(c => c.id === payload.connector_id);
+      if (idx >= 0) boardConnectors[idx] = updated;
+      renderConnectors();
+      return { old_snapshot };
+    }
+    case 'delete_connector': {
+      const existing = boardConnectors.find(c => c.id === payload.connector_id);
+      const snapshot = existing ? { ...existing } : null;
+      const res = await apiFetch(`/api/boards/${boardId}/connectors/${payload.connector_id}`, { method: 'DELETE' });
+      if (!res || !res.ok) { const e = await res?.json().catch(()=>({})); throw new Error(e?.detail || `API ${res?.status}`); }
+      boardConnectors = boardConnectors.filter(c => c.id !== payload.connector_id);
+      renderConnectors();
+      return { snapshot };
+    }
     default:
       throw new Error(`Unknown action type: ${type}`);
   }
@@ -4047,6 +4447,45 @@ async function _undoProposedAction(action, applyResult, boardId) {
       if (res && res.ok) { const elem = await res.json(); boardState.elements.push(elem); renderCanvas(); }
       return;
     }
+    case 'create_connector':
+      await apiFetch(`/api/boards/${boardId}/connectors/${applyResult.created_id}`, { method: 'DELETE' });
+      boardConnectors = boardConnectors.filter(c => c.id !== applyResult.created_id);
+      renderConnectors();
+      return;
+    case 'update_connector': {
+      if (!applyResult.old_snapshot) return;
+      const snap = applyResult.old_snapshot;
+      const res = await apiFetch(`/api/boards/${boardId}/connectors/${payload.connector_id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ connector_type: snap.connector_type, label: snap.label, notes: snap.notes, actor: 'agent_undo' }),
+      });
+      if (res && res.ok) {
+        const restored = await res.json();
+        const i = boardConnectors.findIndex(c => c.id === payload.connector_id);
+        if (i >= 0) boardConnectors[i] = restored;
+        renderConnectors();
+      }
+      return;
+    }
+    case 'delete_connector': {
+      if (!applyResult.snapshot) return;
+      const snap = applyResult.snapshot;
+      const res = await apiFetch(`/api/boards/${boardId}/connectors`, {
+        method: 'POST',
+        body: JSON.stringify({
+          source_step_id:    snap.source_step_id,
+          source_element_id: snap.source_element_id,
+          target_step_id:    snap.target_step_id,
+          target_element_id: snap.target_element_id,
+          connector_type:    snap.connector_type,
+          label:             snap.label,
+          notes:             snap.notes,
+          actor:             'agent_undo',
+        }),
+      });
+      if (res && res.ok) { const conn = await res.json(); boardConnectors.push(conn); renderConnectors(); }
+      return;
+    }
     default:
       throw new Error(`Cannot undo ${type}`);
   }
@@ -4065,8 +4504,9 @@ function _renderProposalCardBody(card, action, boardId) {
     return;
   }
 
+  const extraHtml = _connectorExtraHtml(action);
   card.className = 'proposal-card' + (isDestructive ? ' proposal-destructive' : '');
-  card.innerHTML = `<div class="proposal-card-header"><span class="proposal-card-badge">${escHtml(label)}</span><span class="proposal-card-desc">${escHtml(desc)}</span></div><div class="proposal-card-btns">${isDestructive ? '<span class="proposal-card-warning">⚠ This is a destructive action — difficult to reverse</span>' : ''}<button class="proposal-approve-btn">${isDestructive ? 'Approve (destructive)' : 'Approve'}</button><button class="proposal-reject-btn">Reject</button></div>`;
+  card.innerHTML = `<div class="proposal-card-header"><span class="proposal-card-badge">${escHtml(label)}</span><span class="proposal-card-desc">${escHtml(desc)}</span></div>${extraHtml}<div class="proposal-card-btns">${isDestructive ? '<span class="proposal-card-warning">⚠ This is a destructive action — difficult to reverse</span>' : ''}<button class="proposal-approve-btn">${isDestructive ? 'Approve (destructive)' : 'Approve'}</button><button class="proposal-reject-btn">Reject</button></div>`;
 
   let needsConfirm = isDestructive;
 
@@ -4116,9 +4556,16 @@ function _buildProposalCard(action, boardId) {
 
 function appendProposalCards(wrap, proposedActions, boardId) {
   if (!proposedActions || !proposedActions.length) return;
+  // Cap connector proposals at 5 per turn (FR-2 safeguard)
+  const connectorTypes = new Set(['create_connector', 'update_connector', 'delete_connector']);
+  let connCount = 0;
+  const capped = proposedActions.filter(a => {
+    if (connectorTypes.has(a.type)) { if (connCount >= 5) return false; connCount++; }
+    return true;
+  });
   const container = document.createElement('div');
   container.className = 'proposal-cards-container';
-  proposedActions.forEach(action => container.appendChild(_buildProposalCard(action, boardId)));
+  capped.forEach(action => container.appendChild(_buildProposalCard(action, boardId)));
   wrap.appendChild(container);
 }
 
@@ -4403,6 +4850,853 @@ async function groupSelectedEvents() {
     console.warn('groupSelectedEvents error', e);
     showToast('Grouping failed');
   }
+}
+
+// ── Branch switcher (PRD-17d) ─────────────────────────────────────────────
+
+async function loadBranches(boardId) {
+  const res = await apiFetch(`/api/boards/${boardId}/branches`);
+  if (!res || !res.ok) return;
+  _branches = await res.json();
+  if (!_currentBranchId) {
+    const def = _branches.find(b => b.is_default) || _branches[0];
+    if (def) _currentBranchId = def.id;
+  }
+  const wrap = document.getElementById('branch-wrap');
+  if (wrap) wrap.style.display = '';
+  renderBranchLabel();
+}
+
+function renderBranchLabel() {
+  const b = _branches.find(b => b.id === _currentBranchId);
+  const lbl = document.getElementById('branch-label');
+  if (lbl) lbl.textContent = b ? b.name : 'main';
+}
+
+function toggleBranchPicker() {
+  const pop = document.getElementById('branch-popover');
+  if (!pop) return;
+  const open = pop.style.display !== 'none';
+  if (open) {
+    pop.style.display = 'none';
+  } else {
+    renderBranchPicker();
+    pop.style.display = '';
+    const inp = document.getElementById('branch-new-input');
+    if (inp) { inp.value = ''; inp.focus(); }
+  }
+}
+
+function renderBranchPicker() {
+  const list = document.getElementById('branch-list');
+  if (!list) return;
+  list.innerHTML = _branches.map(b => `
+    <div class="branch-item${b.id === _currentBranchId ? ' active' : ''}" onclick="switchBranch('${b.id}')">
+      <span>${b.name}${b.is_default ? ' <span style="font-size:9px;color:var(--text3)">(default)</span>' : ''}</span>
+      <span style="display:flex;align-items:center;gap:4px;">
+        ${b.id === _currentBranchId ? '<span class="branch-item-check">✓</span>' : ''}
+        ${!b.is_default ? `<button class="branch-del-btn" onclick="event.stopPropagation();deleteBranch('${b.id}')" title="Delete branch">×</button>` : ''}
+      </span>
+    </div>
+  `).join('');
+}
+
+async function switchBranch(id) {
+  _currentBranchId = id;
+  renderBranchLabel();
+  renderBranchPicker();
+  const pop = document.getElementById('branch-popover');
+  if (pop) pop.style.display = 'none';
+
+  const branch = _branches.find(b => b.id === id);
+  if (branch && !branch.is_default) {
+    // Load branch-specific structure from state_snapshot
+    const snap = branch.state_snapshot || {};
+    boardState.swimlanes = Array.isArray(snap.swimlanes) ? snap.swimlanes : [];
+    boardState.steps     = Array.isArray(snap.steps)     ? snap.steps     : [];
+    // Load branch-specific elements
+    const elRes = await apiFetch(`/api/boards/${currentBoardId}/elements?branch_id=${id}`);
+    boardState.elements = (elRes && elRes.ok) ? await elRes.json() : [];
+  } else {
+    // Main branch: reload fresh board structure and main-branch elements
+    const boardRes = await apiFetch(`/api/boards/${currentBoardId}`);
+    if (boardRes && boardRes.ok) {
+      const board = await boardRes.json();
+      const state = board.state || {};
+      boardState.swimlanes = Array.isArray(state.swimlanes) ? state.swimlanes : [];
+      boardState.steps     = Array.isArray(state.steps)     ? state.steps     : [];
+      boardState.version   = board.version;
+    }
+    const elRes = await apiFetch(`/api/boards/${currentBoardId}/elements`);
+    boardState.elements = (elRes && elRes.ok) ? await elRes.json() : [];
+  }
+
+  // Reload connectors (branch-agnostic for now)
+  const connRes = await apiFetch(`/api/boards/${currentBoardId}/connectors`);
+  boardConnectors = (connRes && connRes.ok) ? await connRes.json() : [];
+
+  renderCanvas();
+  showToast('Switched to branch: ' + (branch?.name || id));
+}
+
+async function createNewBranch() {
+  const inp = document.getElementById('branch-new-input');
+  const name = inp ? inp.value.trim() : '';
+  if (!name || !currentBoardId) return;
+  const res = await apiFetch(`/api/boards/${currentBoardId}/branches`, {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  });
+  if (!res || !res.ok) {
+    const err = res ? await res.json().catch(() => ({})) : {};
+    showToast(err.detail || 'Failed to create branch');
+    return;
+  }
+  const branch = await res.json();
+  _branches.push(branch);
+  if (inp) inp.value = '';
+  switchBranch(branch.id);
+}
+
+async function deleteBranch(id) {
+  const branch = _branches.find(b => b.id === id);
+  if (!branch || !confirm(`Delete branch "${branch.name}"?`)) return;
+  const res = await apiFetch(`/api/boards/${currentBoardId}/branches/${id}`, { method: 'DELETE' });
+  if (!res || (res.status !== 204 && !res.ok)) { showToast('Delete failed'); return; }
+  _branches = _branches.filter(b => b.id !== id);
+  if (_currentBranchId === id) {
+    const def = _branches.find(b => b.is_default) || _branches[0];
+    _currentBranchId = def ? def.id : null;
+    renderBranchLabel();
+  }
+  renderBranchPicker();
+  showToast('Branch deleted');
+}
+
+// close branch popover when clicking outside
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('branch-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    const pop = document.getElementById('branch-popover');
+    if (pop) pop.style.display = 'none';
+  }
+  // Close context menus when clicking outside them
+  const _ctxC = document.getElementById('conn-ctx-menu');
+  const _ctxE = document.getElementById('el-conn-ctx-menu');
+  if (_ctxC && !_ctxC.contains(e.target)) _ctxC.style.display = 'none';
+  if (_ctxE && !_ctxE.contains(e.target)) _ctxE.style.display = 'none';
+
+  // Deselect connector when clicking outside connector path, drawer, or waypoint handles
+  if (selectedConnectorId
+    && !e.target.classList.contains('conn-path')
+    && !e.target.classList.contains('conn-wp-handle')
+    && !e.target.closest?.('#connector-drawer')
+    && !e.target.closest?.('#conn-ctx-menu')) {
+    selectedConnectorId = null;
+    if (typeof closeConnectorDrawer === 'function') closeConnectorDrawer();
+    renderConnectors();
+  }
+});
+
+// ═══════════════════════════════════════════════════════
+// PRD-19 — CONNECTOR VISUAL RENDERING
+// ═══════════════════════════════════════════════════════
+
+const _CONN_STYLES = {
+  sequence:   { stroke: '#475569', dash: '',    arrow: 'filled' },
+  data_flow:  { stroke: '#1A4FD8', dash: '',    arrow: 'open'   },
+  trigger:    { stroke: '#A35800', dash: '4,4', arrow: 'filled' },
+  dependency: { stroke: '#6D28D9', dash: '8,4', arrow: 'filled' },
+  feedback:   { stroke: '#166534', dash: '',    arrow: 'filled' },
+  failure:    { stroke: '#B91C1C', dash: '6,3', arrow: 'filled' },
+};
+
+const _CONN_TYPE_LABELS = {
+  sequence: 'Sequence', data_flow: 'Data flow', trigger: 'Trigger',
+  dependency: 'Dependency', feedback: 'Feedback', failure: 'Failure',
+};
+
+function _strokeWidth(tier) {
+  return tier === 'step' ? 3 : tier === 'element' ? 1.5 : 2;
+}
+
+function _clearConnectorSvg() {
+  const svg = document.getElementById('connector-svg');
+  if (svg) { svg.innerHTML = ''; svg.style.width = '0'; svg.style.height = '0'; }
+}
+
+function getEndpointXY(type, id, svgEl) {
+  const svgRect = svgEl.getBoundingClientRect();
+  let el;
+  if (type === 'element') el = document.querySelector(`.el-card[data-el-id="${id}"]`);
+  else if (type === 'step') el = document.querySelector(`.bp-step-header[data-id="${id}"]`);
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  return { x: r.left - svgRect.left + r.width / 2, y: r.top - svgRect.top + r.height / 2 };
+}
+
+function getEndpointRect(type, id, svgEl) {
+  const svgRect = svgEl.getBoundingClientRect();
+  let el;
+  if (type === 'element') el = document.querySelector(`.el-card[data-el-id="${id}"]`);
+  else if (type === 'step') el = document.querySelector(`.bp-step-header[data-id="${id}"]`);
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  const x = r.left - svgRect.left, y = r.top - svgRect.top;
+  return { x, y, w: r.width, h: r.height, cx: x + r.width / 2, cy: y + r.height / 2 };
+}
+
+function _edgePts(s, t) {
+  const dx = t.cx - s.cx, dy = t.cy - s.cy;
+  let sp, tp;
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    if (dx >= 0) { sp = { x: s.x + s.w, y: s.cy }; tp = { x: t.x,       y: t.cy }; }
+    else          { sp = { x: s.x,       y: s.cy }; tp = { x: t.x + t.w, y: t.cy }; }
+  } else {
+    if (dy >= 0) { sp = { x: s.cx, y: s.y + s.h }; tp = { x: t.cx, y: t.y };       }
+    else          { sp = { x: s.cx, y: s.y };        tp = { x: t.cx, y: t.y + t.h }; }
+  }
+  return { sp, tp };
+}
+
+function _elbowPath(sx, sy, tx, ty) {
+  const dx = tx - sx, dy = ty - sy;
+  if (Math.abs(dx) < 2) return `M ${sx} ${sy} V ${ty}`;
+  if (Math.abs(dy) < 2) return `M ${sx} ${sy} H ${tx}`;
+  const midX = sx + dx / 2;
+  const r = Math.min(12, Math.abs(dx) / 2, Math.abs(dy) / 2);
+  const sx2 = dx >= 0 ? 1 : -1, sy2 = dy >= 0 ? 1 : -1;
+  if (r < 2) return `M ${sx} ${sy} H ${midX} V ${ty} H ${tx}`;
+  return [
+    `M ${sx} ${sy}`,
+    `H ${midX - sx2 * r}`,
+    `Q ${midX} ${sy} ${midX} ${sy + sy2 * r}`,
+    `V ${ty - sy2 * r}`,
+    `Q ${midX} ${ty} ${midX + sx2 * r} ${ty}`,
+    `H ${tx}`,
+  ].join(' ');
+}
+
+function renderConnectors() {
+  const svg  = document.getElementById('connector-svg');
+  const grid = document.getElementById('canvas-grid');
+  if (!svg || !grid || grid.style.display === 'none') { _clearConnectorSvg(); return; }
+
+  // Size SVG to match grid
+  const w = grid.scrollWidth;
+  const h = grid.scrollHeight;
+  svg.style.width  = w + 'px';
+  svg.style.height = h + 'px';
+
+  // Filter by visibility toggle
+  const visible = boardConnectors.filter(c =>
+    c.tier === 'step' || showElementConnectors
+  );
+
+  // Build SVG marker defs for each type
+  let defs = '<defs>';
+  Object.entries(_CONN_STYLES).forEach(([type, s]) => {
+    const isOpen  = s.arrow === 'open';
+    const fill    = isOpen ? 'none'    : s.stroke;
+    const stkLine = isOpen ? s.stroke  : 'none';
+    const stkW    = isOpen ? '1.5'     : '0';
+    // small marker (element-tier)
+    defs += `<marker id="ma-${type}" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
+      <polygon points="0 0,10 3.5,0 7" fill="${fill}" stroke="${stkLine}" stroke-width="${stkW}"/></marker>`;
+    // large marker (step-tier)
+    defs += `<marker id="mb-${type}" markerWidth="14" markerHeight="10" refX="13" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <polygon points="0 0,14 5,0 10" fill="${fill}" stroke="${stkLine}" stroke-width="${stkW}"/></marker>`;
+  });
+  defs += '</defs>';
+
+  let paths = '';
+  visible.forEach(conn => {
+    const style = _CONN_STYLES[conn.connector_type] || _CONN_STYLES.sequence;
+    const sw    = _strokeWidth(conn.tier);
+
+    // Resolve endpoints — use bounding rects to pick edge exit/entry points
+    let srcR, tgtR;
+    if (conn.source_step_id)         srcR = getEndpointRect('step',    conn.source_step_id,    svg);
+    else if (conn.source_element_id) srcR = getEndpointRect('element', conn.source_element_id, svg);
+    if (conn.target_step_id)         tgtR = getEndpointRect('step',    conn.target_step_id,    svg);
+    else if (conn.target_element_id) tgtR = getEndpointRect('element', conn.target_element_id, svg);
+
+    if (!srcR || !tgtR) return; // FR-10: silently skip missing endpoints
+    const { sp: src, tp: tgt } = _edgePts(srcR, tgtR);
+
+    const wps = Array.isArray(conn.waypoints) ? conn.waypoints : [];
+    const markerId = sw >= 3 ? `mb-${conn.connector_type}` : `ma-${conn.connector_type}`;
+    const isSelected = conn.id === selectedConnectorId;
+
+    // Build path d attribute
+    let d;
+    if (wps.length > 0) {
+      const pts = [src, ...wps, tgt];
+      d = 'M ' + pts.map(p => `${p.x} ${p.y}`).join(' L ');
+    } else if (conn.connector_type === 'feedback') {
+      // Quadratic bezier curve for feedback type
+      const mx  = (src.x + tgt.x) / 2;
+      const my  = (src.y + tgt.y) / 2;
+      const dx  = tgt.x - src.x;
+      const dy  = tgt.y - src.y;
+      const len = Math.sqrt(dx * dx + dy * dy) || 1;
+      const off = Math.min(50, len * 0.3);
+      const px  = (-dy / len) * off;
+      const py  = (dx / len) * off;
+      d = `M ${src.x} ${src.y} Q ${mx + px} ${my + py} ${tgt.x} ${tgt.y}`;
+    } else {
+      d = _elbowPath(src.x, src.y, tgt.x, tgt.y);
+    }
+
+    // Dash: mixed tier gets a dash even if type has none
+    const dash = style.dash || (conn.tier === 'mixed' ? '8,4' : '');
+    const dashAttr = dash ? `stroke-dasharray="${dash}"` : '';
+
+    // Selection glow: render a wider, semi-transparent path behind
+    if (isSelected) {
+      paths += `<path d="${d}" fill="none" stroke="${style.stroke}" stroke-width="${sw + 5}" stroke-opacity="0.22" pointer-events="none"/>`;
+    }
+
+    const labelEsc = escHtml(conn.label || '');
+    const typeEsc  = escHtml(conn.connector_type);
+    paths += `<path
+      class="conn-path"
+      data-conn-id="${conn.id}"
+      data-conn-type="${typeEsc}"
+      data-conn-label="${labelEsc}"
+      d="${d}"
+      fill="none"
+      stroke="${style.stroke}"
+      stroke-width="${sw}"
+      ${dashAttr}
+      marker-end="url(#${markerId})"
+    />`;
+
+    // Mid-point label
+    if (conn.label) {
+      const mp = wps.length > 0
+        ? wps[Math.floor(wps.length / 2)]
+        : { x: (src.x + tgt.x) / 2, y: (src.y + tgt.y) / 2 };
+      paths += `<text
+        x="${mp.x}" y="${mp.y - 6}"
+        text-anchor="middle"
+        font-size="10"
+        font-family="DM Sans,sans-serif"
+        fill="${style.stroke}"
+        pointer-events="none"
+        paint-order="stroke"
+        stroke="white"
+        stroke-width="3"
+        stroke-linejoin="round"
+      >${escHtml(conn.label)}</text>`;
+    }
+
+    // Waypoint drag handles (shown when this connector is selected)
+    if (isSelected && wps.length > 0) {
+      wps.forEach((wp, idx) => {
+        paths += `<circle class="conn-wp-handle" data-conn-id="${conn.id}" data-wp-idx="${idx}"
+          cx="${wp.x}" cy="${wp.y}" r="5"
+          fill="white" stroke="${style.stroke}" stroke-width="1.5"
+          pointer-events="all" style="cursor:move"/>`;
+      });
+    }
+  });
+
+  svg.innerHTML = defs + paths;
+
+  // Re-attach ghost line group (cleared by innerHTML replace)
+  if (typeof connectorState !== 'undefined' && connectorState.mode === 'selecting_target') {
+    _renderGhostLine();
+  }
+
+  // Init waypoint drag handles
+  if (typeof _initWaypointDrag === 'function') _initWaypointDrag();
+
+  // Attach hover + click + contextmenu listeners on conn-path elements
+  svg.querySelectorAll('.conn-path').forEach(path => {
+    const origSw  = parseFloat(path.getAttribute('stroke-width'));
+    const cType   = path.dataset.connType;
+    const cLabel  = path.dataset.connLabel;
+    const cId     = path.dataset.connId;
+
+    path.addEventListener('mouseenter', e => {
+      if (typeof connectorState !== 'undefined' && connectorState.mode !== 'idle') return;
+      path.setAttribute('stroke-width', origSw + 1);
+      path.style.filter = 'brightness(1.2)';
+      showConnTooltip(e, cType, cLabel);
+    });
+    path.addEventListener('mousemove', moveConnTooltip);
+    path.addEventListener('mouseleave', () => {
+      path.setAttribute('stroke-width', origSw);
+      path.style.filter = '';
+      hideConnTooltip();
+    });
+    path.addEventListener('click', e => {
+      e.stopPropagation();
+      if (typeof connectorState !== 'undefined' && connectorState.mode !== 'idle') return;
+      if (selectedConnectorId === cId) {
+        selectedConnectorId = null;
+        if (typeof closeConnectorDrawer === 'function') closeConnectorDrawer();
+      } else {
+        selectedConnectorId = cId;
+        if (typeof openConnectorDrawer === 'function') openConnectorDrawer(cId);
+      }
+      renderConnectors();
+    });
+    path.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof connectorState !== 'undefined' && connectorState.mode !== 'idle') return;
+      selectedConnectorId = cId;
+      renderConnectors();
+      if (typeof _openConnCtxMenu === 'function') _openConnCtxMenu(e, cId);
+    });
+  });
+}
+
+function showConnTooltip(e, type, label) {
+  const tt = document.getElementById('conn-tooltip');
+  if (!tt) return;
+  const typeName = _CONN_TYPE_LABELS[type] || type;
+  tt.innerHTML = `<div class="ct-type">${typeName}</div>${label ? `<div class="ct-label">${escHtml(label)}</div>` : ''}`;
+  tt.style.display = 'block';
+  moveConnTooltip(e);
+}
+
+function moveConnTooltip(e) {
+  const tt = document.getElementById('conn-tooltip');
+  if (!tt || tt.style.display === 'none') return;
+  tt.style.left = (e.clientX + 14) + 'px';
+  tt.style.top  = (e.clientY - 10) + 'px';
+}
+
+function hideConnTooltip() {
+  const tt = document.getElementById('conn-tooltip');
+  if (tt) tt.style.display = 'none';
+}
+
+function toggleElementConnectors() {
+  showElementConnectors = !showElementConnectors;
+  localStorage.setItem('bp_show_el_conn', showElementConnectors ? 'true' : 'false');
+  const btn = document.getElementById('conn-toggle-btn');
+  if (btn) btn.classList.toggle('active', showElementConnectors);
+  renderConnectors();
+}
+
+// Debounce re-renders on resize (connector positions depend on DOM layout)
+window.addEventListener('resize', () => {
+  clearTimeout(_connRenderTimer);
+  _connRenderTimer = setTimeout(renderConnectors, 60);
+});
+
+// ═══════════════════════════════════════════════════════
+// PRD-20 — CONNECTOR EDITOR: CREATE, EDIT, DELETE
+// ═══════════════════════════════════════════════════════
+
+let connectorState = { mode:'idle', source:null, target:null, waypoints:[], ghostPos:null };
+let _ctxConnId      = null;
+let _ctxElId        = null;
+let _connDrawerId   = null;
+let _waypointDragIdx  = null;
+let _waypointSaveTimer = null;
+
+// ─── Drag-to-connect: port mousedown ──────────────────
+
+function _portMouseDown(type, id, e) {
+  if (!currentBoardId) return;
+  e.preventDefault();
+  e.stopPropagation();
+  connectorState = { mode:'selecting_target', source:{ type, id }, target:null, waypoints:[], ghostPos:null };
+  document.getElementById('bp-canvas-wrap')?.classList.add('conn-dragging');
+  _highlightConnSource();
+  document.addEventListener('mousemove', _connDragMove);
+  document.addEventListener('mouseup', _connDragEnd);
+}
+
+function _connDragMove(e) {
+  if (connectorState.mode !== 'selecting_target') return;
+  const svg = document.getElementById('connector-svg');
+  if (!svg) return;
+  const svgRect = svg.getBoundingClientRect();
+  let px = e.clientX - svgRect.left;
+  let py = e.clientY - svgRect.top;
+
+  // Snap-to-element center within 30px
+  const candidates = [
+    ...document.querySelectorAll('.el-card[data-el-id]'),
+  ];
+  let snapPt = null, minDist = 30;
+  candidates.forEach(el => {
+    const r = el.getBoundingClientRect();
+    const cx = r.left - svgRect.left + r.width / 2;
+    const cy = r.top - svgRect.top + r.height / 2;
+    const dist = Math.sqrt((px - cx) ** 2 + (py - cy) ** 2);
+    if (dist < minDist) { minDist = dist; snapPt = { x: cx, y: cy }; }
+  });
+  connectorState.ghostPos = snapPt || { x: px, y: py };
+  _renderGhostLine();
+}
+
+async function _connDragEnd(e) {
+  document.removeEventListener('mousemove', _connDragMove);
+  document.removeEventListener('mouseup', _connDragEnd);
+  if (connectorState.mode !== 'selecting_target') { _cancelConnDrag(); return; }
+
+  // Identify element under cursor at release
+  const under = document.elementFromPoint(e.clientX, e.clientY);
+  const card  = under?.closest('.el-card[data-el-id]');
+
+  let target = null;
+  if (card) target = { type: 'element', id: card.dataset.elId };
+
+  // Must be a different node from source
+  if (target && !(target.type === connectorState.source.type && target.id === connectorState.source.id)) {
+    connectorState.target = target;
+    await _submitConnectorImmediate();
+  } else {
+    _cancelConnDrag();
+  }
+}
+
+function _cancelConnDrag() {
+  connectorState = { mode:'idle', source:null, target:null, waypoints:[], ghostPos:null };
+  document.getElementById('bp-canvas-wrap')?.classList.remove('conn-dragging');
+  document.removeEventListener('mousemove', _connDragMove);
+  document.removeEventListener('mouseup', _connDragEnd);
+  _removeConnSourceHighlight();
+  _clearGhostLine();
+  renderConnectors();
+}
+
+async function _submitConnectorImmediate() {
+  const { source, target, waypoints } = connectorState;
+  _cancelConnDrag();
+  if (!source || !target) return;
+  const body = { connector_type: 'sequence', waypoints, actor: 'user' };
+  if (source.type === 'step') body.source_step_id = source.id;
+  else body.source_element_id = source.id;
+  if (target.type === 'step') body.target_step_id = target.id;
+  else body.target_element_id = target.id;
+  try {
+    const res = await apiFetch(`/api/boards/${currentBoardId}/connectors`, { method:'POST', body:JSON.stringify(body) });
+    if (!res || !res.ok) {
+      let msg = 'Failed to create connector';
+      try { const d = await res.json(); msg = d.detail || msg; } catch {}
+      showToast(msg); return;
+    }
+    const newConn = await res.json();
+    boardConnectors.push(newConn);
+    renderConnectors();
+    showToast('Connector created — click it to set type');
+  } catch { showToast('Network error'); }
+}
+
+// ─── Source highlight ──────────────────────────────────
+
+function _highlightConnSource() {
+  _removeConnSourceHighlight();
+  if (!connectorState.source) return;
+  let el;
+  if (connectorState.source.type === 'element') {
+    el = document.querySelector(`.el-card[data-el-id="${connectorState.source.id}"]`);
+  } else {
+    el = document.querySelector(`.bp-step-header[data-id="${connectorState.source.id}"]`);
+  }
+  if (el) el.classList.add('conn-source-highlight');
+}
+
+function _removeConnSourceHighlight() {
+  document.querySelectorAll('.conn-source-highlight').forEach(el => el.classList.remove('conn-source-highlight'));
+}
+
+// ─── Ghost line ────────────────────────────────────────
+
+function _renderGhostLine() {
+  const svg = document.getElementById('connector-svg');
+  if (!svg) return;
+  let g = document.getElementById('conn-ghost');
+  if (!g) {
+    g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.id = 'conn-ghost';
+    svg.appendChild(g);
+  }
+  if (connectorState.mode !== 'selecting_target' || !connectorState.source || !connectorState.ghostPos) {
+    g.innerHTML = ''; return;
+  }
+  const src = connectorState.source.type === 'element'
+    ? getEndpointXY('element', connectorState.source.id, svg)
+    : getEndpointXY('step', connectorState.source.id, svg);
+  if (!src) { g.innerHTML = ''; return; }
+
+  const pts = [src, ...connectorState.waypoints, connectorState.ghostPos];
+  const d   = 'M ' + pts.map(p => `${p.x} ${p.y}`).join(' L ');
+  g.innerHTML = `<path d="${d}" fill="none" stroke="var(--blue)" stroke-width="1.5"
+    stroke-dasharray="5,4" pointer-events="none" opacity="0.65"/>`;
+}
+
+function _clearGhostLine() {
+  const g = document.getElementById('conn-ghost');
+  if (g) g.innerHTML = '';
+}
+
+// ─── Canvas wrap init ──────────────────────────────────
+
+function _initCanvasConnHandlers() {
+  const wrap = document.getElementById('bp-canvas-wrap');
+  if (!wrap) return;
+  wrap.addEventListener('contextmenu', function(e) {
+    if (connectorState.mode !== 'idle') { e.preventDefault(); _cancelConnDrag(); }
+  });
+}
+
+// ─── Element card handlers ─────────────────────────────
+
+function elCardClicked(id, e) {
+  openElementDrawer(id);
+  e.stopPropagation();
+}
+
+function elCardContextMenu(e, id) {
+  e.preventDefault();
+  closeCtxMenus();
+  _ctxElId = id;
+  const menu = document.getElementById('el-conn-ctx-menu');
+  if (!menu) return;
+  let left = e.clientX, top = e.clientY;
+  if (left + 180 > window.innerWidth)  left = e.clientX - 180;
+  if (top  + 50  > window.innerHeight) top  = e.clientY - 50;
+  menu.style.left = left + 'px';
+  menu.style.top  = top + 'px';
+  menu.style.display = 'block';
+}
+
+function startConnectorFromCtx() {
+  closeCtxMenus();
+  if (!_ctxElId) return;
+  const id = _ctxElId; _ctxElId = null;
+  connectorState = { mode:'selecting_target', source:{ type:'element', id }, target:null, waypoints:[], ghostPos:null };
+  document.getElementById('bp-canvas-wrap')?.classList.add('conn-dragging');
+  _highlightConnSource();
+  document.addEventListener('mousemove', _connDragMove);
+  document.addEventListener('mouseup', _connDragEnd);
+}
+
+// ─── Connector drawer (edit) ───────────────────────────
+
+function openConnectorDrawer(connId) {
+  const conn = boardConnectors.find(c => c.id === connId);
+  if (!conn) return;
+  _connDrawerId = connId;
+  const title = document.getElementById('conn-drawer-title');
+  const body  = document.getElementById('conn-drawer-body');
+  if (!title || !body) return;
+  title.textContent = (_CONN_TYPE_LABELS[conn.connector_type] || conn.connector_type) + ' connector';
+  const typeOpts = Object.entries(_CONN_TYPE_LABELS).map(([k, v]) =>
+    `<option value="${k}"${conn.connector_type === k ? ' selected' : ''}>${v}</option>`
+  ).join('');
+  const provDate = conn.created_at ? new Date(conn.created_at).toLocaleDateString() : '';
+  body.innerHTML = `
+    <div class="fg">
+      <div class="fl">Type</div>
+      <select class="fi" id="conn-edit-type">${typeOpts}</select>
+    </div>
+    <div class="fg">
+      <div class="fl">Label <span style="font-weight:400;color:var(--text3);">(optional)</span></div>
+      <input class="fi" id="conn-edit-label" maxlength="100" value="${escHtml(conn.label || '')}" placeholder="e.g. passes user data">
+    </div>
+    <div class="fg">
+      <div class="fl">Notes</div>
+      <textarea class="fi" id="conn-edit-notes" rows="3" style="resize:vertical;">${escHtml(conn.notes || '')}</textarea>
+    </div>
+    <div class="conn-prov">
+      <div class="el-drawer-label">Provenance</div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:6px;">
+        <span style="color:var(--text2);">Created by ${escHtml(conn.created_by_actor || 'user')}</span>
+        <span style="color:var(--text3);">${provDate}</span>
+      </div>
+    </div>`;
+  document.getElementById('connector-drawer').classList.add('open');
+}
+
+function closeConnectorDrawer() {
+  document.getElementById('connector-drawer')?.classList.remove('open');
+  _connDrawerId = null;
+}
+
+async function saveConnectorDrawer() {
+  if (!_connDrawerId) return;
+  const type  = document.getElementById('conn-edit-type')?.value;
+  const label = document.getElementById('conn-edit-label')?.value.trim() || null;
+  const notes = document.getElementById('conn-edit-notes')?.value.trim() || null;
+  try {
+    const res = await apiFetch(`/api/boards/${currentBoardId}/connectors/${_connDrawerId}`, {
+      method: 'PATCH', body: JSON.stringify({ connector_type: type, label, notes }),
+    });
+    if (!res || !res.ok) { showToast('Save failed'); return; }
+    const updated = await res.json();
+    const idx = boardConnectors.findIndex(c => c.id === _connDrawerId);
+    if (idx >= 0) boardConnectors[idx] = updated;
+    closeConnectorDrawer();
+    renderConnectors();
+    showToast('Connector saved');
+  } catch { showToast('Save failed'); }
+}
+
+function deleteConnectorInDrawer() {
+  if (!_connDrawerId) return;
+  _ctxConnId = _connDrawerId;
+  openModal('confirm-delete-connector');
+}
+
+async function confirmDeleteConnector() {
+  closeModal('confirm-delete-connector');
+  if (!_ctxConnId) return;
+  const idToDelete = _ctxConnId;
+  _ctxConnId = null;
+  try {
+    const res = await apiFetch(`/api/boards/${currentBoardId}/connectors/${idToDelete}`, { method: 'DELETE' });
+    if (!res || !res.ok) {
+      let msg = 'Delete failed';
+      try { const d = await res.json(); msg = d.detail || msg; } catch {}
+      showToast(msg); return;
+    }
+    boardConnectors = boardConnectors.filter(c => c.id !== idToDelete);
+    if (selectedConnectorId === idToDelete) { selectedConnectorId = null; closeConnectorDrawer(); }
+    if (_connDrawerId === idToDelete) closeConnectorDrawer();
+    renderConnectors();
+    showToast('Connector deleted');
+  } catch { showToast('Delete failed'); }
+}
+
+// ─── Right-click context menu on connectors ────────────
+
+function _openConnCtxMenu(e, connId) {
+  closeCtxMenus();
+  _ctxConnId = connId;
+  const menu = document.getElementById('conn-ctx-menu');
+  if (!menu) return;
+  let left = e.clientX, top = e.clientY;
+  if (left + 150 > window.innerWidth)  left = e.clientX - 150;
+  if (top  + 110 > window.innerHeight) top  = e.clientY - 110;
+  menu.style.left = left + 'px';
+  menu.style.top  = top  + 'px';
+  menu.style.display = 'block';
+}
+
+function editConnectorCtx() {
+  closeCtxMenus();
+  if (!_ctxConnId) return;
+  selectedConnectorId = _ctxConnId;
+  openConnectorDrawer(_ctxConnId);
+  renderConnectors();
+}
+
+async function duplicateConnectorCtx() {
+  closeCtxMenus();
+  if (!_ctxConnId) return;
+  const conn = boardConnectors.find(c => c.id === _ctxConnId);
+  if (!conn) return;
+  const body = { connector_type: conn.connector_type, waypoints: [], actor: 'user' };
+  if (conn.label) body.label = conn.label;
+  if (conn.source_step_id)    body.source_step_id    = conn.source_step_id;
+  else                        body.source_element_id = conn.source_element_id;
+  if (conn.target_step_id)    body.target_step_id    = conn.target_step_id;
+  else                        body.target_element_id = conn.target_element_id;
+  try {
+    const res = await apiFetch(`/api/boards/${currentBoardId}/connectors`, { method:'POST', body:JSON.stringify(body) });
+    if (!res || !res.ok) { showToast('Duplicate failed'); return; }
+    const newConn = await res.json();
+    boardConnectors.push(newConn);
+    renderConnectors();
+    showToast('Connector duplicated');
+  } catch { showToast('Duplicate failed'); }
+}
+
+function deleteConnectorCtx() {
+  closeCtxMenus();
+  if (!_ctxConnId) return;
+  openModal('confirm-delete-connector');
+}
+
+function closeCtxMenus() {
+  const c = document.getElementById('conn-ctx-menu');
+  const e = document.getElementById('el-conn-ctx-menu');
+  if (c) c.style.display = 'none';
+  if (e) e.style.display = 'none';
+}
+
+// ─── Keyboard shortcuts ────────────────────────────────
+
+document.addEventListener('keydown', e => {
+  const tag = e.target.tagName;
+  const inInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable;
+
+  if (e.key === 'Escape') {
+    if (connectorState.mode !== 'idle') {
+      _cancelConnDrag();
+      e.stopPropagation();
+      return;
+    }
+    if (selectedConnectorId) {
+      selectedConnectorId = null;
+      closeConnectorDrawer();
+      renderConnectors();
+      return;
+    }
+    return;
+  }
+
+  if (inInput) return;
+
+  if ((e.key === 'Delete' || e.key === 'Backspace') && selectedConnectorId) {
+    _ctxConnId = selectedConnectorId;
+    openModal('confirm-delete-connector');
+    e.preventDefault();
+  }
+}, true); // capture phase so we run before the modal-close handler
+
+// ─── Waypoint drag handles ─────────────────────────────
+
+function _initWaypointDrag() {
+  const svg = document.getElementById('connector-svg');
+  if (!svg) return;
+  svg.querySelectorAll('.conn-wp-handle').forEach(circle => {
+    const cId = circle.dataset.connId;
+    const idx = parseInt(circle.dataset.wpIdx, 10);
+    circle.addEventListener('mousedown', function(e) {
+      e.stopPropagation(); e.preventDefault();
+      const svgRect = svg.getBoundingClientRect();
+      function onMove(ev) {
+        const conn = boardConnectors.find(c => c.id === cId);
+        if (!conn || !conn.waypoints) return;
+        conn.waypoints[idx] = { x: ev.clientX - svgRect.left, y: ev.clientY - svgRect.top };
+        renderConnectors();
+      }
+      function onUp() {
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+        clearTimeout(_waypointSaveTimer);
+        _waypointSaveTimer = setTimeout(() => _saveConnectorWaypoints(cId), 500);
+      }
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+    });
+  });
+}
+
+async function _saveConnectorWaypoints(connId) {
+  const conn = boardConnectors.find(c => c.id === connId);
+  if (!conn) return;
+  try {
+    const res = await apiFetch(`/api/boards/${currentBoardId}/connectors/${connId}`, {
+      method: 'PATCH', body: JSON.stringify({ waypoints: conn.waypoints }),
+    });
+    if (res && res.ok) {
+      const updated = await res.json();
+      const idx = boardConnectors.findIndex(c => c.id === connId);
+      if (idx >= 0) boardConnectors[idx] = updated;
+    }
+  } catch {}
 }
 
 async function loadHistory(reset) {
@@ -4815,6 +6109,10 @@ function initRoleUI() {
 async function initApp() {
   initRoleUI();
   initChatDragDrop();
+  _initCanvasConnHandlers();
+  // PRD-19: sync connector toggle button to persisted state
+  const _ctBtn = document.getElementById('conn-toggle-btn');
+  if (_ctBtn) _ctBtn.classList.toggle('active', showElementConnectors);
   renderCanvas();  // show empty state immediately before any board loads
   await loadCurrentUser();
 
@@ -5866,6 +7164,51 @@ initApp();
     <button class="btn btn-ghost" onclick="deleteElementDrawer()" style="color:var(--red);border-color:var(--red-bd);">Delete</button>
     <button class="btn btn-ghost" onclick="closeElementDrawer()" style="margin-left:auto;">Cancel</button>
     <button class="btn btn-primary" onclick="saveElementDrawer()">Save</button>
+  </div>
+</div>
+
+<!-- PRD-19: connector hover tooltip (fixed position, outside all scroll containers) -->
+<div id="conn-tooltip" class="conn-tooltip" role="tooltip"></div>
+
+<!-- PRD-20: connector edit drawer -->
+<div class="el-drawer" id="connector-drawer">
+  <div class="el-drawer-head">
+    <svg width="16" height="10" viewBox="0 0 16 10" fill="none" style="flex-shrink:0;"><line x1="0" y1="5" x2="12" y2="5" stroke="var(--text2)" stroke-width="1.5"/><polygon points="10,2 14,5 10,8" fill="var(--text2)"/></svg>
+    <div class="el-drawer-title" id="conn-drawer-title">Connector</div>
+    <button class="btn-icon btn" onclick="closeConnectorDrawer()" style="border:none;font-size:15px;">×</button>
+  </div>
+  <div class="el-drawer-body" id="conn-drawer-body"></div>
+  <div class="el-drawer-foot">
+    <button class="btn btn-ghost" onclick="deleteConnectorInDrawer()" style="color:var(--red);border-color:var(--red-bd);">Delete</button>
+    <button class="btn btn-ghost" onclick="closeConnectorDrawer()" style="margin-left:auto;">Cancel</button>
+    <button class="btn btn-primary" onclick="saveConnectorDrawer()">Save</button>
+  </div>
+</div>
+
+<!-- PRD-20: context menus -->
+<div id="conn-ctx-menu" class="ctx-menu">
+  <div class="ctx-item" onclick="editConnectorCtx()">Edit connector</div>
+  <div class="ctx-item" onclick="duplicateConnectorCtx()">Duplicate</div>
+  <div class="ctx-item danger" onclick="deleteConnectorCtx()">Delete connector</div>
+</div>
+<div id="el-conn-ctx-menu" class="ctx-menu">
+  <div class="ctx-item" onclick="startConnectorFromCtx()">Start connector from here</div>
+</div>
+
+<!-- PRD-20: connector delete confirmation -->
+<div class="overlay" id="overlay-confirm-delete-connector">
+  <div class="modal sm">
+    <div class="modal-head">
+      <div class="modal-icon" style="background:var(--red-bg);font-size:16px;">🗑️</div>
+      <div>
+        <div class="modal-title">Delete connector?</div>
+        <div class="modal-sub">Cannot be undone except via change history.</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('confirm-delete-connector')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDeleteConnector()">Yes, delete</button>
+    </div>
   </div>
 </div>
 

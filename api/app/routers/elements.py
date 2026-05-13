@@ -1,7 +1,8 @@
 """
 Elements router — /api/boards/{board_id}/elements
 """
-from fastapi import APIRouter, Depends
+from typing import Optional
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -18,12 +19,13 @@ router = APIRouter(prefix="/api/boards", tags=["elements"])
 
 @router.get("/{board_id}/elements", response_model=list[ElementOut])
 async def list_elements_route(
-    board_id: str,
+    board_id:  str,
+    branch_id: Optional[str] = Query(None),
     user: User = Depends(get_current_user),
     db:   AsyncSession = Depends(get_db),
 ):
     await assert_board_access(db, board_id, user.id)
-    return await list_elements(db, board_id)
+    return await list_elements(db, board_id, branch_id=branch_id)
 
 
 @router.post("/{board_id}/elements", response_model=ElementOut, status_code=201)

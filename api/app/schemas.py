@@ -6,7 +6,7 @@ Covers auth, boards, capabilities, chat, insights, governance, audit, exports.
 from __future__ import annotations
 import re
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
@@ -438,6 +438,26 @@ class GroupCommitRequest(BaseModel):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# BRANCHES (PRD-17d)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class BranchCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+
+
+class BranchOut(BaseModel):
+    id:                 str
+    board_id:           str
+    name:               str
+    is_default:         bool
+    state_snapshot:     Optional[dict[str, Any]] = None
+    created_by_user_id: Optional[str] = None
+    created_at:         datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # ELEMENTS
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -458,6 +478,7 @@ class ElementCreate(BaseModel):
     status:      str = "draft"
     swimlane_id: Optional[str] = None
     step_id:     Optional[str] = None
+    branch_id:   Optional[str] = None
     meta:        Optional[dict[str, Any]] = None
     actor:       str = Field("user", max_length=30)
 
@@ -516,9 +537,60 @@ class ElementUpdate(BaseModel):
         return v
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# CONNECTORS (PRD-18)
+# ─────────────────────────────────────────────────────────────────────────────
+
+ConnectorType = Literal["sequence", "data_flow", "trigger", "dependency", "feedback", "failure"]
+ConnectorTier = Literal["step", "element", "mixed"]
+
+_CONNECTOR_TYPES = {"sequence", "data_flow", "trigger", "dependency", "feedback", "failure"}
+
+
+class ConnectorCreate(BaseModel):
+    source_step_id:    Optional[str] = None
+    source_element_id: Optional[str] = None
+    target_step_id:    Optional[str] = None
+    target_element_id: Optional[str] = None
+    connector_type:    ConnectorType
+    label:             Optional[str] = Field(None, max_length=100)
+    notes:             Optional[str] = Field(None, max_length=2000)
+    waypoints:         list = Field(default_factory=list)
+    actor:             Literal["user", "agent"] = "user"
+
+
+class ConnectorUpdate(BaseModel):
+    connector_type: Optional[ConnectorType] = None
+    label:          Optional[str] = Field(None, max_length=100)
+    notes:          Optional[str] = Field(None, max_length=2000)
+    waypoints:      Optional[list] = None
+
+
+class ConnectorOut(BaseModel):
+    id:                 str
+    board_id:           str
+    source_step_id:     Optional[str] = None
+    source_element_id:  Optional[str] = None
+    target_step_id:     Optional[str] = None
+    target_element_id:  Optional[str] = None
+    tier:               str
+    connector_type:     str
+    label:              Optional[str] = None
+    notes:              Optional[str] = None
+    waypoints:          list = Field(default_factory=list)
+    created_by_actor:   str
+    created_by_user_id: Optional[str] = None
+    updated_by_actor:   Optional[str] = None
+    created_at:         datetime
+    updated_at:         datetime
+
+    model_config = {"from_attributes": True}
+
+
 class ElementOut(BaseModel):
     id:          str
     board_id:    str
+    branch_id:   Optional[str] = None
     swimlane_id: Optional[str] = None
     step_id:     Optional[str] = None
     type:        str

@@ -85,6 +85,8 @@ class Board(Base):
     import_jobs   = relationship("ImportJob",         back_populates="board", cascade="all, delete-orphan")
     change_events = relationship("ChangeEvent",       back_populates="board", cascade="all, delete-orphan")
     commits       = relationship("Commit",            back_populates="board", cascade="all, delete-orphan")
+    branches      = relationship("Branch",            back_populates="board", cascade="all, delete-orphan")
+    connectors    = relationship("Connector",         back_populates="board", cascade="all, delete-orphan")
 
 
 class BoardCollaborator(Base):
@@ -137,6 +139,7 @@ class Element(Base):
 
     id          = Column(Uuid(as_uuid=False), primary_key=True, default=_uuid)
     board_id    = Column(Uuid(as_uuid=False), ForeignKey("boards.id", ondelete="CASCADE"), nullable=False, index=True)
+    branch_id   = Column(Uuid(as_uuid=False), ForeignKey("branches.id", ondelete="CASCADE"), nullable=True, index=True)
     swimlane_id = Column(Uuid(as_uuid=False))     # soft ref to boards.state swimlane UUID
     step_id     = Column(Uuid(as_uuid=False))     # soft ref to boards.state step UUID
     type        = Column(String(50), nullable=False)
@@ -153,7 +156,8 @@ class Element(Base):
     updated_by_user_id = Column(Uuid(as_uuid=False), ForeignKey("users.id"), nullable=True)
     updated_by_actor   = Column(String(30), nullable=False, server_default="user", default="user")
 
-    board = relationship("Board", back_populates="elements")
+    board  = relationship("Board",  back_populates="elements")
+    branch = relationship("Branch", foreign_keys=[branch_id])
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -340,3 +344,49 @@ class ChangeEvent(Base):
 
     board  = relationship("Board",  back_populates="change_events")
     commit = relationship("Commit", back_populates="events")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BRANCHES (PRD-17d — branch switcher data model)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class Branch(Base):
+    __tablename__ = "branches"
+
+    id                 = Column(Uuid(as_uuid=False), primary_key=True, default=_uuid)
+    board_id           = Column(Uuid(as_uuid=False), ForeignKey("boards.id", ondelete="CASCADE"), nullable=False, index=True)
+    name               = Column(String(100), nullable=False)
+    is_default         = Column(Boolean, server_default="false", default=False, nullable=False)
+    state_snapshot     = Column(JSON, nullable=True)
+    created_by_user_id = Column(Uuid(as_uuid=False), ForeignKey("users.id"), nullable=True)
+    created_at         = Column(DateTime(timezone=True), server_default=func.now())
+
+    board = relationship("Board", back_populates="branches")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CONNECTORS (PRD-18 — directed graph edges between steps/elements)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class Connector(Base):
+    __tablename__ = "connectors"
+
+    id                 = Column(Uuid(as_uuid=False), primary_key=True, default=_uuid)
+    board_id           = Column(Uuid(as_uuid=False), ForeignKey("boards.id",    ondelete="CASCADE"), nullable=False, index=True)
+    source_step_id     = Column(Uuid(as_uuid=False), nullable=True)
+    source_element_id  = Column(Uuid(as_uuid=False), ForeignKey("elements.id",  ondelete="CASCADE"), nullable=True)
+    target_step_id     = Column(Uuid(as_uuid=False), nullable=True)
+    target_element_id  = Column(Uuid(as_uuid=False), ForeignKey("elements.id",  ondelete="CASCADE"), nullable=True)
+    tier               = Column(Text, nullable=False)   # step | element | mixed
+    connector_type     = Column(Text, nullable=False)   # sequence | data_flow | trigger | dependency | feedback | failure
+    label              = Column(Text, nullable=True)
+    notes              = Column(Text, nullable=True)
+    waypoints          = Column(JSON, server_default='[]', default=list, nullable=True)
+    created_by_user_id = Column(Uuid(as_uuid=False), ForeignKey("users.id"), nullable=True)
+    created_by_actor   = Column(Text, nullable=False, server_default="user", default="user")
+    updated_by_user_id = Column(Uuid(as_uuid=False), ForeignKey("users.id"), nullable=True)
+    updated_by_actor   = Column(Text, nullable=True)
+    created_at         = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at         = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    board = relationship("Board", back_populates="connectors")

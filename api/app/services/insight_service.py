@@ -46,18 +46,26 @@ Each insight object must have EXACTLY these fields:
 - "severity":    one of "high" | "medium" | "low" | "info" | "positive"
 - "title":       concise string, max 80 characters
 - "description": 1-3 sentence explanation, max 300 characters
-- "source_ref":  where the issue comes from (e.g. "Step 3 · AI swimlane · CAP-001")
+- "source_ref":  where the issue comes from (e.g. "Step 3 · AI swimlane · CAP-001", or a connector ID if the insight is about a flow)
 - "actions":     array of objects, each with "label" (string) and "action_type" (string)
 
 Rules:
 - Include at most 8 insights total
-- Prioritise real issues — reference specific steps, swimlane names, element IDs
+- Prioritise real issues — reference specific steps, swimlane names, element IDs, or connector IDs
 - Always include at least one "positive" insight if something is done well
 - Flag missing XAI strategies, undocumented overrides, transparency gaps, bias risks only when AI capabilities are present on the board
 - If the board has no elements, return a single info insight encouraging the user to start mapping
 - Return ONLY the raw JSON array — no markdown fences, no preamble
 
-Example action_types: "add_element", "flag_risk", "escalate_governance", "open_monitoring", "ask_agent"
+Connector-aware analysis (include where relevant):
+- Orphaned elements: elements with no connectors at all — likely incomplete
+- Missing failure paths: elements or steps with no outgoing 'failure' connector in high-stakes contexts
+- Cyclic dependencies: A → B → C → A patterns — note if intentional (retry) or a design smell
+- Backstage data flows crossing into frontstage — may need transparency or consent review
+- Bottlenecks: elements with many incoming 'dependency' connectors — single points of failure
+- For connector-related insights, set "source_ref" to the connector ID (from the context) or a description of the path
+
+Example action_types: "add_element", "flag_risk", "escalate_governance", "open_monitoring", "ask_agent", "add_connector"
 """
 
 
