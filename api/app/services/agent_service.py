@@ -25,7 +25,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
-from app.models import Board, Capability, Element, Insight, GovernanceDecision, ChatMessage, Upload
+from app.models import Board, Capability, Connector, Element, Insight, GovernanceDecision, ChatMessage, Upload
 from app.schemas import AgentError, AgentCallError
 from app.services.error_messages import USER_MESSAGES, RETRY_ADVICE
 
@@ -51,7 +51,7 @@ def _get_client():
 
 
 MAX_HISTORY_MESSAGES = 20
-MAX_RESPONSE_TOKENS  = 2048
+MAX_RESPONSE_TOKENS  = 8192
 
 
 # -- Health counter ------------------------------------------------------------
@@ -114,6 +114,90 @@ def _classify_error(exc: Exception, request_id: str) -> AgentError:
 
 # -- Board context builder -----------------------------------------------------
 
+_CONNECTOR_FULL_LIMIT = 100
+
+
+def _resolve_endpoint(
+    step_id, element_id,
+    step_map: dict[str, str],
+    element_map: dict[str, str],
+) -> dict:
+    if step_id:
+        sid = str(step_id)
+        return {"kind": "step", "id": sid, "name": step_map.get(sid, sid)}
+    eid = str(element_id)
+    return {"kind": "element", "id": eid, "name": element_map.get(eid, eid)}
+
+
+def _serialize_connector(c: "Connector", step_map: dict, element_map: dict) -> dict:
+    return {
+        "id":     str(c.id),
+        "source": _resolve_endpoint(c.source_step_id, c.source_element_id, step_map, element_map),
+        "target": _resolve_endpoint(c.target_step_id, c.target_element_id, step_map, element_map),
+        "type":   c.connector_type,
+        "tier":   c.tier,
+        "label":  c.label,
+    }
+
+
+def _build_connector_context(
+    connectors: list,
+    all_elements: list,
+    step_map: dict[str, str],
+    element_map: dict[str, str],
+) -> dict:
+    """Return full list or summary dict depending on connector count."""
+    if len(connectors) <= _CONNECTOR_FULL_LIMIT:
+        return {
+            "connectors": [_serialize_connector(c, step_map, element_map) for c in connectors]
+        }
+
+    # Summary mode for large boards
+    by_type: dict[str, int] = {}
+    by_tier: dict[str, int] = {}
+    connected_ids: set[str] = set()
+    target_ids: set[str]  = set()
+    source_ids: set[str]  = set()
+
+    for c in connectors:
+        by_type[c.connector_type] = by_type.get(c.connector_type, 0) + 1
+        by_tier[c.tier]           = by_tier.get(c.tier, 0) + 1
+        for fld in (c.source_element_id, c.target_element_id,
+                    c.source_step_id,    c.target_step_id):
+            if fld:
+                connected_ids.add(str(fld))
+        if c.target_element_id:
+            target_ids.add(str(c.target_element_id))
+        if c.source_element_id:
+            source_ids.add(str(c.source_element_id))
+
+    orphaned = [
+        {"id": str(e.id), "name": e.name}
+        for e in all_elements
+        if str(e.id) not in connected_ids
+    ][:10]
+
+    dead_ends = [
+        {"id": str(e.id), "name": e.name}
+        for e in all_elements
+        if str(e.id) in target_ids and str(e.id) not in source_ids
+    ][:10]
+
+    return {
+        "connectors_summary": {
+            "total":              len(connectors),
+            "by_type":            by_type,
+            "by_tier":            by_tier,
+            "orphaned_elements":  orphaned,
+            "dead_ends":          dead_ends,
+        },
+        "connectors_sample": [
+            _serialize_connector(c, step_map, element_map)
+            for c in connectors[-20:]
+        ],
+    }
+
+
 async def build_board_context(db: AsyncSession, board_id: str) -> dict:
     """Pull live board state from every relevant table and return as a dict."""
     board_res = await db.execute(select(Board).where(Board.id == board_id))
@@ -126,13 +210,28 @@ async def build_board_context(db: AsyncSession, board_id: str) -> dict:
     )
     caps = caps_res.scalars().all()
 
+    # Fetch all elements — need all for connector name resolution; display is capped at 20.
     elems_res = await db.execute(
         select(Element)
         .where(Element.board_id == board_id)
         .order_by(Element.updated_at.desc())
-        .limit(20)
     )
-    elements = elems_res.scalars().all()
+    all_elements = elems_res.scalars().all()
+    elements = all_elements[:20]
+
+    conn_res = await db.execute(
+        select(Connector)
+        .where(Connector.board_id == board_id)
+        .order_by(Connector.created_at)
+    )
+    connectors = conn_res.scalars().all()
+
+    element_map = {str(e.id): e.name for e in all_elements}
+    step_map    = {
+        str(s["id"]): s.get("name", "")
+        for s in (board.state or {}).get("steps", [])
+        if "id" in s
+    }
 
     open_ins_res = await db.execute(
         select(Insight).where(
@@ -149,6 +248,8 @@ async def build_board_context(db: AsyncSession, board_id: str) -> dict:
         .limit(5)
     )
     recent_gov = gov_res.scalars().all()
+
+    connector_ctx = _build_connector_context(connectors, all_elements, step_map, element_map)
 
     return {
         "board_id":      board.id,
@@ -193,6 +294,7 @@ async def build_board_context(db: AsyncSession, board_id: str) -> dict:
             }
             for g in recent_gov
         ],
+        **connector_ctx,
     }
 
 
@@ -220,9 +322,11 @@ Your responsibilities:
 5. This board may or may not involve AI. Do not assume AI is present unless you see AI capabilities or AI-tagged elements in the board state.
 
 Communication:
-- Be specific. Reference element IDs and names.
-- Be brief. 150-300 words unless asked for more.
-- Use bullets for multiple items, **bold** for key terms."""
+- Be specific. Reference element names and IDs.
+- For simple questions, be concise (a few sentences). For gap analysis, reviews, or strategy questions, be thorough and complete — never cut off mid-point.
+- Use bullets for multiple items, **bold** for key terms, ### for section headings.
+- Never include raw JSON, code blocks, or technical object notation in your response. Write everything as plain prose or structured markdown.
+- End every response with a short "**What to do next:**" section offering 2-3 concrete next steps the user can take on this board."""
 
 
 def _hcai_section() -> str:
@@ -253,13 +357,36 @@ Allowed action types and their payloads:
 - delete_swimlane: { "id": "...", "name": "..." }
 - update_step: { "id": "...", "name": "..." }
 - delete_step: { "id": "...", "name": "..." }
+- create_connector: { "source": {"kind": "element"|"step", "id": "..."}, "target": {"kind": "element"|"step", "id": "..."}, "connector_type": "sequence"|"data_flow"|"trigger"|"dependency"|"feedback"|"failure", "label": "optional string", "rationale": "why you are proposing this — shown to the user" }
+- update_connector: { "connector_id": "...", "updates": { "connector_type": "...", "label": "...", "notes": "..." }, "rationale": "..." }
+- delete_connector: { "connector_id": "...", "rationale": "..." }
 
 Rules:
 - Never claim to have made a change — only propose it. The user must approve each action before it is applied.
 - Put your full explanation in the "message" field. Explain each proposed action.
-- For analysis, questions, or reviews, respond with plain text only (not JSON).
+- For analysis, questions, or reviews: respond with plain Markdown prose only — absolutely no JSON, no code blocks, no technical object notation.
 - Reference real IDs from the board context (board_state.swimlanes[].id, board_state.steps[].id, elements[].id) when updating or deleting.
-- Each action is independent — the user can approve some and reject others."""
+- Reference real connector IDs from the connectors list when proposing update_connector or delete_connector.
+- For create_connector: use real element or step IDs from the board context as source/target.
+- Each action is independent — the user can approve some and reject others.
+- Do not propose more than 5 connector actions in a single response — prioritise the most impactful gaps.
+
+Example — good connector proposal response:
+{
+  "message": "The login form connects to the backend via data_flow, but there is no failure path back. If auth fails, users won't know why. I'm proposing a failure connector.",
+  "actions": [
+    {
+      "type": "create_connector",
+      "payload": {
+        "source": {"kind": "element", "id": "<backend-element-id>"},
+        "target": {"kind": "element", "id": "<login-form-element-id>"},
+        "connector_type": "failure",
+        "label": "invalid credentials",
+        "rationale": "Without a failure path, auth errors are invisible to the user. This connector makes the error flow explicit."
+      }
+    }
+  ]
+}"""
 
 
 _ROLE_SECTIONS: dict[str, str] = {
@@ -277,6 +404,65 @@ def _role_section(role: str) -> str:
     if not text:
         return ""
     return f"Role context: {text}"
+
+
+def _connectors_section(ctx: dict) -> str:
+    """Generate a system prompt section that teaches the agent to use connector data."""
+    if "connectors_summary" in ctx:
+        s = ctx["connectors_summary"]
+        orphaned_names = [o["name"] for o in s.get("orphaned_elements", [])]
+        dead_end_names = [d["name"] for d in s.get("dead_ends", [])]
+        return (
+            f"This board has {s['total']} connectors (summary mode — board is large).\n"
+            f"By type: {s['by_type']}\n"
+            f"By tier: {s['by_tier']}\n"
+            f"Orphaned elements (zero connectors): {orphaned_names or 'none'}\n"
+            f"Dead-end elements (incoming only, no outgoing): {dead_end_names or 'none'}\n"
+            "A representative sample of connectors is included in the board context.\n\n"
+            + _CONNECTOR_REASONING_RULES
+        )
+
+    connectors = ctx.get("connectors", [])
+    if not connectors:
+        return (
+            "This board has no connectors yet. "
+            "Do not hallucinate connections between elements. "
+            "If asked about flows or relationships, acknowledge that no connectors have been drawn and invite the user to add them."
+        )
+
+    return (
+        f"This board has {len(connectors)} typed, directed connectors between its steps and elements.\n"
+        "Each connector has a source, a target (step or element), a type "
+        "(sequence | data_flow | trigger | dependency | feedback | failure), "
+        "a tier (step | element | mixed), and an optional label.\n\n"
+        + _CONNECTOR_REASONING_RULES
+    )
+
+
+_CONNECTOR_REASONING_RULES = """\
+When reasoning about the board:
+- Use connectors to trace flow — do not rely on element placement alone.
+- Reference connectors using the format: [connector: Source Name → Target Name (type)]
+  Example: [connector: Login form → Backend auth service (data_flow)]
+- Only reference connectors that exist in the provided context. Never invent connections.
+- Identify orphaned elements (zero connectors) — they may be incomplete or not yet wired in.
+- Identify missing failure paths: steps or elements with no 'failure' connector out.
+- Flag data flows that cross visibility lines (frontstage → backstage) — may need transparency review.
+- Note bottlenecks: elements with many incoming 'dependency' connectors are single points of failure.
+- Note cycles (A → B → C → A) — sometimes intentional (retry loops), often a design smell.
+
+When proposing connector changes (via the action vocabulary):
+- Propose create_connector when: an element has no outgoing connectors but clearly leads somewhere; a high-stakes step has no failure path; a data flow is implied by element placement but not drawn.
+- Propose update_connector when: an existing connector is mis-typed (e.g. sequence where failure is appropriate) or has a misleading or missing label.
+- Propose delete_connector when: a connector is redundant (duplicate path) or contradicts the described flow.
+- Always include a rationale field — the user reads it before deciding to approve.
+- Never propose more than 5 connector actions per response. If many gaps exist, prioritise and offer to surface more next turn.
+
+Good response examples:
+- "The login form has a data_flow to the backend, but I see no failure connector from the backend back [connector: Backend auth → Login form (failure)] — how are auth errors communicated to users?"
+- "Two elements have no connectors at all: 'X' and 'Y'. Are they orphaned, or not yet wired?"
+- "Three elements depend on 'Auth service' via dependency connectors — it's a single point of failure. Consider a fallback."
+- "If no feedback connector exists on this board, I'll note it honestly rather than assume one is present.\""""
 
 
 def _parse_agent_response(text: str) -> tuple[str, list[dict]]:
@@ -305,6 +491,7 @@ def _parse_agent_response(text: str) -> tuple[str, list[dict]]:
 
 def build_system_prompt(ctx: dict, role: Optional[str] = None) -> str:
     sections = [_core_section(ctx)]
+    sections.append(_connectors_section(ctx))
     if _has_ai_content(ctx):
         sections.append(_hcai_section())
     if role:
@@ -446,6 +633,14 @@ async def chat(
 
     text   = response.text or ""
     tokens = response.usage_metadata.total_token_count if response.usage_metadata else 0
+
+    # Detect truncation: if the model was stopped by the token limit, append a hint
+    try:
+        finish_reason = response.candidates[0].finish_reason if response.candidates else None
+        if finish_reason and str(finish_reason).upper() in ("MAX_TOKENS", "2"):
+            text = text.rstrip() + "\n\n*Response reached length limit. Ask me to continue, or narrow your question.*"
+    except Exception:
+        pass
 
     log.info("Chat tokens used: %d (board=%s, attachments=%d)", tokens, board_id, len(attach_refs))
 

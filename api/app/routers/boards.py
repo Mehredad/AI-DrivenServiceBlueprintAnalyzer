@@ -55,9 +55,16 @@ async def patch_board(
 ):
     ip = request.client.host if request.client else None
     ua = request.headers.get("user-agent")
-    board = await board_service.patch_board(db, board_id, user.id, body, ip=ip, ua=ua)
+    board, removed_step_ids = await board_service.patch_board(db, board_id, user.id, body, ip=ip, ua=ua)
     await db.commit()
     await db.refresh(board)
+    # Cascade-delete connectors for any steps removed in this patch (FR-6, PRD-18)
+    if removed_step_ids:
+        from app.services import connector_service
+        for step_id in removed_step_ids:
+            await connector_service.delete_connectors_for_step(
+                db, board_id, step_id, actor_user_id=str(user.id)
+            )
     return board
 
 

@@ -1,3 +1,4 @@
+from uuid import uuid4
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase
@@ -22,11 +23,17 @@ if _db_ready:
     _is_sqlite = _db_url.startswith("sqlite")
     _engine_kw: dict = {"echo": not settings.is_production}
     if not _is_sqlite:
-        # NullPool + statement_cache_size=0 required for Vercel serverless + Supabase PgBouncer
-        # (transaction pool mode can't maintain prepared statement state across pooled connections)
+        # NullPool + UUID-named prepared statements required for Supabase PgBouncer
+        # transaction mode. PgBouncer keeps server connections alive between
+        # SQLAlchemy sessions, so sequential names (__asyncpg_stmt_1__) collide.
+        # UUID names are unique per prepare call, eliminating the conflict.
         _engine_kw.update({
             "poolclass": NullPool,
-            "connect_args": {"statement_cache_size": 0},
+            "connect_args": {
+                "statement_cache_size": 0,
+                "prepared_statement_cache_size": 0,
+                "prepared_statement_name_func": lambda: f"__asyncpg_{uuid4().hex}__",
+            },
         })
     engine = create_async_engine(_db_url, **_engine_kw)
     AsyncSessionLocal = async_sessionmaker(

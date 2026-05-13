@@ -15,12 +15,15 @@ from app.services.history_service import record_change_event, _element_snapshot
 log = logging.getLogger(__name__)
 
 
-async def list_elements(db: AsyncSession, board_id: str) -> list[Element]:
-    result = await db.execute(
-        select(Element)
-        .where(Element.board_id == board_id)
-        .order_by(Element.created_at)
-    )
+async def list_elements(
+    db: AsyncSession, board_id: str, branch_id: Optional[str] = None
+) -> list[Element]:
+    q = select(Element).where(Element.board_id == board_id)
+    if branch_id:
+        q = q.where(Element.branch_id == branch_id)
+    else:
+        q = q.where(Element.branch_id.is_(None))
+    result = await db.execute(q.order_by(Element.created_at))
     return result.scalars().all()
 
 
@@ -112,6 +115,12 @@ async def delete_element(
     before_snap = _element_snapshot(el)
     if el.type == "ai_capability":
         await _sync_capability_delete(db, board_id, element_id)
+    # Log history for connectors that FK-cascade will delete (FR-7, PRD-18)
+    try:
+        from app.services.connector_service import delete_connectors_for_element
+        await delete_connectors_for_element(db, board_id, element_id, actor_user_id=user_id)
+    except Exception as exc:
+        log.warning("connector cascade history failed for element %s: %s", element_id, exc)
     await db.delete(el)
     await db.commit()
 

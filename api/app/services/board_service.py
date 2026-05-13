@@ -88,20 +88,25 @@ async def patch_board(
     data: BoardPatch,
     ip: Optional[str] = None,
     ua: Optional[str] = None,
-) -> Board:
+) -> tuple:
+    """Returns (board, removed_step_ids) so callers can cascade-delete connectors."""
     board = await assert_board_access(db, board_id, user_id, require_role="editor")
     old_state = dict(board.state or {})
 
+    removed_step_ids: set[str] = set()
     if data.title  is not None: board.title  = data.title
     if data.domain is not None: board.domain = data.domain
     if data.phase  is not None: board.phase  = data.phase
     if data.state  is not None:
+        old_step_ids = {str(s["id"]) for s in old_state.get("steps", []) if "id" in s}
         board.state = {**board.state, **data.state}  # shallow merge
+        new_step_ids = {str(s["id"]) for s in board.state.get("steps", []) if "id" in s}
+        removed_step_ids = old_step_ids - new_step_ids
 
     board.version += 1
     _audit(db, board_id, user_id, "board.update", "board", board_id,
            diff={"before": old_state, "after": board.state}, ip=ip, ua=ua)
-    return board
+    return board, removed_step_ids
 
 
 async def archive_board(db: AsyncSession, board_id: str, user_id: str) -> None:
