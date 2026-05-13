@@ -9,7 +9,13 @@ settings = get_settings()
 
 _db_url = settings.database_url
 
-# Supabase (and many hosting providers) give postgres:// or postgresql:// —
+# Strip UTF-8 BOM (U+FEFF) that Windows PowerShell may prepend when piping env var
+# values through the Vercel CLI. utf-8-sig codec is the standard Python idiom for
+# stripping a BOM from a string that was read as UTF-8-with-BOM.
+if _db_url:
+    _db_url = _db_url.encode("utf-8").decode("utf-8-sig")
+
+# Supabase (and many hosting providers) give postgres:// or postgresql:// --
 # asyncpg requires the postgresql+asyncpg:// dialect prefix.
 if _db_url and not _db_url.startswith("sqlite"):
     if _db_url.startswith("postgres://"):
@@ -54,12 +60,12 @@ class Base(DeclarativeBase):
 
 _DB_NOT_CONFIGURED = HTTPException(
     status_code=503,
-    detail="Database not configured. Set DATABASE_URL in Vercel → Settings → Environment Variables.",
+    detail="Database not configured. Set DATABASE_URL in Vercel -> Settings -> Environment Variables.",
 )
 
 
 async def get_db() -> AsyncSession:
-    """FastAPI dependency — yields a session, commits on success, rolls back on error."""
+    """FastAPI dependency -- yields a session, commits on success, rolls back on error."""
     if not _db_ready:
         raise _DB_NOT_CONFIGURED
     async with AsyncSessionLocal() as session:
