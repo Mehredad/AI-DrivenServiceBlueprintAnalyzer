@@ -268,8 +268,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .bp-cell:hover .bp-cell-add-btn:hover{background:var(--bg2);color:var(--text);}
 /* PRD-19 — Connector SVG overlay */
 .bp-canvas-wrap{position:relative;display:inline-block;min-width:100%;}
-.connector-svg{position:absolute;top:0;left:0;pointer-events:none;overflow:visible;will-change:transform;z-index:0;}
-.connector-hit-svg{position:absolute;top:0;left:0;pointer-events:none;overflow:visible;z-index:2;}
+.connector-svg{position:absolute;top:0;left:0;pointer-events:none;overflow:visible;z-index:2;}
 .bp-grid{position:relative;z-index:1;}
 .conn-path{pointer-events:none;transition:filter .1s;}
 .conn-hit{pointer-events:stroke;cursor:pointer;}
@@ -1546,7 +1545,6 @@ select.fi{appearance:none;cursor:pointer;}
           <div class="bp-canvas-wrap" id="bp-canvas-wrap">
             <svg id="connector-svg" class="connector-svg" width="0" height="0" aria-hidden="true"></svg>
             <div id="canvas-grid" class="bp-grid" style="display:none;"></div>
-            <svg id="connector-hit-svg" class="connector-hit-svg" width="0" height="0" aria-hidden="true"></svg>
           </div>
         </div>
       </div>
@@ -5669,10 +5667,8 @@ function _strokeWidth(tier) {
 }
 
 function _clearConnectorSvg() {
-  const svg    = document.getElementById('connector-svg');
-  const hitSvg = document.getElementById('connector-hit-svg');
-  if (svg)    { svg.innerHTML    = ''; svg.style.width    = '0'; svg.style.height    = '0'; }
-  if (hitSvg) { hitSvg.innerHTML = ''; hitSvg.style.width = '0'; hitSvg.style.height = '0'; }
+  const svg = document.getElementById('connector-svg');
+  if (svg) { svg.innerHTML = ''; svg.style.width = '0'; svg.style.height = '0'; }
 }
 
 function getEndpointXY(type, id, svgEl) {
@@ -5728,22 +5724,21 @@ function _elbowPath(sx, sy, tx, ty) {
 }
 
 function renderConnectors() {
-  const svg    = document.getElementById('connector-svg');
-  const hitSvg = document.getElementById('connector-hit-svg');
-  const grid   = document.getElementById('canvas-grid');
-  if (!svg || !hitSvg || !grid || grid.style.display === 'none') { _clearConnectorSvg(); return; }
+  const svg  = document.getElementById('connector-svg');
+  const grid = document.getElementById('canvas-grid');
+  if (!svg || !grid || grid.style.display === 'none') { _clearConnectorSvg(); return; }
 
-  // Size both SVGs to match grid
+  // Size SVG to match grid
   const w = grid.scrollWidth, h = grid.scrollHeight;
-  svg.style.width = hitSvg.style.width = w + 'px';
-  svg.style.height = hitSvg.style.height = h + 'px';
+  svg.style.width  = w + 'px';
+  svg.style.height = h + 'px';
 
   // Filter by visibility toggle
   const visible = boardConnectors.filter(c =>
     c.tier === 'step' || showElementConnectors
   );
 
-  // Build SVG marker defs for arrowheads (visual SVG only)
+  // Build SVG marker defs for arrowheads
   let defs = '<defs>';
   Object.entries(_CONN_STYLES).forEach(([type, s]) => {
     const isOpen  = s.arrow === 'open';
@@ -5757,21 +5752,21 @@ function renderConnectors() {
   });
   defs += '</defs>';
 
-  let visPaths = '';  // goes into connector-svg (behind elements)
-  let hitPaths = '';  // goes into connector-hit-svg (above elements, transparent)
+  let visPaths = '';  // visual strokes — pointer-events:none, painted first
+  let hitPaths = '';  // invisible wide strokes — pointer-events:stroke, painted on top
 
   visible.forEach(conn => {
     const style = _CONN_STYLES[conn.connector_type] || _CONN_STYLES.sequence;
     const sw    = _strokeWidth(conn.tier);
 
-    // Resolve endpoints via bounding rects relative to the visual SVG
+    // Resolve endpoints relative to the SVG's top-left
     let srcR, tgtR;
     if (conn.source_step_id)         srcR = getEndpointRect('step',    conn.source_step_id,    svg);
     else if (conn.source_element_id) srcR = getEndpointRect('element', conn.source_element_id, svg);
     if (conn.target_step_id)         tgtR = getEndpointRect('step',    conn.target_step_id,    svg);
     else if (conn.target_element_id) tgtR = getEndpointRect('element', conn.target_element_id, svg);
 
-    if (!srcR || !tgtR) return; // silently skip missing endpoints
+    if (!srcR || !tgtR) return;
     const { sp: src, tp: tgt } = _edgePts(srcR, tgtR);
 
     const wps = Array.isArray(conn.waypoints) ? conn.waypoints : [];
@@ -5798,7 +5793,7 @@ function renderConnectors() {
     const labelEsc = escHtml(conn.label || '');
     const typeEsc  = escHtml(conn.connector_type);
 
-    // ── Visual layer (connector-svg, z-index 0, behind elements) ──────
+    // Visual paths (bottom)
     if (isSelected) {
       visPaths += `<path d="${d}" fill="none" stroke="${style.stroke}" stroke-width="${sw + 5}" stroke-opacity="0.22" pointer-events="none"/>`;
     }
@@ -5808,7 +5803,7 @@ function renderConnectors() {
       visPaths += `<text x="${mp.x}" y="${mp.y - 6}" text-anchor="middle" font-size="10" font-family="DM Sans,sans-serif" fill="${style.stroke}" pointer-events="none" paint-order="stroke" stroke="white" stroke-width="3" stroke-linejoin="round">${escHtml(conn.label)}</text>`;
     }
 
-    // ── Hit layer (connector-hit-svg, z-index 2, above elements, invisible) ──
+    // Hit paths (top — transparent wide stroke, catches clicks/hover)
     hitPaths += `<path class="conn-hit" data-conn-id="${conn.id}" data-conn-type="${typeEsc}" data-conn-label="${labelEsc}" d="${d}" fill="none" stroke="transparent" stroke-width="16" pointer-events="stroke"/>`;
     if (isSelected && wps.length > 0) {
       wps.forEach((wp, idx) => {
@@ -5817,19 +5812,18 @@ function renderConnectors() {
     }
   });
 
-  svg.innerHTML    = defs + visPaths;
-  hitSvg.innerHTML = hitPaths;
+  // Write all paths into the single SVG: visual first, hit targets on top
+  svg.innerHTML = defs + visPaths + hitPaths;
 
-  // Re-attach ghost line in visual SVG (cleared by innerHTML replace)
+  // Re-attach ghost line (cleared by innerHTML replace)
   if (typeof connectorState !== 'undefined' && connectorState.mode === 'selecting_target') {
     _renderGhostLine();
   }
 
-  // Waypoint drag handles live in hitSvg
   if (typeof _initWaypointDrag === 'function') _initWaypointDrag();
 
   // Attach hover + click + contextmenu listeners to hit-area paths
-  hitSvg.querySelectorAll('.conn-hit').forEach(hit => {
+  svg.querySelectorAll('.conn-hit').forEach(hit => {
     const cId    = hit.dataset.connId;
     const cType  = hit.dataset.connType;
     const cLabel = hit.dataset.connLabel;
@@ -6310,15 +6304,14 @@ document.addEventListener('keydown', e => {
 // ─── Waypoint drag handles ─────────────────────────────
 
 function _initWaypointDrag() {
-  const svg    = document.getElementById('connector-svg');
-  const hitSvg = document.getElementById('connector-hit-svg');
-  if (!hitSvg) return;
-  hitSvg.querySelectorAll('.conn-wp-handle').forEach(circle => {
+  const svg = document.getElementById('connector-svg');
+  if (!svg) return;
+  svg.querySelectorAll('.conn-wp-handle').forEach(circle => {
     const cId = circle.dataset.connId;
     const idx = parseInt(circle.dataset.wpIdx, 10);
     circle.addEventListener('mousedown', function(e) {
       e.stopPropagation(); e.preventDefault();
-      const svgRect = (svg || hitSvg).getBoundingClientRect();
+      const svgRect = svg.getBoundingClientRect();
       function onMove(ev) {
         const conn = boardConnectors.find(c => c.id === cId);
         if (!conn || !conn.waypoints) return;
