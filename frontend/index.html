@@ -2543,13 +2543,14 @@ async function loadBoard(boardId) {
   const projName = document.getElementById('proj-name-display');
   if (projName) projName.textContent = board.title;
   updateSidebarRole(board);
-  // Load elements from API (stored in elements table, not board.state)
-  const elRes = await apiFetch(`/api/boards/${boardId}/elements`);
+  // Load elements, connectors, and branches in parallel — none depend on each other.
+  const [elRes, connRes] = await Promise.all([
+    apiFetch(`/api/boards/${boardId}/elements`),
+    apiFetch(`/api/boards/${boardId}/connectors`),
+    loadBranches(boardId),
+  ]);
   if (elRes && elRes.ok) boardState.elements = await elRes.json();
-  // PRD-19: load connectors
-  const connRes = await apiFetch(`/api/boards/${boardId}/connectors`);
   boardConnectors = (connRes && connRes.ok) ? await connRes.json() : [];
-  await loadBranches(boardId);
   renderCanvas();
   updateAiBadge();
   updateRegistryNavVisibility();
@@ -6771,17 +6772,17 @@ async function initApp() {
   }
 
   hideLanding();
-  await loadBoardList();
 
   if (!currentUser.has_seen_onboarding) {
     setTimeout(startTour, 600);
   }
 
+  // Run board list and active board load in parallel — they don't depend on each other.
   if (currentBoardId && (currentUser || currentBoardId.startsWith('local-'))) {
-    await loadBoard(currentBoardId);
+    await Promise.all([loadBoardList(), loadBoard(currentBoardId)]);
     initRealtime(currentBoardId);
-    await loadPersistedInsights();
-    initChatSessions(currentBoardId);  // fire-and-forget
+    // insights and chat history are independent — fetch together.
+    Promise.all([loadPersistedInsights(), initChatSessions(currentBoardId)]);
     setTimeout(() => {
       if (document.getElementById('chat-area').children.length === 0) {
         const _ec  = boardState.elements  ? boardState.elements.length  : 0;
