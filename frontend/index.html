@@ -500,11 +500,42 @@ select.fi{appearance:none;cursor:pointer;}
 .msg-wrap{display:flex;flex-direction:column;margin-bottom:10px;}
 .msg-wrap.user{align-items:flex-end;}
 .msg-wrap.agent{align-items:flex-start;}
-.agent-msg{max-width:94%;background:var(--bg);border-radius:0 var(--rl) var(--rl) var(--rl);padding:9px 11px;font-size:12px;line-height:1.6;color:var(--text);}
+.agent-msg{max-width:94%;background:var(--bg);border-radius:0 var(--rl) var(--rl) var(--rl);padding:9px 11px;font-size:13px;line-height:1.65;color:var(--text);}
 .agent-msg-head{display:flex;align-items:center;gap:5px;margin-bottom:4px;}
 .agent-msg-name{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
 .agent-msg-time{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);}
-.user-msg{max-width:88%;background:var(--text);color:white;border-radius:var(--rl) 0 var(--rl) var(--rl);padding:9px 11px;font-size:12px;line-height:1.6;}
+.user-msg{max-width:88%;background:var(--text);color:white;border-radius:var(--rl) 0 var(--rl) var(--rl);padding:9px 11px;font-size:13px;line-height:1.65;}
+/* ── Chat sessions ── */
+.chat-sess-hdr{display:flex;align-items:center;padding:9px 11px;border-bottom:1px solid var(--border);gap:6px;flex-shrink:0;}
+.chat-sess-lbl{font-size:10px;font-weight:600;color:var(--text3);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;flex:1;}
+.chat-sess-new{font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;transition:all .1s;}
+.chat-sess-new:hover{background:var(--text);color:white;border-color:var(--text);}
+.chat-sess-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:32px 20px;color:var(--text3);font-size:12px;text-align:center;}
+.chat-sess-empty-icon{font-size:28px;opacity:.4;}
+.chat-sess-item{display:flex;align-items:center;gap:8px;padding:10px 11px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;}
+.chat-sess-item:hover{background:var(--bg2);}
+.chat-sess-star-btn{width:22px;height:22px;border:none;background:none;cursor:pointer;color:var(--text3);font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:.35;transition:opacity .1s,color .1s;padding:0;}
+.chat-sess-star-btn:hover,.chat-sess-item.starred .chat-sess-star-btn{opacity:1;color:var(--amber,#d97706);}
+.chat-sess-body{flex:1;min-width:0;}
+.chat-sess-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chat-sess-preview{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+.chat-sess-meta{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);flex-shrink:0;}
+.chat-sess-acts{display:flex;gap:2px;flex-shrink:0;opacity:0;transition:opacity .12s;}
+.chat-sess-item:hover .chat-sess-acts{opacity:1;}
+.chat-sess-act{width:22px;height:22px;border:none;background:none;cursor:pointer;color:var(--text3);font-size:12px;display:flex;align-items:center;justify-content:center;border-radius:4px;padding:0;}
+.chat-sess-act:hover{background:var(--bg2);color:var(--text);}
+.chat-sess-act.del:hover{color:var(--red,#dc2626);}
+/* ── Active chat header ── */
+.chat-active-hdr{display:flex;align-items:center;padding:6px 8px;border-bottom:1px solid var(--border);gap:5px;flex-shrink:0;}
+.chat-back-btn{font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;padding:4px 7px;border-radius:5px;flex-shrink:0;white-space:nowrap;}
+.chat-back-btn:hover{background:var(--bg2);color:var(--text);}
+.chat-active-ttl{flex:1;font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;cursor:pointer;}
+.chat-active-ttl:hover{color:var(--blue);}
+.chat-hdr-acts{display:flex;gap:2px;flex-shrink:0;}
+.chat-hdr-act{width:26px;height:26px;border:none;background:none;cursor:pointer;color:var(--text3);font-size:14px;border-radius:4px;display:flex;align-items:center;justify-content:center;padding:0;}
+.chat-hdr-act:hover{background:var(--bg2);color:var(--text);}
+.chat-hdr-act.starred{color:var(--amber,#d97706);}
+.chat-hdr-act.del:hover{color:var(--red,#dc2626);}
 .msg-time{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);margin-top:3px;}
 .chat-load-earlier{text-align:center;padding:4px 0 10px;}
 .chat-load-earlier-btn{font-size:10px;padding:3px 12px;border-radius:5px;border:1px solid var(--border);background:var(--surface);cursor:pointer;color:var(--text2);font-family:inherit;}
@@ -544,7 +575,7 @@ select.fi{appearance:none;cursor:pointer;}
 .qr:hover{background:var(--text);color:white;border-color:var(--text);}
 .chat-input-wrap{padding:9px 11px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;}
 .chat-input-row{display:flex;gap:6px;align-items:center;}
-.chat-input{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:var(--rl);font-size:11px;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);resize:none;min-height:34px;max-height:80px;line-height:1.4;}
+.chat-input{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:var(--rl);font-size:12px;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);resize:none;min-height:34px;max-height:80px;line-height:1.4;}
 .chat-input:focus{outline:none;border-color:var(--border2);background:var(--surface);}
 .chat-send{width:36px;height:36px;border-radius:50%;background:var(--blue);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .12s,background .12s;}
 .chat-send:hover{background:#1240b0;}
@@ -1552,25 +1583,47 @@ select.fi{appearance:none;cursor:pointer;}
 
       <!-- ─ CHAT ─ -->
       <div id="agent-chat" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
-        <div class="chat-area" id="chat-area"></div>
-        <div class="quick-replies" id="quick-replies">
-          <span class="qr" onclick="askAgent('What is missing from this blueprint? Give me a complete gap analysis.')">What's missing?</span>
-          <span class="qr" onclick="askAgent('I\'m new here. Walk me through how to use this tool.')">Onboard me</span>
-          <span class="qr" onclick="askAgent('Which AI capabilities have incomplete XAI strategies?')">XAI gaps?</span>
-          <span class="qr" onclick="askAgent('Generate a governance summary I can present to a committee meeting.')">Gov summary</span>
-        </div>
-        <div class="chat-input-wrap">
-          <div id="chat-attachments" class="chat-attachments"></div>
-          <div class="chat-input-row">
-            <button class="chat-attach-btn" title="Attach file (PDF, PNG, JPG up to 10 MB)" onclick="document.getElementById('chat-file-input').click()">📎</button>
-            <input type="file" id="chat-file-input" multiple accept=".pdf,image/png,image/jpeg,image/webp" style="display:none;" onchange="handleChatFiles(this.files);this.value=''">
-            <textarea class="chat-input" id="chat-input" placeholder="Ask anything about this blueprint…" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-            <button class="chat-send" id="chat-send-btn" onclick="sendChat()" title="Send message">
-              <svg width="14" height="14" viewBox="0 0 12 12" fill="none"><path d="M11 6L1 1L5 6L1 11L11 6Z" fill="white"/></svg>
-            </button>
+
+        <!-- Sessions list pane -->
+        <div id="chat-sessions-pane" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+          <div class="chat-sess-hdr">
+            <span class="chat-sess-lbl">Conversations</span>
+            <button class="chat-sess-new" onclick="newChatSession()">+ New chat</button>
           </div>
-          <div class="chat-hint">Enter to send · Shift+Enter for new line · 📎 attach PDF or image</div>
+          <div id="chat-sessions-list" style="flex:1;overflow-y:auto;"></div>
         </div>
+
+        <!-- Active chat pane -->
+        <div id="chat-active-pane" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+          <div class="chat-active-hdr">
+            <button class="chat-back-btn" onclick="showChatSessionsList()" title="All conversations">← All chats</button>
+            <span id="chat-active-title" class="chat-active-ttl" onclick="renameActiveChat()" title="Click to rename">New conversation</span>
+            <div class="chat-hdr-acts">
+              <button class="chat-hdr-act" id="chat-hdr-star" onclick="starActiveChat()" title="Star conversation">☆</button>
+              <button class="chat-hdr-act del" onclick="deleteActiveChat()" title="Delete conversation">🗑</button>
+            </div>
+          </div>
+          <div class="chat-area" id="chat-area"></div>
+          <div class="quick-replies" id="quick-replies">
+            <span class="qr" onclick="askAgent('What is missing from this blueprint? Give me a complete gap analysis.')">What's missing?</span>
+            <span class="qr" onclick="askAgent('I\'m new here. Walk me through how to use this tool.')">Onboard me</span>
+            <span class="qr" onclick="askAgent('Which AI capabilities have incomplete XAI strategies?')">XAI gaps?</span>
+            <span class="qr" onclick="askAgent('Generate a governance summary I can present to a committee meeting.')">Gov summary</span>
+          </div>
+          <div class="chat-input-wrap">
+            <div id="chat-attachments" class="chat-attachments"></div>
+            <div class="chat-input-row">
+              <button class="chat-attach-btn" title="Attach file (PDF, PNG, JPG up to 10 MB)" onclick="document.getElementById('chat-file-input').click()">📎</button>
+              <input type="file" id="chat-file-input" multiple accept=".pdf,image/png,image/jpeg,image/webp" style="display:none;" onchange="handleChatFiles(this.files);this.value=''">
+              <textarea class="chat-input" id="chat-input" placeholder="Ask anything about this blueprint…" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+              <button class="chat-send" id="chat-send-btn" onclick="sendChat()" title="Send message">
+                <svg width="14" height="14" viewBox="0 0 12 12" fill="none"><path d="M11 6L1 1L5 6L1 11L11 6Z" fill="white"/></svg>
+              </button>
+            </div>
+            <div class="chat-hint">Enter to send · Shift+Enter for new line · 📎 attach PDF or image</div>
+          </div>
+        </div>
+
       </div>
 
       <!-- ─ INSIGHTS ─ -->
@@ -1935,6 +1988,11 @@ let isStreaming    = false;
 let _chatHistoryOffset = 0;
 let _chatHistoryBoard  = null;
 let _chatHistoryHasMore = false;
+// ── Chat sessions (localStorage-backed) ──
+let _activeChatId   = null;
+let _chatSessions   = [];       // array of session objects for current board
+let _sessionMsgs    = [];       // display messages for active session
+let _restoringChat  = false;    // true while re-rendering saved messages (skip save)
 let insightCount   = 0;
 let realtimeChannel = null;
 let _historyOffset  = 0;
@@ -2385,7 +2443,7 @@ async function switchBoard(boardId) {
   await loadBoard(boardId);
   initRealtime(boardId);
   await loadPersistedInsights();
-  loadChatHistory(boardId);  // fire-and-forget — populates chat panel in background
+  initChatSessions(boardId);  // fire-and-forget — loads or migrates chat sessions
 }
 
 function leaveRealtime() {
@@ -3438,6 +3496,265 @@ function initRealtime(boardId) {
 }
 
 // ═══════════════════════════════════════════════════════
+// CHAT SESSIONS — localStorage-backed multi-chat management
+// ═══════════════════════════════════════════════════════
+
+function _sessKey(bid)  { return `bp_sessions_${bid}`; }
+function _fmtRelTime(ts) {
+  if (!ts) return '';
+  const diff = Date.now() - ts;
+  if (diff < 60000)   return 'just now';
+  if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+  if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function _loadSessions(bid) {
+  try { _chatSessions = JSON.parse(localStorage.getItem(_sessKey(bid))) || []; } catch { _chatSessions = []; }
+}
+function _saveSessions() {
+  if (!currentBoardId) return;
+  try { localStorage.setItem(_sessKey(currentBoardId), JSON.stringify(_chatSessions)); } catch {}
+}
+function _getActiveSession() {
+  return _chatSessions.find(s => s.id === _activeChatId) || null;
+}
+
+function _persistExchange(userMsg, assistantText) {
+  const sess = _getActiveSession();
+  if (!sess) return;
+  const now = Date.now();
+  _sessionMsgs.push({ role: 'user',      content: userMsg,        ts: now });
+  _sessionMsgs.push({ role: 'assistant', content: assistantText,  ts: now + 1 });
+  sess.messages  = _sessionMsgs.slice(-100);
+  sess.history   = chatHistory.slice(-20);
+  sess.updatedAt = now;
+  if (!sess.title || sess.title === 'New conversation') {
+    sess.title = userMsg.trim().slice(0, 52) + (userMsg.trim().length > 52 ? '…' : '');
+    const ttl = document.getElementById('chat-active-title');
+    if (ttl) ttl.textContent = sess.title;
+  }
+  // Bubble to front of list
+  _chatSessions = [sess, ..._chatSessions.filter(s => s.id !== sess.id)];
+  _saveSessions();
+  renderChatSessionsList();
+}
+
+function renderChatSessionsList() {
+  const list = document.getElementById('chat-sessions-list');
+  if (!list) return;
+  const starred = _chatSessions.filter(s => s.starred);
+  const recent  = _chatSessions.filter(s => !s.starred);
+  const ordered = [...starred, ...recent];
+  if (ordered.length === 0) {
+    list.innerHTML = `<div class="chat-sess-empty"><div class="chat-sess-empty-icon">💬</div><div style="font-weight:600;font-size:12px;color:var(--text2);">No conversations yet</div><div>Start a new chat to ask the agent anything about this board.</div><button class="chat-sess-new" style="margin-top:10px;" onclick="newChatSession()">+ Start a conversation</button></div>`;
+    return;
+  }
+  list.innerHTML = ordered.map(s => {
+    const preview = (s.messages || []).filter(m => m.role === 'assistant').slice(-1)[0]?.content || '';
+    const previewTxt = preview.replace(/[#*_`]/g, '').trim().slice(0, 60) + (preview.length > 60 ? '…' : '');
+    const starClass  = s.starred ? 'starred' : '';
+    const starIcon   = s.starred ? '★' : '☆';
+    return `<div class="chat-sess-item ${starClass}" onclick="openChatSession('${s.id}')">
+      <button class="chat-sess-star-btn" onclick="event.stopPropagation();starChatSession('${s.id}')" title="${s.starred ? 'Unstar' : 'Star'}">${starIcon}</button>
+      <div class="chat-sess-body">
+        <div class="chat-sess-name">${escHtml(s.title || 'Conversation')}</div>
+        ${previewTxt ? `<div class="chat-sess-preview">${escHtml(previewTxt)}</div>` : ''}
+      </div>
+      <span class="chat-sess-meta">${_fmtRelTime(s.updatedAt)}</span>
+      <div class="chat-sess-acts">
+        <button class="chat-sess-act" onclick="event.stopPropagation();renameChatSession('${s.id}')" title="Rename">✎</button>
+        <button class="chat-sess-act del" onclick="event.stopPropagation();deleteChatSession('${s.id}')" title="Delete">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function initChatSessions(boardId) {
+  _loadSessions(boardId);
+  if (_chatSessions.length > 0) {
+    // Open the most recently updated session
+    const latest = [..._chatSessions].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];
+    _openChatSession(latest.id);
+  } else {
+    // No sessions yet — try to migrate DB history into a first session
+    const migrated = await _migrateDbHistory(boardId);
+    if (!migrated) {
+      // Fresh start — auto-open a new empty session
+      _createAndOpenSession();
+    }
+  }
+}
+
+async function _migrateDbHistory(boardId) {
+  if (!authToken || !boardId) return false;
+  try {
+    const res = await apiFetch(`/api/agent/boards/${boardId}/history?limit=50&offset=0`);
+    if (!res || !res.ok) return false;
+    const messages = await res.json();
+    if (!messages.length) return false;
+    // Create a session from DB history
+    const id   = 'cs_' + Date.now();
+    const msgs = [];
+    const hist = [];
+    for (const msg of messages) {
+      if (msg.role === 'user') {
+        msgs.push({ role: 'user', content: msg.content, ts: new Date(msg.created_at || Date.now()).getTime() });
+        hist.push({ role: 'user', content: msg.content });
+      } else {
+        let content = msg.content;
+        try { const p = JSON.parse(msg.content); if (p?.message) content = p.message; } catch {}
+        msgs.push({ role: 'assistant', content, ts: new Date(msg.created_at || Date.now()).getTime() });
+        hist.push({ role: 'assistant', content });
+      }
+    }
+    const firstUserMsg = msgs.find(m => m.role === 'user')?.content || '';
+    const sess = {
+      id, starred: false,
+      title: firstUserMsg.trim().slice(0, 52) + (firstUserMsg.trim().length > 52 ? '…' : '') || 'Previous conversation',
+      createdAt: msgs[0]?.ts || Date.now(),
+      updatedAt: msgs[msgs.length - 1]?.ts || Date.now(),
+      messages: msgs.slice(-100),
+      history:  hist.slice(-20),
+    };
+    _chatSessions = [sess];
+    _saveSessions();
+    _openChatSession(id);
+    return true;
+  } catch { return false; }
+}
+
+function _createAndOpenSession() {
+  const id   = 'cs_' + Date.now();
+  const sess = { id, title: 'New conversation', starred: false,
+    createdAt: Date.now(), updatedAt: Date.now(), messages: [], history: [] };
+  _chatSessions.unshift(sess);
+  _saveSessions();
+  _openChatSession(id);
+}
+
+function newChatSession() {
+  _createAndOpenSession();
+}
+
+function _openChatSession(id) {
+  const sess = _chatSessions.find(s => s.id === id);
+  if (!sess) return;
+  _activeChatId  = id;
+  _sessionMsgs   = [...(sess.messages || [])];
+  chatHistory    = [...(sess.history  || [])];
+
+  // Update header
+  const ttl = document.getElementById('chat-active-title');
+  if (ttl) ttl.textContent = sess.title || 'Conversation';
+  _updateStarBtn(sess.starred);
+
+  // Re-render messages
+  _restoringChat = true;
+  const area = document.getElementById('chat-area');
+  if (area) {
+    area.innerHTML = '';
+    for (const m of _sessionMsgs) {
+      if (m.role === 'user') addUserMsg(m.content, [], m.ts);
+      else                   addAgentMsg(m.content, [], m.ts);
+    }
+    area.scrollTop = area.scrollHeight;
+  }
+  _restoringChat = false;
+
+  // Show active pane
+  const sp = document.getElementById('chat-sessions-pane');
+  const ap = document.getElementById('chat-active-pane');
+  if (sp) sp.style.display = 'none';
+  if (ap) { ap.style.display = 'flex'; }
+}
+
+function openChatSession(id) { _openChatSession(id); }
+
+function showChatSessionsList() {
+  _activeChatId = null;
+  const sp = document.getElementById('chat-sessions-pane');
+  const ap = document.getElementById('chat-active-pane');
+  if (ap) ap.style.display = 'none';
+  if (sp) sp.style.display = 'flex';
+  renderChatSessionsList();
+}
+
+function _updateStarBtn(starred) {
+  const btn = document.getElementById('chat-hdr-star');
+  if (!btn) return;
+  btn.textContent = starred ? '★' : '☆';
+  btn.classList.toggle('starred', !!starred);
+  btn.title = starred ? 'Unstar' : 'Star conversation';
+}
+
+function starActiveChat() {
+  const sess = _getActiveSession();
+  if (!sess) return;
+  sess.starred = !sess.starred;
+  _saveSessions();
+  _updateStarBtn(sess.starred);
+  renderChatSessionsList();
+}
+
+function starChatSession(id) {
+  const sess = _chatSessions.find(s => s.id === id);
+  if (!sess) return;
+  sess.starred = !sess.starred;
+  _saveSessions();
+  renderChatSessionsList();
+}
+
+function renameActiveChat() {
+  const sess = _getActiveSession();
+  if (!sess) return;
+  const name = prompt('Rename conversation:', sess.title || '');
+  if (name === null) return;
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  sess.title = trimmed;
+  _saveSessions();
+  const ttl = document.getElementById('chat-active-title');
+  if (ttl) ttl.textContent = trimmed;
+  renderChatSessionsList();
+}
+
+function renameChatSession(id) {
+  const sess = _chatSessions.find(s => s.id === id);
+  if (!sess) return;
+  const name = prompt('Rename conversation:', sess.title || '');
+  if (name === null) return;
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  sess.title = trimmed;
+  _saveSessions();
+  renderChatSessionsList();
+  if (_activeChatId === id) {
+    const ttl = document.getElementById('chat-active-title');
+    if (ttl) ttl.textContent = trimmed;
+  }
+}
+
+function deleteActiveChat() {
+  const sess = _getActiveSession();
+  if (!sess) return;
+  if (!confirm(`Delete "${sess.title || 'this conversation'}"? This cannot be undone.`)) return;
+  _chatSessions = _chatSessions.filter(s => s.id !== _activeChatId);
+  _saveSessions();
+  showChatSessionsList();
+}
+
+function deleteChatSession(id) {
+  const sess = _chatSessions.find(s => s.id === id);
+  if (!sess) return;
+  if (!confirm(`Delete "${sess.title || 'this conversation'}"? This cannot be undone.`)) return;
+  _chatSessions = _chatSessions.filter(s => s.id !== id);
+  _saveSessions();
+  if (_activeChatId === id) showChatSessionsList();
+  else renderChatSessionsList();
+}
+
+// ═══════════════════════════════════════════════════════
 // BACKEND AGENT CHAT (replaces direct Anthropic call)
 // ═══════════════════════════════════════════════════════
 const _retryContexts = new Map();
@@ -3447,6 +3764,10 @@ async function callBackendAgent(userMsg, attachments = []) {
   if (!currentBoardId) {
     addAgentMsg("No board is open. Create or open a board first, then I can analyse it.", []);
     return;
+  }
+  // Ensure there is an active session — create one if needed (e.g. quick reply tapped from sessions list)
+  if (!_activeChatId) {
+    _createAndOpenSession();
   }
 
   const sendBtn = document.getElementById('chat-send-btn');
@@ -3497,6 +3818,8 @@ async function callBackendAgent(userMsg, attachments = []) {
     const displayText = text || (proposedActions.length ? '*Here are my proposed changes — review and approve each one:*' : '');
     const agentWrap = addAgentMsg(displayText, getContextActions(userMsg));
     if (proposedActions.length) appendProposalCards(agentWrap, proposedActions, currentBoardId);
+    // Persist exchange to active session
+    _persistExchange(userMsg, displayText);
 
   } catch (err) {
     removeTyping(typingId);
@@ -3723,6 +4046,8 @@ async function generateInsights() {
 // ═══════════════════════════════════════════════════════
 function askAgent(msg) {
   openAgentPanel('chat');
+  // Ensure we're in the active chat pane (not the sessions list)
+  if (!_activeChatId) _createAndOpenSession();
   addUserMsg(msg);
   callBackendAgent(msg);
 }
@@ -4668,8 +4993,9 @@ function startOnboard(role) {
 function openAgentPanel(tab) {
   document.getElementById('agent-panel').classList.add('open');
   switchTab(tab, document.getElementById('tab-' + tab));
-  // Show welcome message only once when chat first opens
-  if (tab === 'chat' && document.getElementById('chat-area').children.length === 0) {
+  // Show welcome message only once when chat first opens (in an empty session)
+  const _sessEmpty = !_activeChatId || (_getActiveSession()?.messages || []).length === 0;
+  if (tab === 'chat' && _sessEmpty && document.getElementById('chat-area').children.length === 0) {
     if (!authToken) {
       addAgentMsg("Please sign in to use the AI agent. Click **Sign in** in the sidebar.", []);
     } else if (!currentBoardId) {
@@ -6185,7 +6511,7 @@ async function initApp() {
     await loadBoard(currentBoardId);
     initRealtime(currentBoardId);
     await loadPersistedInsights();
-    loadChatHistory(currentBoardId);  // fire-and-forget
+    initChatSessions(currentBoardId);  // fire-and-forget
     setTimeout(() => {
       if (document.getElementById('chat-area').children.length === 0) {
         const _ec  = boardState.elements  ? boardState.elements.length  : 0;
