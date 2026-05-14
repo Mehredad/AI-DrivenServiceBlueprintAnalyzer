@@ -942,8 +942,6 @@ select.fi{appearance:none;cursor:pointer;}
       <!-- Hero CTAs (FR-8) -->
       <div class="lp-hero-ctas">
         <button class="lp-btn-primary" onclick="lpScrollToAuth('register')">Get started free</button>
-        <!-- TODO: replace with live read-only demo route when board sharing is implemented -->
-        <button class="lp-btn-secondary" onclick="document.getElementById('lp-example-modal').style.display='flex'">View example board</button>
       </div>
       <!-- Stat row -->
       <div style="display:flex;gap:32px;margin-top:4px;">
@@ -1032,31 +1030,16 @@ select.fi{appearance:none;cursor:pointer;}
       <div class="lp-section-title">From blank canvas to reviewed blueprint</div>
       <div class="lp-how-steps">
         <div class="lp-how-step">
-          <!-- TODO: replace with real screenshot — empty canvas with swimlane and step controls -->
-          <div class="lp-how-img">
-            <div class="lp-how-img-icon">⊞</div>
-            <div class="lp-how-img-label">Screenshot placeholder</div>
-          </div>
           <div class="lp-how-step-num">Step 01</div>
           <div class="lp-how-step-title">Map your service</div>
           <div class="lp-how-step-desc">Add swimlanes for each actor — customer, staff, system — and define the steps across the top. The grid reveals where hand-offs, data flows, and touchpoints happen.</div>
         </div>
         <div class="lp-how-step">
-          <!-- TODO: replace with real screenshot — populated board with AI capability and risk elements -->
-          <div class="lp-how-img">
-            <div class="lp-how-img-icon">🤖</div>
-            <div class="lp-how-img-label">Screenshot placeholder</div>
-          </div>
           <div class="lp-how-step-num">Step 02</div>
           <div class="lp-how-step-title">Add AI capabilities and risks</div>
           <div class="lp-how-step-desc">Tag each cell with element types — AI capabilities, governance checkpoints, human-AI handoffs, risks. Autonomy levels and explainability strategies attach directly to the step where they matter.</div>
         </div>
         <div class="lp-how-step">
-          <!-- TODO: replace with real screenshot — agent panel with severity-rated insights -->
-          <div class="lp-how-img">
-            <div class="lp-how-img-icon">✦</div>
-            <div class="lp-how-img-label">Screenshot placeholder</div>
-          </div>
           <div class="lp-how-step-num">Step 03</div>
           <div class="lp-how-step-title">Let the agent review it</div>
           <div class="lp-how-step-desc">The Blueprint Agent reads your actual canvas and returns severity-rated insights — governance gaps, missing oversight, risky autonomy levels — tied to the specific elements that need attention.</div>
@@ -1259,21 +1242,6 @@ select.fi{appearance:none;cursor:pointer;}
     </div>
   </div>
 
-  <!-- EXAMPLE BOARD MODAL (FR-8 / AC-6) — TODO: replace static with live read-only demo route -->
-  <div id="lp-example-modal" style="display:none;position:fixed;inset:0;background:rgba(29,28,24,.6);z-index:600;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px);" onclick="if(event.target===this)this.style.display='none'">
-    <div style="background:var(--surface);border-radius:var(--rxl);border:1px solid var(--border);box-shadow:0 24px 64px rgba(0,0,0,.3);max-width:840px;width:100%;overflow:hidden;">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);">
-        <span style="font-family:'Fraunces',serif;font-size:16px;font-weight:400;">Example blueprint</span>
-        <button onclick="document.getElementById('lp-example-modal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text2);line-height:1;padding:0;">×</button>
-      </div>
-      <!-- TODO: replace placeholder with real screenshot or embed a read-only demo board -->
-      <div style="background:var(--bg2);aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:var(--text3);padding:32px;text-align:center;">
-        <div style="font-size:48px;opacity:.2;">⊞</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.5px;text-transform:uppercase;">Demo board screenshot placeholder</div>
-        <div style="font-size:13px;line-height:1.65;max-width:340px;">A real example blueprint will appear here. <a href="#" onclick="lpScrollToAuth('register');document.getElementById('lp-example-modal').style.display='none';return false;" style="color:var(--blue);text-decoration:none;font-weight:600;">Get started free</a> to build your own.</div>
-      </div>
-    </div>
-  </div>
 </div>
 <!-- ═══ END LANDING ═══ -->
 
