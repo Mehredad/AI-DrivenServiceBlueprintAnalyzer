@@ -1337,7 +1337,7 @@ select.fi{appearance:none;cursor:pointer;}
     <div class="tb-crumb" id="tb-crumb"><span>Blueprint AI</span><span>›</span><span style="color:var(--text2)" id="crumb-board">No board open</span></div>
     <div style="flex:1;"></div>
     <div class="board-progress" id="board-progress">
-      <span id="bp-elements">0 elements</span> · <span id="bp-lanes">0 lanes</span> · <span id="bp-steps">0 steps</span>
+      <span id="bp-elements">0 elements</span> · <span id="bp-lanes">0 lanes</span> · <span id="bp-steps">0 steps</span><span id="bp-orphaned" style="display:none;color:var(--amber,#d97706);cursor:help;"></span>
     </div>
     <div class="branch-wrap" id="branch-wrap" style="display:none;">
       <button class="branch-btn" onclick="toggleBranchPicker()" title="Switch branch">
@@ -2570,18 +2570,30 @@ function renderCanvas() {
 }
 
 function updateProgressIndicator() {
-  const ec = boardState.elements  ? boardState.elements.length  : 0;
-  const lc = boardState.swimlanes ? boardState.swimlanes.length : 0;
-  const sc = boardState.steps     ? boardState.steps.length     : 0;
+  const all = boardState.elements  || [];
+  const lc  = boardState.swimlanes ? boardState.swimlanes.length : 0;
+  const sc  = boardState.steps     ? boardState.steps.length     : 0;
+  const placed   = all.filter(e => e.swimlane_id && e.step_id);
+  const orphaned = all.filter(e => !e.swimlane_id || !e.step_id);
   const prog = document.getElementById('board-progress');
   if (!prog) return;
   prog.style.display = currentBoardId ? 'block' : 'none';
   const el = document.getElementById('bp-elements');
   const la = document.getElementById('bp-lanes');
   const st = document.getElementById('bp-steps');
-  if (el) el.textContent = `${ec} element${ec !== 1 ? 's' : ''}`;
+  const orp = document.getElementById('bp-orphaned');
+  if (el) el.textContent = `${placed.length} element${placed.length !== 1 ? 's' : ''}`;
   if (la) la.textContent = `${lc} lane${lc !== 1 ? 's' : ''}`;
   if (st) st.textContent = `${sc} step${sc !== 1 ? 's' : ''}`;
+  if (orp) {
+    if (orphaned.length > 0) {
+      orp.textContent = ` · ⚠ ${orphaned.length} unplaced`;
+      orp.title = `${orphaned.length} element${orphaned.length !== 1 ? 's' : ''} exist in the database but are not assigned to a lane and step — they are invisible on the canvas. Ask the AI agent to re-add them with proper placement.`;
+      orp.style.display = 'inline';
+    } else {
+      orp.style.display = 'none';
+    }
+  }
 }
 
 function renderGrid() {
@@ -4342,11 +4354,19 @@ async function _applyProposedAction(action, boardId) {
         const hit = collection.find(x => x.name === val || (x.name||'').toLowerCase() === val.toLowerCase());
         return hit ? hit.id : null;
       };
+      const resolvedSwimlane = _resolveToId(payload.swimlane_id, boardState.swimlanes);
+      const resolvedStep     = _resolveToId(payload.step_id,     boardState.steps);
+      if (payload.swimlane_id && !resolvedSwimlane) {
+        throw new Error(`Cannot place element: swimlane "${payload.swimlane_id}" not found on this board. Ask the agent to retry with a valid swimlane.`);
+      }
+      if (payload.step_id && !resolvedStep) {
+        throw new Error(`Cannot place element: step "${payload.step_id}" not found on this board. Ask the agent to retry with a valid step.`);
+      }
       const body = {
         type: payload.type || 'touchpoint',
         name: payload.name,
-        swimlane_id: _resolveToId(payload.swimlane_id, boardState.swimlanes),
-        step_id:     _resolveToId(payload.step_id,     boardState.steps),
+        swimlane_id: resolvedSwimlane,
+        step_id:     resolvedStep,
         notes:       payload.notes       || null,
         owner:       payload.owner       || null,
         status: 'draft',
