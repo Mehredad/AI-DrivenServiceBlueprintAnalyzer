@@ -1,5 +1,11 @@
 from functools import lru_cache
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _strip_bom(v: str) -> str:
+    """Strip UTF-8 BOM that Windows PowerShell prepends when piping env vars."""
+    return v.encode("utf-8").decode("utf-8-sig").strip() if isinstance(v, str) else v
 
 
 class Settings(BaseSettings):
@@ -9,6 +15,16 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
+
+    @field_validator(
+        "database_url", "supabase_url", "supabase_service_key",
+        "secret_key", "gemini_api_key", "nim_api_key", "google_client_id",
+        "allowed_origins",
+        mode="before",
+    )
+    @classmethod
+    def strip_bom_from_env(cls, v: object) -> object:
+        return _strip_bom(v) if isinstance(v, str) else v
 
     # ── App
     app_name: str = "Blueprint AI"

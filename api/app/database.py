@@ -7,13 +7,7 @@ from app.config import get_settings
 
 settings = get_settings()
 
-_db_url = settings.database_url
-
-# Strip UTF-8 BOM (U+FEFF) that Windows PowerShell may prepend when piping env var
-# values through the Vercel CLI. utf-8-sig codec is the standard Python idiom for
-# stripping a BOM from a string that was read as UTF-8-with-BOM.
-if _db_url:
-    _db_url = _db_url.encode("utf-8").decode("utf-8-sig")
+_db_url = settings.database_url  # BOM already stripped by config.py field_validator
 
 # Supabase (and many hosting providers) give postgres:// or postgresql:// --
 # asyncpg requires the postgresql+asyncpg:// dialect prefix.
