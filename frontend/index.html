@@ -1410,7 +1410,7 @@ select.fi{appearance:none;cursor:pointer;}
     <div class="tb-crumb" id="tb-crumb"><span>Blueprint AI</span><span>›</span><span style="color:var(--text2)" id="crumb-board">No board open</span></div>
     <div style="flex:1;"></div>
     <div class="board-progress" id="board-progress">
-      <span id="bp-elements">0 elements</span> · <span id="bp-lanes">0 lanes</span> · <span id="bp-steps">0 steps</span><span id="bp-orphaned" style="display:none;" onclick="showOrphanedDialog()" title="Click to fix unplaced elements"></span>
+      <span id="bp-orphaned" style="display:none;" onclick="showOrphanedDialog()" title="Click to fix unplaced elements"></span>
     </div>
     <div class="branch-wrap" id="branch-wrap" style="display:none;">
       <button class="branch-btn" onclick="toggleBranchPicker()" title="Switch branch">
@@ -1506,9 +1506,10 @@ select.fi{appearance:none;cursor:pointer;}
             <div class="bp-head-title" id="bp-board-title">New Blueprint</div>
             <div class="bp-meta" style="margin-top:2px;">
               <span id="phase-badge" style="color:var(--blue);font-weight:700;">● Understand</span>
+              <span id="canvas-meta-el-sep" style="display:none;">·</span><span id="canvas-meta-el-count" style="display:none;"></span>
               <span id="canvas-meta-lanes" style="display:none;">·</span><span id="canvas-meta-lanes-count" style="display:none;"></span>
               <span id="canvas-meta-steps" style="display:none;">·</span><span id="canvas-meta-steps-count" style="display:none;"></span>
-              <span>·</span><span style="color:var(--teal);" id="save-status">↻ Saved</span>
+              <span id="canvas-meta-save-sep" style="display:none;">·</span><span id="save-status" style="display:none;"></span>
             </div>
           </div>
           <div style="margin-left:auto;display:flex;gap:5px;">
@@ -2426,12 +2427,41 @@ document.addEventListener('click', e => {
 // ═══════════════════════════════════════════════════════
 // BOARD PERSISTENCE
 // ═══════════════════════════════════════════════════════
-let savePending = false;
-let saveTimer   = null;
+let savePending      = false;
+let saveTimer        = null;
+let _saveStatusTimer = null;
+
+function showSaveStatus(state) {
+  const sep = document.getElementById('canvas-meta-save-sep');
+  const el  = document.getElementById('save-status');
+  if (!el) return;
+  if (_saveStatusTimer) { clearTimeout(_saveStatusTimer); _saveStatusTimer = null; }
+  if (state === 'saving') {
+    el.textContent = 'Saving…';
+    el.style.color = 'var(--text3)';
+  } else if (state === 'saved') {
+    el.textContent = '↻ Saved';
+    el.style.color = 'var(--teal)';
+    _saveStatusTimer = setTimeout(() => {
+      el.style.display = 'none';
+      if (sep) sep.style.display = 'none';
+      _saveStatusTimer = null;
+    }, 30000);
+  } else if (state === 'error') {
+    el.textContent = '⚠ Save failed';
+    el.style.color = 'var(--red)';
+  } else {
+    el.style.display = 'none';
+    if (sep) sep.style.display = 'none';
+    return;
+  }
+  el.style.display = '';
+  if (sep) sep.style.display = '';
+}
 
 function scheduleSave(statePatch) {
-  // Debounce saves — batch rapid changes into one PATCH
   if (saveTimer) clearTimeout(saveTimer);
+  showSaveStatus('saving');
   saveTimer = setTimeout(() => persistBoard(statePatch), 1200);
 }
 
@@ -2439,6 +2469,7 @@ async function persistBoard(statePatch) {
   if (!currentBoardId) return;
   if (currentBoardId.startsWith('local-')) {
     try { localStorage.setItem('bp_local_board', JSON.stringify({ id: currentBoardId, title: boardState.title, ...statePatch })); } catch {}
+    showSaveStatus('saved');
     return;
   }
   savePending = true;
@@ -2461,9 +2492,11 @@ async function persistBoard(statePatch) {
       activeBranch.state_snapshot = snap.state_snapshot;
     }
     savePending = false;
+    showSaveStatus(res && res.ok ? 'saved' : 'error');
     return;
   }
   savePending = false;
+  showSaveStatus(res && res.ok ? 'saved' : 'error');
   if (res && res.ok) {
     const board = await res.json();
     boardState.version = board.version;
@@ -2855,29 +2888,15 @@ async function deleteUnplacedElements() {
 }
 
 function updateProgressIndicator() {
-  const all = boardState.elements  || [];
-  const lc  = boardState.swimlanes ? boardState.swimlanes.length : 0;
-  const sc  = boardState.steps     ? boardState.steps.length     : 0;
-  const placed   = all.filter(e => e.swimlane_id && e.step_id);
-  const orphaned = all.filter(e => !e.swimlane_id || !e.step_id);
-  const prog = document.getElementById('board-progress');
-  if (!prog) return;
-  prog.style.display = currentBoardId ? 'block' : 'none';
-  const el = document.getElementById('bp-elements');
-  const la = document.getElementById('bp-lanes');
-  const st = document.getElementById('bp-steps');
+  const orphaned = (boardState.elements || []).filter(e => !e.swimlane_id || !e.step_id);
   const orp = document.getElementById('bp-orphaned');
-  if (el) el.textContent = `${placed.length} element${placed.length !== 1 ? 's' : ''}`;
-  if (la) la.textContent = `${lc} lane${lc !== 1 ? 's' : ''}`;
-  if (st) st.textContent = `${sc} step${sc !== 1 ? 's' : ''}`;
-  if (orp) {
-    if (orphaned.length > 0) {
-      orp.textContent = `⚠ ${orphaned.length} unplaced`;
-      orp.title = `${orphaned.length} element${orphaned.length !== 1 ? 's' : ''} exist in the database but are not assigned to a lane and step — they are invisible on the canvas. Ask the AI agent to re-add them with proper placement.`;
-      orp.style.display = 'inline';
-    } else {
-      orp.style.display = 'none';
-    }
+  if (!orp) return;
+  if (orphaned.length > 0) {
+    orp.textContent = `⚠ ${orphaned.length} unplaced`;
+    orp.title = `${orphaned.length} element${orphaned.length !== 1 ? 's' : ''} not assigned to a lane and step — invisible on canvas.`;
+    orp.style.display = 'inline';
+  } else {
+    orp.style.display = 'none';
   }
 }
 
@@ -3640,16 +3659,21 @@ function renderAiCapRegister() {
 // ── META & BADGE UPDATES ────────────────────────────────
 
 function updateCanvasMeta() {
+  const elSep    = document.getElementById('canvas-meta-el-sep');
+  const elCnt    = document.getElementById('canvas-meta-el-count');
   const lanesEl  = document.getElementById('canvas-meta-lanes');
   const lanesCnt = document.getElementById('canvas-meta-lanes-count');
   const stepsEl  = document.getElementById('canvas-meta-steps');
   const stepsCnt = document.getElementById('canvas-meta-steps-count');
-  const hasLanes = boardState.swimlanes.length > 0;
-  const hasSteps = boardState.steps.length > 0;
-  if (lanesEl)  lanesEl.style.display  = hasLanes ? '' : 'none';
-  if (lanesCnt) { lanesCnt.style.display = hasLanes ? '' : 'none'; lanesCnt.textContent = boardState.swimlanes.length + ' swimlane' + (boardState.swimlanes.length === 1 ? '' : 's'); }
-  if (stepsEl)  stepsEl.style.display  = hasSteps ? '' : 'none';
-  if (stepsCnt) { stepsCnt.style.display = hasSteps ? '' : 'none'; stepsCnt.textContent = boardState.steps.length + ' step' + (boardState.steps.length === 1 ? '' : 's'); }
+  const ec = (boardState.elements || []).filter(e => e.swimlane_id && e.step_id).length;
+  const lc = boardState.swimlanes ? boardState.swimlanes.length : 0;
+  const sc = boardState.steps     ? boardState.steps.length     : 0;
+  if (elSep)    elSep.style.display    = ec > 0 ? '' : 'none';
+  if (elCnt)  { elCnt.style.display    = ec > 0 ? '' : 'none';  elCnt.textContent    = ec + ' element' + (ec === 1 ? '' : 's'); }
+  if (lanesEl)  lanesEl.style.display  = lc > 0 ? '' : 'none';
+  if (lanesCnt) { lanesCnt.style.display = lc > 0 ? '' : 'none'; lanesCnt.textContent = lc + ' lane' + (lc === 1 ? '' : 's'); }
+  if (stepsEl)  stepsEl.style.display  = sc > 0 ? '' : 'none';
+  if (stepsCnt) { stepsCnt.style.display = sc > 0 ? '' : 'none'; stepsCnt.textContent = sc + ' step' + (sc === 1 ? '' : 's'); }
 }
 
 function updateAiBadge() {
