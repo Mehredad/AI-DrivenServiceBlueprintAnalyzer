@@ -224,7 +224,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .bp-act-btn.del{color:var(--red);}
 .bp-inline-edit{border:1.5px solid var(--blue);border-radius:4px;padding:2px 5px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;background:white;color:var(--text);outline:none;width:100%;min-width:60px;}
 /* ELEMENTS — PRD-03 */
-.el-card{display:flex;align-items:center;gap:4px;padding:10px 6px;border-radius:6px;border:1.5px solid var(--border);background:var(--surface);margin:3px;cursor:pointer;font-size:11px;line-height:1.3;transition:box-shadow .1s;width:calc(50% - 6px);min-height:48px;position:relative;overflow:visible;}
+.el-card{display:flex;align-items:center;gap:4px;padding:10px 6px;border-radius:6px;border:1.5px solid var(--border);background:rgba(255,255,255,0.88);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);margin:3px;cursor:pointer;font-size:11px;line-height:1.3;transition:box-shadow .1s;width:calc(50% - 6px);min-height:48px;position:relative;overflow:visible;}
 .el-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.1);}
 .el-icon{font-size:12px;flex-shrink:0;}
 .el-name{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -233,10 +233,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .el-status-in-progress{background:var(--blue);}
 .el-status-live{background:var(--green);}
 .el-status-deprecated{background:var(--border2);}
-.el-touchpoint{border-color:var(--blue);background:var(--blue-bg);}
-.el-system{border-color:var(--border2);background:var(--bg2);}
-.el-data_flow{border-color:var(--teal);background:var(--teal-bg);}
-.el-handoff{border-color:var(--purple);background:var(--purple-bg);}
+.el-touchpoint{border-color:var(--blue);background:rgba(238,242,253,0.88);}
+.el-system{border-color:var(--border2);background:rgba(237,235,229,0.88);}
+.el-data_flow{border-color:var(--teal);background:rgba(230,245,242,0.88);}
+.el-handoff{border-color:var(--purple);background:rgba(245,240,254,0.88);}
 .el-risk{border-color:var(--amber);background:var(--amber-bg);}
 .el-opportunity{border-color:var(--green);background:var(--green-bg);}
 .el-pain_point{border-color:var(--red);background:var(--red-bg);}
@@ -269,7 +269,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 /* PRD-19 — Connector SVG overlay */
 .bp-canvas-wrap{position:relative;display:inline-block;min-width:100%;}
 .connector-svg{position:absolute;top:0;left:0;pointer-events:none;overflow:visible;will-change:transform;}
-.conn-path{pointer-events:stroke;cursor:pointer;transition:filter .1s;}
+.conn-path{pointer-events:none;transition:filter .1s;}
+.conn-hit{pointer-events:stroke;cursor:pointer;}
 .conn-tooltip{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 9px;font-size:11px;pointer-events:none;z-index:900;box-shadow:0 4px 14px rgba(0,0,0,.12);display:none;max-width:200px;line-height:1.4;}
 .ct-type{font-weight:600;color:var(--text);}
 .ct-label{color:var(--text2);margin-top:2px;font-size:10px;}
@@ -279,7 +280,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 /* PRD-20 — Connector ports (drag-to-connect) */
 .conn-port{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--blue);border:2.5px solid white;opacity:0;pointer-events:none;z-index:15;cursor:crosshair;box-shadow:0 0 0 1.5px var(--blue);transition:opacity .12s,box-shadow .12s;}
 .el-card:hover .conn-port{opacity:1;pointer-events:auto;}
-.conn-port:hover{box-shadow:0 0 0 4px var(--blue-bd);}
+.bp-canvas-wrap.conn-mode .conn-port{opacity:.4;pointer-events:auto;}
+.bp-canvas-wrap.conn-mode .el-card:hover .conn-port{opacity:1;}
+.conn-port:hover{opacity:1!important;box-shadow:0 0 0 4px var(--blue-bd);}
 .conn-port-n{top:-5px;left:50%;transform:translateX(-50%);}
 .conn-port-e{right:-5px;top:50%;transform:translateY(-50%);}
 .conn-port-s{bottom:-5px;left:50%;transform:translateX(-50%);}
@@ -288,7 +291,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .bp-canvas-wrap.conn-dragging{cursor:crosshair!important;user-select:none;}
 .bp-canvas-wrap.conn-dragging .el-card{outline:1.5px dashed var(--border2);outline-offset:2px;}
 .bp-canvas-wrap.conn-dragging .el-card:hover{outline:2px solid var(--blue);outline-offset:2px;}
-.conn-source-highlight{outline:2.5px solid var(--blue)!important;outline-offset:2px!important;background:var(--blue-bg)!important;}
+.bp-canvas-wrap.conn-dragging .conn-port{opacity:.65;pointer-events:auto;}
+.bp-canvas-wrap.conn-dragging .el-card:hover .conn-port{opacity:1;}
+.conn-source-highlight{outline:2.5px solid var(--blue)!important;outline-offset:2px!important;background:rgba(238,242,253,0.92)!important;}
 /* Context menu */
 .ctx-menu{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh2);z-index:800;min-width:140px;overflow:hidden;display:none;}
 .ctx-item{padding:7px 12px;font-size:12px;cursor:pointer;color:var(--text2);transition:background .1s;font-family:'DM Sans',sans-serif;}
@@ -1537,8 +1542,8 @@ select.fi{appearance:none;cursor:pointer;}
         <!-- Dynamic canvas grid — populated by renderCanvas() in PRD-02 -->
         <div class="bp-grid-scroll">
           <div class="bp-canvas-wrap" id="bp-canvas-wrap">
-            <div id="canvas-grid" class="bp-grid" style="display:none;"></div>
             <svg id="connector-svg" class="connector-svg" width="0" height="0" aria-hidden="true"></svg>
+            <div id="canvas-grid" class="bp-grid" style="display:none;"></div>
           </div>
         </div>
       </div>
@@ -3445,10 +3450,10 @@ function renderElementCard(el) {
     <span class="el-name">${escHtml(el.name)}</span>
     ${aiBadge}
     <span class="el-status el-status-${escHtml((el.status||'draft').replace('-','_'))}"></span>
-    <span class="conn-port conn-port-n" onmousedown="event.stopPropagation();_portMouseDown('element','${_eid}',event)" onclick="event.stopPropagation()"></span>
-    <span class="conn-port conn-port-e" onmousedown="event.stopPropagation();_portMouseDown('element','${_eid}',event)" onclick="event.stopPropagation()"></span>
-    <span class="conn-port conn-port-s" onmousedown="event.stopPropagation();_portMouseDown('element','${_eid}',event)" onclick="event.stopPropagation()"></span>
-    <span class="conn-port conn-port-w" onmousedown="event.stopPropagation();_portMouseDown('element','${_eid}',event)" onclick="event.stopPropagation()"></span>
+    <span class="conn-port conn-port-n" onmousedown="event.stopPropagation();_portMouseDown('element','${_eid}',event)" onclick="event.stopPropagation();_portClick('element','${_eid}',event)"></span>
+    <span class="conn-port conn-port-e" onmousedown="event.stopPropagation();_portMouseDown('element','${_eid}',event)" onclick="event.stopPropagation();_portClick('element','${_eid}',event)"></span>
+    <span class="conn-port conn-port-s" onmousedown="event.stopPropagation();_portMouseDown('element','${_eid}',event)" onclick="event.stopPropagation();_portClick('element','${_eid}',event)"></span>
+    <span class="conn-port conn-port-w" onmousedown="event.stopPropagation();_portMouseDown('element','${_eid}',event)" onclick="event.stopPropagation();_portClick('element','${_eid}',event)"></span>
   </div>`;
 }
 
@@ -5802,15 +5807,16 @@ function renderConnectors() {
     paths += `<path
       class="conn-path"
       data-conn-id="${conn.id}"
-      data-conn-type="${typeEsc}"
-      data-conn-label="${labelEsc}"
       d="${d}"
       fill="none"
       stroke="${style.stroke}"
       stroke-width="${sw}"
       ${dashAttr}
       marker-end="url(#${markerId})"
+      pointer-events="none"
     />`;
+    // Wide invisible hit area for easier click detection
+    paths += `<path class="conn-hit" data-conn-id="${conn.id}" data-conn-type="${typeEsc}" data-conn-label="${labelEsc}" d="${d}" fill="none" stroke="transparent" stroke-width="16" pointer-events="stroke"/>`;
 
     // Mid-point label
     if (conn.label) {
@@ -5852,26 +5858,25 @@ function renderConnectors() {
   // Init waypoint drag handles
   if (typeof _initWaypointDrag === 'function') _initWaypointDrag();
 
-  // Attach hover + click + contextmenu listeners on conn-path elements
-  svg.querySelectorAll('.conn-path').forEach(path => {
-    const origSw  = parseFloat(path.getAttribute('stroke-width'));
-    const cType   = path.dataset.connType;
-    const cLabel  = path.dataset.connLabel;
-    const cId     = path.dataset.connId;
+  // Attach hover + click + contextmenu listeners on wide hit-area paths
+  svg.querySelectorAll('.conn-hit').forEach(hit => {
+    const cId    = hit.dataset.connId;
+    const cType  = hit.dataset.connType;
+    const cLabel = hit.dataset.connLabel;
+    const visPath = svg.querySelector(`.conn-path[data-conn-id="${cId}"]`);
+    const origSw  = visPath ? parseFloat(visPath.getAttribute('stroke-width')) : 2;
 
-    path.addEventListener('mouseenter', e => {
+    hit.addEventListener('mouseenter', e => {
       if (typeof connectorState !== 'undefined' && connectorState.mode !== 'idle') return;
-      path.setAttribute('stroke-width', origSw + 1);
-      path.style.filter = 'brightness(1.2)';
+      if (visPath) { visPath.setAttribute('stroke-width', origSw + 1); visPath.style.filter = 'brightness(1.2)'; }
       showConnTooltip(e, cType, cLabel);
     });
-    path.addEventListener('mousemove', moveConnTooltip);
-    path.addEventListener('mouseleave', () => {
-      path.setAttribute('stroke-width', origSw);
-      path.style.filter = '';
+    hit.addEventListener('mousemove', moveConnTooltip);
+    hit.addEventListener('mouseleave', () => {
+      if (visPath) { visPath.setAttribute('stroke-width', origSw); visPath.style.filter = ''; }
       hideConnTooltip();
     });
-    path.addEventListener('click', e => {
+    hit.addEventListener('click', e => {
       e.stopPropagation();
       if (typeof connectorState !== 'undefined' && connectorState.mode !== 'idle') return;
       if (selectedConnectorId === cId) {
@@ -5883,7 +5888,7 @@ function renderConnectors() {
       }
       renderConnectors();
     });
-    path.addEventListener('contextmenu', e => {
+    hit.addEventListener('contextmenu', e => {
       e.preventDefault();
       e.stopPropagation();
       if (typeof connectorState !== 'undefined' && connectorState.mode !== 'idle') return;
@@ -5918,9 +5923,17 @@ function hideConnTooltip() {
 function toggleElementConnectors() {
   showElementConnectors = !showElementConnectors;
   localStorage.setItem('bp_show_el_conn', showElementConnectors ? 'true' : 'false');
-  const btn = document.getElementById('conn-toggle-btn');
-  if (btn) btn.classList.toggle('active', showElementConnectors);
+  const btn  = document.getElementById('conn-toggle-btn');
+  const wrap = document.getElementById('bp-canvas-wrap');
+  if (btn)  btn.classList.toggle('active', showElementConnectors);
+  if (wrap) wrap.classList.toggle('conn-mode', showElementConnectors);
+  if (!showElementConnectors && typeof _cancelConnDrag === 'function') _cancelConnDrag();
   renderConnectors();
+}
+
+function _initConnMode() {
+  const wrap = document.getElementById('bp-canvas-wrap');
+  if (wrap) wrap.classList.toggle('conn-mode', showElementConnectors);
 }
 
 // Debounce re-renders on resize (connector positions depend on DOM layout)
@@ -5951,6 +5964,28 @@ function _portMouseDown(type, id, e) {
   _highlightConnSource();
   document.addEventListener('mousemove', _connDragMove);
   document.addEventListener('mouseup', _connDragEnd);
+}
+
+// ─── Click-to-connect: port click ─────────────────────
+
+function _portClick(type, id, e) {
+  if (connectorState.mode === 'click_connect') {
+    if (connectorState.source.id === id) {
+      // Clicked same source port — cancel
+      connectorState = { mode:'idle', source:null, target:null, waypoints:[], ghostPos:null };
+      document.getElementById('bp-canvas-wrap')?.classList.remove('conn-dragging');
+      _removeConnSourceHighlight();
+      return;
+    }
+    // Second port on a different element — submit connector
+    connectorState.target = { type, id };
+    _submitConnectorImmediate();
+  } else if (connectorState.mode === 'idle') {
+    // First port click — enter click-connect mode
+    connectorState = { mode:'click_connect', source:{ type, id }, target:null, waypoints:[], ghostPos:null };
+    document.getElementById('bp-canvas-wrap')?.classList.add('conn-dragging');
+    _highlightConnSource();
+  }
 }
 
 function _connDragMove(e) {
@@ -6086,6 +6121,11 @@ function _initCanvasConnHandlers() {
   if (!wrap) return;
   wrap.addEventListener('contextmenu', function(e) {
     if (connectorState.mode !== 'idle') { e.preventDefault(); _cancelConnDrag(); }
+  });
+  wrap.addEventListener('click', function(e) {
+    if (connectorState.mode === 'click_connect' && !e.target.closest('.conn-port')) {
+      _cancelConnDrag();
+    }
   });
 }
 
@@ -6751,9 +6791,10 @@ async function initApp() {
   initRoleUI();
   initChatDragDrop();
   _initCanvasConnHandlers();
-  // PRD-19: sync connector toggle button to persisted state
+  // PRD-19: sync connector toggle button and conn-mode class to persisted state
   const _ctBtn = document.getElementById('conn-toggle-btn');
   if (_ctBtn) _ctBtn.classList.toggle('active', showElementConnectors);
+  _initConnMode();
   renderCanvas();  // show empty state immediately before any board loads
   await loadCurrentUser();
 
