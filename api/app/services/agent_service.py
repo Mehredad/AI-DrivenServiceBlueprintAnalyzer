@@ -297,6 +297,17 @@ async def build_board_context(db: AsyncSession, board_id: str) -> dict:
             }
             for e in placed_elements[:20]
         ],
+        # Unplaced elements exist in the DB but are NOT visible on the canvas.
+        # Use update_element with swimlane_id + step_id to place them.
+        # Never use create_element for these — that would create duplicates.
+        "unplaced_elements": [
+            {
+                "id":   str(e.id),
+                "type": e.type,
+                "name": e.name,
+            }
+            for e in orphaned_elements
+        ],
         "open_insights": [
             {"severity": i.severity, "title": i.title, "source": i.source_ref}
             for i in open_insights
@@ -387,7 +398,8 @@ Allowed action types and their payloads:
 - create_swimlane: { "name": "...", "lane_type": "customer_actions|frontstage_actions|backstage_actions|support_processes|moment_of_truth|touchpoints|systems|data_flow|handoffs|risks|opportunities|pain_points|ai_capability|research_evidence|governance|custom" }
 - create_step: { "name": "..." }
 - create_element: { "type": "customer_action|physical_evidence|frontstage_action|backstage_action|support_process|moment_of_truth|touchpoint|system|data_flow|handoff|risk|opportunity|pain_point|research_evidence|ai_capability|governance_checkpoint", "name": "...", "swimlane_id": "<REQUIRED — exact UUID from PLACEMENT REFERENCE above, swimlane_id column>", "step_id": "<REQUIRED — exact UUID from PLACEMENT REFERENCE above, step_id column>", "notes": "..." }
-- update_element: { "id": "...", "name": "...", "updates": { "name": "...", "notes": "...", "status": "..." } }
+- update_element: { "id": "...", "name": "...", "updates": { "name": "...", "notes": "...", "status": "...", "swimlane_id": "...", "step_id": "..." } }
+  → To place an unplaced element on the canvas: use update_element with updates.swimlane_id and updates.step_id copied from the PLACEMENT REFERENCE. Copy the element id from unplaced_elements[]. NEVER use create_element for elements already in unplaced_elements — that creates duplicates.
 - delete_element: { "id": "...", "name": "..." }
 - update_swimlane: { "id": "...", "name": "..." }
 - delete_swimlane: { "id": "...", "name": "..." }
@@ -505,33 +517,60 @@ Good response examples:
 def _parse_agent_response(text: str) -> tuple[str, list[dict]]:
     """
     Try to parse agent response as structured JSON {"message": ..., "actions": [...]}.
-    Handles plain JSON and JSON wrapped in markdown code fences (```json ... ```).
+    Handles:
+      1. Entire response is a bare JSON object.
+      2. JSON wrapped in a markdown code fence (```json ... ```).
+      3. JSON object embedded anywhere in the text (model mixed prose + JSON).
     Falls back to (text, []) if not parseable or missing the expected shape.
     """
     import re
-    stripped = text.strip()
 
-    # Gemini sometimes wraps the JSON in a markdown code block
-    if not stripped.startswith('{'):
-        m = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', stripped, re.DOTALL)
-        if m:
-            stripped = m.group(1).strip()
-
-    if not stripped.startswith('{'):
-        return text, []
-
-    try:
-        data = json.loads(stripped)
+    def _extract_actions(data: dict) -> tuple[str, list[dict]] | None:
         if isinstance(data, dict) and isinstance(data.get('message'), str):
             actions = data.get('actions', [])
             if isinstance(actions, list):
                 valid = [
                     a for a in actions
-                    if isinstance(a, dict) and isinstance(a.get('type'), str) and isinstance(a.get('payload'), dict)
+                    if isinstance(a, dict)
+                    and isinstance(a.get('type'), str)
+                    and isinstance(a.get('payload'), dict)
                 ]
                 return data['message'], valid
-    except (json.JSONDecodeError, ValueError):
-        pass
+        return None
+
+    stripped = text.strip()
+
+    # Case 1: entire response is a bare JSON object
+    if stripped.startswith('{'):
+        try:
+            result = _extract_actions(json.loads(stripped))
+            if result:
+                return result
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # Case 2: JSON wrapped in a markdown code fence
+    m = re.search(r'```(?:json)?\s*(\{.*?})\s*```', stripped, re.DOTALL)
+    if m:
+        try:
+            result = _extract_actions(json.loads(m.group(1)))
+            if result:
+                return result
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # Case 3: JSON object embedded in prose (model prepended explanation text)
+    json_match = re.search(r'\{\s*"message"\s*:', stripped)
+    if json_match:
+        try:
+            decoder = json.JSONDecoder()
+            data, _ = decoder.raw_decode(stripped, json_match.start())
+            result = _extract_actions(data)
+            if result:
+                return result
+        except (json.JSONDecodeError, ValueError):
+            pass
+
     return text, []
 
 
