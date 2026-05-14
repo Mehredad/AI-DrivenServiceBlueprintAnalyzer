@@ -4313,11 +4313,20 @@ async function _applyProposedAction(action, boardId) {
       return { snapshot, idx };
     }
     case 'create_element': {
+      // The AI sometimes sends a swimlane/step name instead of its UUID.
+      // Resolve: if the value is already a UUID pass it through; otherwise look
+      // up by name in the live board state so PostgreSQL accepts it.
+      const _resolveToId = (val, collection) => {
+        if (!val) return null;
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val)) return val;
+        const hit = collection.find(x => x.name === val || (x.name||'').toLowerCase() === val.toLowerCase());
+        return hit ? hit.id : null;
+      };
       const body = {
         type: payload.type || 'touchpoint',
         name: payload.name,
-        swimlane_id: payload.swimlane_id || null,
-        step_id:     payload.step_id     || null,
+        swimlane_id: _resolveToId(payload.swimlane_id, boardState.swimlanes),
+        step_id:     _resolveToId(payload.step_id,     boardState.steps),
         notes:       payload.notes       || null,
         owner:       payload.owner       || null,
         status: 'draft',
