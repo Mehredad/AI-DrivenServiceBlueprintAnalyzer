@@ -281,19 +281,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 /* PRD-20 — Connector ports (drag-to-connect) */
 .conn-port{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--blue);border:2.5px solid white;opacity:0;pointer-events:none;z-index:15;cursor:crosshair;box-shadow:0 0 0 1.5px var(--blue);transition:opacity .12s,box-shadow .12s;}
 .el-card:hover .conn-port{opacity:1;pointer-events:auto;}
-.bp-canvas-wrap.conn-mode .conn-port{opacity:.4;pointer-events:auto;}
-.bp-canvas-wrap.conn-mode .el-card:hover .conn-port{opacity:1;}
 .conn-port:hover{opacity:1!important;box-shadow:0 0 0 4px var(--blue-bd);}
-.conn-port-n{top:-5px;left:50%;transform:translateX(-50%);}
-.conn-port-e{right:-5px;top:50%;transform:translateY(-50%);}
-.conn-port-s{bottom:-5px;left:50%;transform:translateX(-50%);}
-.conn-port-w{left:-5px;top:50%;transform:translateY(-50%);}
 .bp-step-header{overflow:visible;}
 .bp-canvas-wrap.conn-dragging{cursor:crosshair!important;user-select:none;}
 .bp-canvas-wrap.conn-dragging .el-card{outline:1.5px dashed var(--border2);outline-offset:2px;}
 .bp-canvas-wrap.conn-dragging .el-card:hover{outline:2px solid var(--blue);outline-offset:2px;}
-.bp-canvas-wrap.conn-dragging .conn-port{opacity:.65;pointer-events:auto;}
-.bp-canvas-wrap.conn-dragging .el-card:hover .conn-port{opacity:1;}
 .conn-source-highlight{outline:2.5px solid var(--blue)!important;outline-offset:2px!important;background:rgba(238,242,253,0.92)!important;}
 /* Context menu */
 .ctx-menu{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh2);z-index:800;min-width:140px;overflow:hidden;display:none;}
@@ -3446,15 +3438,12 @@ function renderElementCard(el) {
     (Date.now() - new Date(el.updated_at).getTime() < 86400000);
   const aiBadge = recentAgent ? '<span class="el-ai-badge">AI</span>' : '';
   const _eid = escHtml(el.id);
-  return `<div class="el-card el-${escHtml(el.type)}${dimCls}" data-el-id="${_eid}" title="${escHtml(el.name)}" onclick="elCardClicked('${_eid}',event)" oncontextmenu="elCardContextMenu(event,'${_eid}')">
+  return `<div class="el-card el-${escHtml(el.type)}${dimCls}" data-el-id="${_eid}" title="${escHtml(el.name)}" onclick="elCardClicked('${_eid}',event)" oncontextmenu="elCardContextMenu(event,'${_eid}')" onmousemove="_portMove(this,event)">
     <span class="el-icon">${t.icon}</span>
     <span class="el-name">${escHtml(el.name)}</span>
     ${aiBadge}
     <span class="el-status el-status-${escHtml((el.status||'draft').replace('-','_'))}"></span>
-    <span class="conn-port conn-port-n" onmousedown="event.stopPropagation();_portMouseDown('element','${_eid}',event)" onclick="event.stopPropagation();_portClick('element','${_eid}',event)"></span>
-    <span class="conn-port conn-port-e" onmousedown="event.stopPropagation();_portMouseDown('element','${_eid}',event)" onclick="event.stopPropagation();_portClick('element','${_eid}',event)"></span>
-    <span class="conn-port conn-port-s" onmousedown="event.stopPropagation();_portMouseDown('element','${_eid}',event)" onclick="event.stopPropagation();_portClick('element','${_eid}',event)"></span>
-    <span class="conn-port conn-port-w" onmousedown="event.stopPropagation();_portMouseDown('element','${_eid}',event)" onclick="event.stopPropagation();_portClick('element','${_eid}',event)"></span>
+    <span class="conn-port" onmousedown="event.stopPropagation();_portMouseDown('element','${_eid}',event)" onclick="event.stopPropagation();_portClick('element','${_eid}',event)"></span>
   </div>`;
 }
 
@@ -5854,8 +5843,8 @@ function renderConnectors() {
     hit.addEventListener('mouseenter', e => {
       if (typeof connectorState !== 'undefined' && connectorState.mode !== 'idle') return;
       if (visPath) {
-        visPath.setAttribute('stroke-width', origSw + 2.5);
-        visPath.style.filter = `drop-shadow(0 0 7px ${stroke}) drop-shadow(0 0 3px ${stroke})`;
+        visPath.setAttribute('stroke-width', origSw + 1.2);
+        visPath.style.filter = `drop-shadow(0 0 4px ${stroke})`;
       }
       showConnTooltip(e, cType, cLabel);
     });
@@ -5864,8 +5853,46 @@ function renderConnectors() {
       if (visPath) { visPath.setAttribute('stroke-width', origSw); visPath.style.filter = ''; }
       hideConnTooltip();
     });
+    hit.addEventListener('mousedown', e => {
+      if (typeof connectorState !== 'undefined' && connectorState.mode !== 'idle') return;
+      const startX = e.clientX, startY = e.clientY;
+      let dragWpIdx = -1;
+      const svgEl = document.getElementById('connector-svg');
+      if (!svgEl) return;
+      function onWpMove(ev) {
+        const conn = boardConnectors.find(c => c.id === cId);
+        if (!conn) return;
+        const svgRect = svgEl.getBoundingClientRect();
+        const px = ev.clientX - svgRect.left;
+        const py = ev.clientY - svgRect.top;
+        if (dragWpIdx < 0) {
+          if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 5) return;
+          if (!conn.waypoints) conn.waypoints = [];
+          const pathEl = svgEl.querySelector(`.conn-path[data-conn-id="${cId}"]`);
+          const insertIdx = pathEl ? _bestInsertIdx(pathEl, px, py, conn.waypoints.length) : conn.waypoints.length;
+          conn.waypoints.splice(insertIdx, 0, { x: px, y: py });
+          dragWpIdx = insertIdx;
+          _connHitDragged = true;
+          renderConnectors();
+        } else {
+          conn.waypoints[dragWpIdx] = { x: px, y: py };
+          renderConnectors();
+        }
+      }
+      function onWpUp() {
+        window.removeEventListener('mousemove', onWpMove);
+        window.removeEventListener('mouseup', onWpUp);
+        if (dragWpIdx >= 0) {
+          clearTimeout(_waypointSaveTimer);
+          _waypointSaveTimer = setTimeout(() => _saveConnectorWaypoints(cId), 500);
+        }
+      }
+      window.addEventListener('mousemove', onWpMove);
+      window.addEventListener('mouseup', onWpUp);
+    });
     hit.addEventListener('click', e => {
       e.stopPropagation();
+      if (_connHitDragged) { _connHitDragged = false; return; }
       if (typeof connectorState !== 'undefined' && connectorState.mode !== 'idle') return;
       if (selectedConnectorId === cId) {
         selectedConnectorId = null;
@@ -5940,6 +5967,7 @@ let _ctxElId        = null;
 let _connDrawerId   = null;
 let _waypointDragIdx  = null;
 let _waypointSaveTimer = null;
+let _connHitDragged = false;
 
 // ─── Drag-to-connect: port mousedown ──────────────────
 
@@ -6367,6 +6395,37 @@ async function _saveConnectorWaypoints(connId) {
       if (idx >= 0) boardConnectors[idx] = updated;
     }
   } catch {}
+}
+
+function _bestInsertIdx(pathEl, px, py, nWps) {
+  const len = pathEl.getTotalLength();
+  const samples = Math.max(60, Math.round(len / 4));
+  let bestT = 0, bestDist = Infinity;
+  for (let i = 0; i <= samples; i++) {
+    const t = i / samples;
+    const pt = pathEl.getPointAtLength(t * len);
+    const d = Math.hypot(pt.x - px, pt.y - py);
+    if (d < bestDist) { bestDist = d; bestT = t; }
+  }
+  return Math.min(Math.floor(bestT * (nWps + 1)), nWps);
+}
+
+function _portMove(cardEl, e) {
+  const port = cardEl.querySelector('.conn-port');
+  if (!port) return;
+  const r = cardEl.getBoundingClientRect();
+  const mx = e.clientX - r.left;
+  const my = e.clientY - r.top;
+  const dL = mx, dR = r.width - mx, dT = my, dB = r.height - my;
+  const min = Math.min(dL, dR, dT, dB);
+  let cx, cy;
+  if (min === dL)      { cx = 0;        cy = my; }
+  else if (min === dR) { cx = r.width;  cy = my; }
+  else if (min === dT) { cx = mx;       cy = 0; }
+  else                 { cx = mx;       cy = r.height; }
+  port.style.left      = (cx - 4.5) + 'px';
+  port.style.top       = (cy - 4.5) + 'px';
+  port.style.transform = 'none';
 }
 
 async function loadHistory(reset) {
