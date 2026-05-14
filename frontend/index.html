@@ -2110,59 +2110,52 @@ function closeExportDropdown() {
 }
 
 // ── Custom dialog helpers (replace browser prompt/confirm) ─
-let _bpDialogResolve = null;
-function _bpCloseDialog() {
-  const ov = document.getElementById('bp-dialog-overlay');
-  if (ov) ov.remove();
-  _bpDialogResolve = null;
-}
 function bpConfirm(msg, title = 'Are you sure?', confirmLabel = 'Confirm', isDanger = false) {
   return new Promise(resolve => {
-    _bpDialogResolve = resolve;
     const ov = document.createElement('div');
     ov.className = 'bp-dialog-overlay';
-    ov.id = 'bp-dialog-overlay';
     ov.innerHTML = `<div class="bp-dialog" onclick="event.stopPropagation()">
       <div class="bp-dialog-title">${escHtml(title)}</div>
       <div class="bp-dialog-msg">${escHtml(msg)}</div>
       <div class="bp-dialog-btns">
-        <button class="btn btn-ghost" onclick="_bpCloseDialog();_bpDialogResolve&&_bpDialogResolve(false)">Cancel</button>
-        <button class="btn btn-primary${isDanger ? ' btn-danger' : ''}" onclick="_bpCloseDialog();_bpDialogResolve&&_bpDialogResolve(true)">${escHtml(confirmLabel)}</button>
+        <button class="btn btn-ghost" id="_bpCancel">Cancel</button>
+        <button class="btn btn-primary${isDanger ? ' btn-danger' : ''}" id="_bpConfirm">${escHtml(confirmLabel)}</button>
       </div>
     </div>`;
-    ov.onclick = () => { _bpCloseDialog(); resolve(false); };
+    const close = val => { ov.remove(); resolve(val); };
+    ov.addEventListener('click', () => close(false));
+    ov.querySelector('#_bpCancel').addEventListener('click',  e => { e.stopPropagation(); close(false); });
+    ov.querySelector('#_bpConfirm').addEventListener('click', e => { e.stopPropagation(); close(true); });
     document.body.appendChild(ov);
   });
 }
 function bpPrompt(msg, defaultValue = '', title = '') {
   return new Promise(resolve => {
-    _bpDialogResolve = resolve;
     const ov = document.createElement('div');
     ov.className = 'bp-dialog-overlay';
-    ov.id = 'bp-dialog-overlay';
     ov.innerHTML = `<div class="bp-dialog" onclick="event.stopPropagation()">
       ${title ? `<div class="bp-dialog-title">${escHtml(title)}</div>` : ''}
       <div class="bp-dialog-msg">${escHtml(msg)}</div>
-      <input class="bp-dialog-input" id="bp-dialog-input" type="text" value="${escHtml(defaultValue)}" />
+      <input class="bp-dialog-input" id="_bpInput" type="text" value="${escHtml(defaultValue)}" />
       <div class="bp-dialog-btns">
-        <button class="btn btn-ghost" onclick="_bpCloseDialog();_bpDialogResolve&&_bpDialogResolve(null)">Cancel</button>
-        <button class="btn btn-primary" onclick="_bpDialogConfirmInput()">OK</button>
+        <button class="btn btn-ghost" id="_bpCancel">Cancel</button>
+        <button class="btn btn-primary" id="_bpOk">OK</button>
       </div>
     </div>`;
-    ov.onclick = () => { _bpCloseDialog(); resolve(null); };
+    const close = val => { ov.remove(); resolve(val); };
+    ov.addEventListener('click', () => close(null));
+    const inp = ov.querySelector('#_bpInput');
+    ov.querySelector('#_bpCancel').addEventListener('click', e => { e.stopPropagation(); close(null); });
+    ov.querySelector('#_bpOk').addEventListener('click',     e => { e.stopPropagation(); close(inp ? inp.value : ''); });
     document.body.appendChild(ov);
-    const inp = document.getElementById('bp-dialog-input');
     if (inp) {
       inp.focus(); inp.select();
-      inp.onkeydown = e => { if (e.key === 'Enter') _bpDialogConfirmInput(); if (e.key === 'Escape') { _bpCloseDialog(); resolve(null); } };
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter')  { e.stopPropagation(); close(inp.value); }
+        if (e.key === 'Escape') { e.stopPropagation(); close(null); }
+      });
     }
   });
-}
-function _bpDialogConfirmInput() {
-  const inp = document.getElementById('bp-dialog-input');
-  const val = inp ? inp.value : '';
-  _bpCloseDialog();
-  if (_bpDialogResolve) _bpDialogResolve(val);
 }
 
 // ── Session 3-dot context menu ─────────────────────────
