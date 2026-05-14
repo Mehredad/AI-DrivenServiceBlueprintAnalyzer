@@ -4660,19 +4660,26 @@ function _formatAgentText(raw) {
 }
 
 function _inlineFormat(text) {
-  return text
+  // Step 1: extract connector refs before HTML-escaping so name lookups match raw boardState names.
+  const spans = [];
+  let t = text.replace(/\[connector:\s*(.+?)\s*→\s*(.+?)\s*\((.+?)\)\]/g, (_, src, tgt, type) => {
+    const cId = _findConnectorId(src.trim(), tgt.trim(), type.trim());
+    const label = `${escHtml(src.trim())} → ${escHtml(tgt.trim())} (${escHtml(type.trim())})`;
+    const span = cId
+      ? `<span class="connector-ref" onclick="selectConnectorRef('${escHtml(cId)}')" title="Click to highlight on canvas">${label}</span>`
+      : `<span class="connector-ref-unknown" title="Connector not found on canvas">${label}</span>`;
+    spans.push(span);
+    return `\x00${spans.length - 1}\x00`;
+  });
+  // Step 2: HTML-escape remaining text so AI output cannot inject markup.
+  t = escHtml(t);
+  // Step 3: apply inline markdown to the now-safe text.
+  t = t
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/`([^`]+)`/g, '<code style="background:var(--bg2);padding:1px 4px;border-radius:3px;font-size:10px">$1</code>')
-    // PRD-21 — parse [connector: Source → Target (type)] tokens
-    .replace(/\[connector:\s*(.+?)\s*→\s*(.+?)\s*\((.+?)\)\]/g, (match, src, tgt, type) => {
-      const cId = _findConnectorId(src.trim(), tgt.trim(), type.trim());
-      const label = `${src.trim()} → ${tgt.trim()} (${type.trim()})`;
-      if (cId) {
-        return `<span class="connector-ref" onclick="selectConnectorRef('${cId}')" title="Click to highlight on canvas">${label}</span>`;
-      }
-      return `<span class="connector-ref-unknown" title="Connector not found on canvas">${label}</span>`;
-    });
+    .replace(/`([^`]+)`/g, '<code style="background:var(--bg2);padding:1px 4px;border-radius:3px;font-size:10px">$1</code>');
+  // Step 4: restore connector spans.
+  return t.replace(/\x00(\d+)\x00/g, (_, i) => spans[+i]);
 }
 
 function addAgentMsg(text, actions = [], ts = null) {

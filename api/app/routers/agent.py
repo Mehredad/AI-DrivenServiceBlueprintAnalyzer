@@ -6,7 +6,7 @@ DELETE /api/agent/boards/{id}/history -> clear history
 """
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select, delete as sql_delete
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,12 +19,15 @@ from app.schemas import ChatRequest, ChatResponse, ChatMessageOut, AgentCallErro
 from app.services import agent_service
 from app.services.board_service import assert_board_access
 from app.middleware.auth_middleware import get_current_user
+from app.limiter import limiter
 
 router = APIRouter(prefix="/api/agent", tags=["agent"])
 
 
 @router.post("/chat", response_model=ChatResponse)
+@limiter.limit("20/minute")
 async def chat(
+    request: Request,
     body: ChatRequest,
     user: User = Depends(get_current_user),
     db:   AsyncSession = Depends(get_db),
