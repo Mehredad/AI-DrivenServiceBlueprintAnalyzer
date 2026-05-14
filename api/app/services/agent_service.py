@@ -233,6 +233,11 @@ async def build_board_context(db: AsyncSession, board_id: str) -> dict:
         if "id" in s
     }
 
+    # Partition elements: placed = visible on canvas (has both swimlane_id AND step_id).
+    # Orphaned = exist in DB but are invisible because they have no placement.
+    placed_elements   = [e for e in all_elements if e.swimlane_id and e.step_id]
+    orphaned_elements = [e for e in all_elements if not e.swimlane_id or not e.step_id]
+
     open_ins_res = await db.execute(
         select(Insight).where(
             Insight.board_id     == board_id,
@@ -258,6 +263,16 @@ async def build_board_context(db: AsyncSession, board_id: str) -> dict:
         "current_phase": board.phase,
         "version":       board.version,
         "board_state":   board.state,
+        # IMPORTANT: only placed_elements are VISIBLE on the canvas.
+        # Orphaned elements exist in the DB but have no swimlane+step placement
+        # and are completely invisible to users. Do NOT tell the user the board
+        # contains elements unless placed_count > 0.
+        "canvas_summary": {
+            "placed_element_count":  len(placed_elements),
+            "orphaned_element_count": len(orphaned_elements),
+            "swimlane_count":        len((board.state or {}).get("swimlanes", [])),
+            "step_count":            len((board.state or {}).get("steps", [])),
+        },
         "capabilities": [
             {
                 "cap_id":       c.cap_id,
@@ -280,7 +295,7 @@ async def build_board_context(db: AsyncSession, board_id: str) -> dict:
                 "status": e.status,
                 "owner":  e.owner,
             }
-            for e in elements
+            for e in placed_elements[:20]
         ],
         "open_insights": [
             {"severity": i.severity, "title": i.title, "source": i.source_ref}
