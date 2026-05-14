@@ -16,7 +16,7 @@ TEST_DB_URL = "sqlite+aiosqlite:///./test_blueprint.db"
 os.environ.setdefault('DATABASE_URL', TEST_DB_URL)
 os.environ.setdefault('SECRET_KEY', 'test-secret-key-for-ci-only')
 os.environ.setdefault('ANTHROPIC_API_KEY', 'test-key')
-os.environ.setdefault('ENVIRONMENT', 'development')
+os.environ.setdefault('ENVIRONMENT', 'test')
 
 from app.main import app
 from app.database import Base, get_db

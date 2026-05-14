@@ -269,6 +269,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 /* PRD-19 — Connector SVG overlay */
 .bp-canvas-wrap{position:relative;display:inline-block;min-width:100%;}
 .connector-svg{position:absolute;top:0;left:0;pointer-events:none;overflow:visible;will-change:transform;z-index:0;}
+.connector-hit-svg{position:absolute;top:0;left:0;pointer-events:none;overflow:visible;z-index:2;}
 .bp-grid{position:relative;z-index:1;}
 .conn-path{pointer-events:none;transition:filter .1s;}
 .conn-hit{pointer-events:stroke;cursor:pointer;}
@@ -1543,8 +1544,9 @@ select.fi{appearance:none;cursor:pointer;}
         <!-- Dynamic canvas grid — populated by renderCanvas() in PRD-02 -->
         <div class="bp-grid-scroll">
           <div class="bp-canvas-wrap" id="bp-canvas-wrap">
-            <div id="canvas-grid" class="bp-grid" style="display:none;"></div>
             <svg id="connector-svg" class="connector-svg" width="0" height="0" aria-hidden="true"></svg>
+            <div id="canvas-grid" class="bp-grid" style="display:none;"></div>
+            <svg id="connector-hit-svg" class="connector-hit-svg" width="0" height="0" aria-hidden="true"></svg>
           </div>
         </div>
       </div>
@@ -5667,8 +5669,10 @@ function _strokeWidth(tier) {
 }
 
 function _clearConnectorSvg() {
-  const svg = document.getElementById('connector-svg');
-  if (svg) { svg.innerHTML = ''; svg.style.width = '0'; svg.style.height = '0'; }
+  const svg    = document.getElementById('connector-svg');
+  const hitSvg = document.getElementById('connector-hit-svg');
+  if (svg)    { svg.innerHTML    = ''; svg.style.width    = '0'; svg.style.height    = '0'; }
+  if (hitSvg) { hitSvg.innerHTML = ''; hitSvg.style.width = '0'; hitSvg.style.height = '0'; }
 }
 
 function getEndpointXY(type, id, svgEl) {
@@ -5724,143 +5728,108 @@ function _elbowPath(sx, sy, tx, ty) {
 }
 
 function renderConnectors() {
-  const svg  = document.getElementById('connector-svg');
-  const grid = document.getElementById('canvas-grid');
-  if (!svg || !grid || grid.style.display === 'none') { _clearConnectorSvg(); return; }
+  const svg    = document.getElementById('connector-svg');
+  const hitSvg = document.getElementById('connector-hit-svg');
+  const grid   = document.getElementById('canvas-grid');
+  if (!svg || !hitSvg || !grid || grid.style.display === 'none') { _clearConnectorSvg(); return; }
 
-  // Size SVG to match grid
-  const w = grid.scrollWidth;
-  const h = grid.scrollHeight;
-  svg.style.width  = w + 'px';
-  svg.style.height = h + 'px';
+  // Size both SVGs to match grid
+  const w = grid.scrollWidth, h = grid.scrollHeight;
+  svg.style.width = hitSvg.style.width = w + 'px';
+  svg.style.height = hitSvg.style.height = h + 'px';
 
   // Filter by visibility toggle
   const visible = boardConnectors.filter(c =>
     c.tier === 'step' || showElementConnectors
   );
 
-  // Build SVG marker defs for each type
+  // Build SVG marker defs for arrowheads (visual SVG only)
   let defs = '<defs>';
   Object.entries(_CONN_STYLES).forEach(([type, s]) => {
     const isOpen  = s.arrow === 'open';
     const fill    = isOpen ? 'none'    : s.stroke;
     const stkLine = isOpen ? s.stroke  : 'none';
     const stkW    = isOpen ? '1.5'     : '0';
-    // small marker (element-tier)
     defs += `<marker id="ma-${type}" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
       <polygon points="0 0,10 3.5,0 7" fill="${fill}" stroke="${stkLine}" stroke-width="${stkW}"/></marker>`;
-    // large marker (step-tier)
     defs += `<marker id="mb-${type}" markerWidth="14" markerHeight="10" refX="13" refY="5" orient="auto" markerUnits="userSpaceOnUse">
       <polygon points="0 0,14 5,0 10" fill="${fill}" stroke="${stkLine}" stroke-width="${stkW}"/></marker>`;
   });
   defs += '</defs>';
 
-  let paths = '';
+  let visPaths = '';  // goes into connector-svg (behind elements)
+  let hitPaths = '';  // goes into connector-hit-svg (above elements, transparent)
+
   visible.forEach(conn => {
     const style = _CONN_STYLES[conn.connector_type] || _CONN_STYLES.sequence;
     const sw    = _strokeWidth(conn.tier);
 
-    // Resolve endpoints — use bounding rects to pick edge exit/entry points
+    // Resolve endpoints via bounding rects relative to the visual SVG
     let srcR, tgtR;
     if (conn.source_step_id)         srcR = getEndpointRect('step',    conn.source_step_id,    svg);
     else if (conn.source_element_id) srcR = getEndpointRect('element', conn.source_element_id, svg);
     if (conn.target_step_id)         tgtR = getEndpointRect('step',    conn.target_step_id,    svg);
     else if (conn.target_element_id) tgtR = getEndpointRect('element', conn.target_element_id, svg);
 
-    if (!srcR || !tgtR) return; // FR-10: silently skip missing endpoints
+    if (!srcR || !tgtR) return; // silently skip missing endpoints
     const { sp: src, tp: tgt } = _edgePts(srcR, tgtR);
 
     const wps = Array.isArray(conn.waypoints) ? conn.waypoints : [];
     const markerId = sw >= 3 ? `mb-${conn.connector_type}` : `ma-${conn.connector_type}`;
     const isSelected = conn.id === selectedConnectorId;
 
-    // Build path d attribute
+    // Build path d
     let d;
     if (wps.length > 0) {
       const pts = [src, ...wps, tgt];
       d = 'M ' + pts.map(p => `${p.x} ${p.y}`).join(' L ');
     } else if (conn.connector_type === 'feedback') {
-      // Quadratic bezier curve for feedback type
-      const mx  = (src.x + tgt.x) / 2;
-      const my  = (src.y + tgt.y) / 2;
-      const dx  = tgt.x - src.x;
-      const dy  = tgt.y - src.y;
+      const mx  = (src.x + tgt.x) / 2, my  = (src.y + tgt.y) / 2;
+      const dx  = tgt.x - src.x,       dy  = tgt.y - src.y;
       const len = Math.sqrt(dx * dx + dy * dy) || 1;
       const off = Math.min(50, len * 0.3);
-      const px  = (-dy / len) * off;
-      const py  = (dx / len) * off;
-      d = `M ${src.x} ${src.y} Q ${mx + px} ${my + py} ${tgt.x} ${tgt.y}`;
+      d = `M ${src.x} ${src.y} Q ${mx + (-dy / len) * off} ${my + (dx / len) * off} ${tgt.x} ${tgt.y}`;
     } else {
       d = _elbowPath(src.x, src.y, tgt.x, tgt.y);
     }
 
-    // Dash: mixed tier gets a dash even if type has none
     const dash = style.dash || (conn.tier === 'mixed' ? '8,4' : '');
     const dashAttr = dash ? `stroke-dasharray="${dash}"` : '';
-
-    // Selection glow: render a wider, semi-transparent path behind
-    if (isSelected) {
-      paths += `<path d="${d}" fill="none" stroke="${style.stroke}" stroke-width="${sw + 5}" stroke-opacity="0.22" pointer-events="none"/>`;
-    }
-
     const labelEsc = escHtml(conn.label || '');
     const typeEsc  = escHtml(conn.connector_type);
-    paths += `<path
-      class="conn-path"
-      data-conn-id="${conn.id}"
-      d="${d}"
-      fill="none"
-      stroke="${style.stroke}"
-      stroke-width="${sw}"
-      ${dashAttr}
-      marker-end="url(#${markerId})"
-      pointer-events="none"
-    />`;
-    // Wide invisible hit area for easier click detection
-    paths += `<path class="conn-hit" data-conn-id="${conn.id}" data-conn-type="${typeEsc}" data-conn-label="${labelEsc}" d="${d}" fill="none" stroke="transparent" stroke-width="16" pointer-events="stroke"/>`;
 
-    // Mid-point label
+    // ── Visual layer (connector-svg, z-index 0, behind elements) ──────
+    if (isSelected) {
+      visPaths += `<path d="${d}" fill="none" stroke="${style.stroke}" stroke-width="${sw + 5}" stroke-opacity="0.22" pointer-events="none"/>`;
+    }
+    visPaths += `<path class="conn-path" data-conn-id="${conn.id}" d="${d}" fill="none" stroke="${style.stroke}" stroke-width="${sw}" ${dashAttr} marker-end="url(#${markerId})" pointer-events="none"/>`;
     if (conn.label) {
-      const mp = wps.length > 0
-        ? wps[Math.floor(wps.length / 2)]
-        : { x: (src.x + tgt.x) / 2, y: (src.y + tgt.y) / 2 };
-      paths += `<text
-        x="${mp.x}" y="${mp.y - 6}"
-        text-anchor="middle"
-        font-size="10"
-        font-family="DM Sans,sans-serif"
-        fill="${style.stroke}"
-        pointer-events="none"
-        paint-order="stroke"
-        stroke="white"
-        stroke-width="3"
-        stroke-linejoin="round"
-      >${escHtml(conn.label)}</text>`;
+      const mp = wps.length > 0 ? wps[Math.floor(wps.length / 2)] : { x: (src.x + tgt.x) / 2, y: (src.y + tgt.y) / 2 };
+      visPaths += `<text x="${mp.x}" y="${mp.y - 6}" text-anchor="middle" font-size="10" font-family="DM Sans,sans-serif" fill="${style.stroke}" pointer-events="none" paint-order="stroke" stroke="white" stroke-width="3" stroke-linejoin="round">${escHtml(conn.label)}</text>`;
     }
 
-    // Waypoint drag handles (shown when this connector is selected)
+    // ── Hit layer (connector-hit-svg, z-index 2, above elements, invisible) ──
+    hitPaths += `<path class="conn-hit" data-conn-id="${conn.id}" data-conn-type="${typeEsc}" data-conn-label="${labelEsc}" d="${d}" fill="none" stroke="transparent" stroke-width="16" pointer-events="stroke"/>`;
     if (isSelected && wps.length > 0) {
       wps.forEach((wp, idx) => {
-        paths += `<circle class="conn-wp-handle" data-conn-id="${conn.id}" data-wp-idx="${idx}"
-          cx="${wp.x}" cy="${wp.y}" r="5"
-          fill="white" stroke="${style.stroke}" stroke-width="1.5"
-          pointer-events="all" style="cursor:move"/>`;
+        hitPaths += `<circle class="conn-wp-handle" data-conn-id="${conn.id}" data-wp-idx="${idx}" cx="${wp.x}" cy="${wp.y}" r="5" fill="white" stroke="${style.stroke}" stroke-width="1.5" pointer-events="all" style="cursor:move"/>`;
       });
     }
   });
 
-  svg.innerHTML = defs + paths;
+  svg.innerHTML    = defs + visPaths;
+  hitSvg.innerHTML = hitPaths;
 
-  // Re-attach ghost line group (cleared by innerHTML replace)
+  // Re-attach ghost line in visual SVG (cleared by innerHTML replace)
   if (typeof connectorState !== 'undefined' && connectorState.mode === 'selecting_target') {
     _renderGhostLine();
   }
 
-  // Init waypoint drag handles
+  // Waypoint drag handles live in hitSvg
   if (typeof _initWaypointDrag === 'function') _initWaypointDrag();
 
-  // Attach hover + click + contextmenu listeners on wide hit-area paths
-  svg.querySelectorAll('.conn-hit').forEach(hit => {
+  // Attach hover + click + contextmenu listeners to hit-area paths
+  hitSvg.querySelectorAll('.conn-hit').forEach(hit => {
     const cId    = hit.dataset.connId;
     const cType  = hit.dataset.connType;
     const cLabel = hit.dataset.connLabel;
@@ -6341,14 +6310,15 @@ document.addEventListener('keydown', e => {
 // ─── Waypoint drag handles ─────────────────────────────
 
 function _initWaypointDrag() {
-  const svg = document.getElementById('connector-svg');
-  if (!svg) return;
-  svg.querySelectorAll('.conn-wp-handle').forEach(circle => {
+  const svg    = document.getElementById('connector-svg');
+  const hitSvg = document.getElementById('connector-hit-svg');
+  if (!hitSvg) return;
+  hitSvg.querySelectorAll('.conn-wp-handle').forEach(circle => {
     const cId = circle.dataset.connId;
     const idx = parseInt(circle.dataset.wpIdx, 10);
     circle.addEventListener('mousedown', function(e) {
       e.stopPropagation(); e.preventDefault();
-      const svgRect = svg.getBoundingClientRect();
+      const svgRect = (svg || hitSvg).getBoundingClientRect();
       function onMove(ev) {
         const conn = boardConnectors.find(c => c.id === cId);
         if (!conn || !conn.waypoints) return;
