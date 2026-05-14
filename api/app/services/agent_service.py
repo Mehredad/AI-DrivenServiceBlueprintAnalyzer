@@ -505,33 +505,60 @@ Good response examples:
 def _parse_agent_response(text: str) -> tuple[str, list[dict]]:
     """
     Try to parse agent response as structured JSON {"message": ..., "actions": [...]}.
-    Handles plain JSON and JSON wrapped in markdown code fences (```json ... ```).
+    Handles:
+      1. Entire response is a bare JSON object.
+      2. JSON wrapped in a markdown code fence (```json ... ```).
+      3. JSON object embedded anywhere in the text (model mixed prose + JSON).
     Falls back to (text, []) if not parseable or missing the expected shape.
     """
     import re
-    stripped = text.strip()
 
-    # Gemini sometimes wraps the JSON in a markdown code block
-    if not stripped.startswith('{'):
-        m = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', stripped, re.DOTALL)
-        if m:
-            stripped = m.group(1).strip()
-
-    if not stripped.startswith('{'):
-        return text, []
-
-    try:
-        data = json.loads(stripped)
+    def _extract_actions(data: dict) -> tuple[str, list[dict]] | None:
         if isinstance(data, dict) and isinstance(data.get('message'), str):
             actions = data.get('actions', [])
             if isinstance(actions, list):
                 valid = [
                     a for a in actions
-                    if isinstance(a, dict) and isinstance(a.get('type'), str) and isinstance(a.get('payload'), dict)
+                    if isinstance(a, dict)
+                    and isinstance(a.get('type'), str)
+                    and isinstance(a.get('payload'), dict)
                 ]
                 return data['message'], valid
-    except (json.JSONDecodeError, ValueError):
-        pass
+        return None
+
+    stripped = text.strip()
+
+    # Case 1: entire response is a bare JSON object
+    if stripped.startswith('{'):
+        try:
+            result = _extract_actions(json.loads(stripped))
+            if result:
+                return result
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # Case 2: JSON wrapped in a markdown code fence
+    m = re.search(r'```(?:json)?\s*(\{.*?})\s*```', stripped, re.DOTALL)
+    if m:
+        try:
+            result = _extract_actions(json.loads(m.group(1)))
+            if result:
+                return result
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # Case 3: JSON object embedded in prose (model prepended explanation text)
+    json_match = re.search(r'\{\s*"message"\s*:', stripped)
+    if json_match:
+        try:
+            decoder = json.JSONDecoder()
+            data, _ = decoder.raw_decode(stripped, json_match.start())
+            result = _extract_actions(data)
+            if result:
+                return result
+        except (json.JSONDecodeError, ValueError):
+            pass
+
     return text, []
 
 

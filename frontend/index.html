@@ -200,7 +200,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .bp-step-header:hover .bp-step-actions{display:flex;}
 .bp-add-step-cell{position:sticky;top:0;z-index:9;background:var(--bg);border-bottom:1px solid var(--border);height:42px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
 .bp-lane-label{position:sticky;left:0;z-index:8;background:var(--bg2);border-right:1px solid var(--border);border-bottom:1px solid var(--border2);min-height:100px;display:flex;align-items:center;padding:0 10px;gap:6px;font-size:11px;font-weight:600;}
-.bp-lane-name{flex:1;overflow:hidden;text-overflow:ellipsis;word-break:break-word;line-height:1.3;}
+.bp-lane-name{overflow:hidden;text-overflow:ellipsis;word-break:break-word;line-height:1.3;}
 .bp-lane-type-icon{font-size:13px;flex-shrink:0;opacity:.45;line-height:1;}
 .bp-lane-actions{display:none;flex-direction:column;gap:2px;flex-shrink:0;}
 .bp-lane-label:hover .bp-lane-actions{display:flex;}
@@ -487,8 +487,8 @@ select.fi{appearance:none;cursor:pointer;}
 .agent-name{font-family:'Fraunces',serif;font-size:13px;font-weight:300;color:white;flex:1;letter-spacing:-.2px;}
 .agent-status{font-size:10px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,.45);display:flex;align-items:center;gap:3px;}
 .astd{width:5px;height:5px;border-radius:50%;background:#4ADE80;}
-.agent-close{cursor:pointer;color:rgba(255,255,255,.45);border:none;background:none;font-size:18px;line-height:1;padding:0 2px;font-family:'DM Sans',sans-serif;}
-.agent-close:hover{color:white;}
+.agent-close{cursor:pointer;color:rgba(255,255,255,.55);border:none;background:rgba(255,255,255,.08);font-size:16px;line-height:1;padding:4px 6px;border-radius:5px;font-family:'DM Sans',sans-serif;margin-left:auto;flex-shrink:0;}
+.agent-close:hover{color:white;background:rgba(255,255,255,.18);}
 .agent-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg);}
 .agent-tab{flex:1;padding:7px 0;text-align:center;font-size:11px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--text3);border-top:none;border-left:none;border-right:none;background:none;font-family:'DM Sans',sans-serif;transition:all .12s;}
 .agent-tab:hover{color:var(--text2);}
@@ -839,6 +839,66 @@ select.fi{appearance:none;cursor:pointer;}
   .lp-footer-links{flex-wrap:wrap;justify-content:center;}
   .lp-hero-ctas{flex-direction:column;align-items:flex-start;}
 }
+
+/* ── Collapsible sidebar ── */
+.sidebar{transition:width .22s cubic-bezier(.4,0,.2,1);}
+.sidebar.collapsed{width:44px;}
+.sidebar.collapsed .logo-name,.sidebar.collapsed .logo-ver,
+.sidebar.collapsed .sb-label,.sidebar.collapsed .sb-txt,
+.sidebar.collapsed .sb-badge,.sidebar.collapsed .sb-project-wrap{display:none!important;}
+.sidebar.collapsed .sb-item{padding:6px 0;justify-content:center;gap:0;}
+.sidebar.collapsed .sb-icon{width:100%;opacity:.5;}
+.sidebar.collapsed .sb-item.active .sb-icon{opacity:1;}
+.sidebar.collapsed .agent-sb-btn{padding:7px 0;justify-content:center;gap:0;}
+.sidebar.collapsed .logo-row{justify-content:center;}
+.sidebar.collapsed .sb-sec{padding:8px 4px 4px;}
+.sb-toggle{width:22px;height:22px;border:none;border-radius:4px;background:none;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:all .12s;line-height:1;padding:0;}
+.sb-toggle:hover{background:var(--bg2);color:var(--text);}
+
+/* ── Session 3-dot menu ── */
+.sess-dot-wrap{position:relative;flex-shrink:0;}
+.sess-dot-btn{width:24px;height:24px;border:none;background:none;cursor:pointer;color:var(--text3);font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;border-radius:4px;padding:0;line-height:1;opacity:0;transition:opacity .12s;}
+.chat-sess-item:hover .sess-dot-btn,.sess-dot-btn:focus{opacity:1;}
+.sess-dot-btn:hover{background:var(--bg2);color:var(--text);}
+.sess-dot-dropdown{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh2);z-index:650;min-width:140px;overflow:hidden;}
+.sess-dot-item{padding:7px 12px;font-size:12px;cursor:pointer;color:var(--text2);transition:background .1s;font-family:'DM Sans',sans-serif;white-space:nowrap;display:block;}
+.sess-dot-item:hover{background:var(--bg2);color:var(--text);}
+.sess-dot-item.danger{color:var(--red);}
+.sess-dot-item.danger:hover{background:var(--red-bg);}
+
+/* ── Export dropdown ── */
+.export-wrap{position:relative;display:inline-flex;}
+.export-btn{display:flex;align-items:center;gap:4px;}
+.export-dropdown{position:absolute;top:calc(100% + 4px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh2);z-index:300;min-width:130px;overflow:hidden;display:none;}
+.export-dropdown.open{display:block;}
+.export-item{padding:7px 12px;font-size:11px;cursor:pointer;color:var(--text2);transition:background .1s;font-family:'DM Sans',sans-serif;white-space:nowrap;display:block;}
+.export-item:hover{background:var(--bg2);color:var(--text);}
+
+/* ── Swimlane type badge ── */
+.bp-lane-name-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.bp-lane-name{overflow:hidden;text-overflow:ellipsis;word-break:break-word;line-height:1.3;}
+.bp-lane-type-badge{font-size:9px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-top:2px;line-height:1;}
+
+/* ── Gov analysis buttons in Insights tab ── */
+.insights-gov-sec{padding:8px 11px 4px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.insights-gov-lbl{font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:6px;}
+.insights-gov-btns{display:flex;flex-wrap:wrap;gap:5px;}
+.ins-gov-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:12px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .12s;white-space:nowrap;}
+.ins-gov-btn:hover{background:var(--text);color:white;border-color:var(--text);}
+.ins-gov-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+
+/* ── Custom confirm/prompt dialog ── */
+.bp-dialog-overlay{position:fixed;inset:0;background:rgba(29,28,24,.44);z-index:950;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);}
+.bp-dialog{background:var(--surface);border-radius:var(--rxl);border:1px solid var(--border);box-shadow:0 24px 64px rgba(0,0,0,.2);width:100%;max-width:400px;padding:22px 24px 18px;display:flex;flex-direction:column;gap:13px;}
+.bp-dialog-title{font-size:14px;font-weight:700;color:var(--text);line-height:1.35;}
+.bp-dialog-msg{font-size:13px;color:var(--text2);line-height:1.55;}
+.bp-dialog-input{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:12px;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);outline:none;margin-top:2px;}
+.bp-dialog-input:focus{border-color:var(--border2);background:var(--surface);}
+.bp-dialog-btns{display:flex;justify-content:flex-end;gap:7px;margin-top:2px;}
+
+/* ── Orphaned badge as actionable button ── */
+#bp-orphaned{cursor:pointer;border:1px solid var(--amber-bd,#f5c07a);background:var(--amber-bg,#fef3e6);border-radius:5px;padding:1px 7px;margin-left:5px;transition:all .12s;color:var(--amber);font-family:'JetBrains Mono',monospace;font-size:10px;white-space:nowrap;}
+#bp-orphaned:hover{background:var(--amber);color:white;border-color:var(--amber);}
 </style>
 </head>
 <body>
@@ -1215,57 +1275,60 @@ select.fi{appearance:none;cursor:pointer;}
 <div class="app" id="app" style="display:none;">
 
 <!-- ═══ SIDEBAR ═══ -->
-<aside class="sidebar">
+<aside class="sidebar" id="sidebar">
   <div class="logo">
     <div class="logo-row">
       <div class="logo-mark">
         <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1" width="4.5" height="4.5" rx=".8" fill="white"/><rect x="7" y="1" width="5" height="4.5" rx=".8" fill="white" opacity=".6"/><rect x="1" y="7.5" width="5" height="4.5" rx=".8" fill="white" opacity=".6"/><rect x="7.5" y="7.5" width="4.5" height="4.5" rx=".8" fill="white" opacity=".28"/></svg>
       </div>
-      <div><div class="logo-name">Blueprint AI</div></div>
+      <div class="sb-txt"><div class="logo-name">Blueprint AI</div></div>
+      <button class="sb-toggle" onclick="toggleSidebar()" id="sb-toggle-btn" title="Collapse sidebar" style="margin-left:auto;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
     </div>
   </div>
 
   <div class="sb-sec" style="padding-bottom:8px;">
-    <button class="agent-sb-btn" onclick="openAgentPanel('chat')">
+    <button class="agent-sb-btn" onclick="openAgentPanel('chat')" title="Ask Blueprint Agent">
       <div class="adw"><div class="adot"></div></div>
-      Ask Blueprint Agent
+      <span class="sb-txt">Ask Blueprint Agent</span>
     </button>
   </div>
 
   <div class="sb-sec">
     <div class="sb-label">Canvas</div>
-    <button class="sb-item active" id="nav-blueprint" onclick="showView('blueprint',this)">
+    <button class="sb-item active" id="nav-blueprint" onclick="showView('blueprint',this)" title="Blueprint Canvas">
       <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x=".5" y=".5" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x="6" y=".5" width="6.5" height="4" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x=".5" y="7" width="6.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x="9" y="7" width="4" height="5.5" rx="1" stroke="currentColor" stroke-width="1.1"/></svg></span>
-      Blueprint Canvas
+      <span class="sb-txt">Blueprint Canvas</span>
     </button>
-    <button class="sb-item" id="nav-outcomes" onclick="showView('outcomes',this)">
+    <button class="sb-item" id="nav-outcomes" onclick="showView('outcomes',this)" title="Outcomes">
       <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><polyline points="1,9.5 4,6 6.5,7.5 9.5,4 12,5" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linecap="round"/></svg></span>
-      Outcomes
+      <span class="sb-txt">Outcomes</span>
     </button>
-    <button class="sb-item" id="nav-register" onclick="showView('register',this)">
+    <button class="sb-item" id="nav-register" onclick="showView('register',this)" title="Capability Register">
       <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x=".5" y=".5" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.1"/><line x1="3.5" y1="4" x2="9.5" y2="4" stroke="currentColor"/><line x1="3.5" y1="6.5" x2="9.5" y2="6.5" stroke="currentColor"/><line x1="3.5" y1="9" x2="6.5" y2="9" stroke="currentColor"/></svg></span>
-      Capability Register
+      <span class="sb-txt">Capability Register</span>
       <span class="sb-badge" id="sb-badge-register" style="display:none;"></span>
     </button>
-    <button class="sb-item" id="nav-monitor" onclick="showView('monitor',this)">
+    <button class="sb-item" id="nav-monitor" onclick="showView('monitor',this)" title="Monitor">
       <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x=".5" y=".5" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.1"/><line x1="5" y1="9.5" x2="8" y2="9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
-      Monitor
+      <span class="sb-txt">Monitor</span>
     </button>
-    <button class="sb-item" id="nav-history" onclick="showView('history',this)">
+    <button class="sb-item" id="nav-history" onclick="showView('history',this)" title="History">
       <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.1"/><polyline points="6.5,3.5 6.5,6.5 8.5,8" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" fill="none"/></svg></span>
-      History
+      <span class="sb-txt">History</span>
     </button>
   </div>
 
   <div class="sb-sec">
     <div class="sb-label">Governance</div>
-    <button class="sb-item" onclick="openModal('stakeholders')"><span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="4" r="1.8" stroke="currentColor" stroke-width="1.1"/><circle cx="2.2" cy="9" r="1.4" stroke="currentColor" stroke-width="1.1"/><circle cx="10.8" cy="9" r="1.4" stroke="currentColor" stroke-width="1.1"/><line x1="4.2" y1="5" x2="2.2" y2="7.6" stroke="currentColor" stroke-width=".9"/><line x1="8.8" y1="5" x2="10.8" y2="7.6" stroke="currentColor" stroke-width=".9"/></svg></span>Stakeholders</button>
-    <button class="sb-item" onclick="openModal('incidents')"><span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1.5L12 11H1L6.5 1.5Z" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linejoin="round"/><line x1="6.5" y1="5" x2="6.5" y2="7.5" stroke="currentColor" stroke-width="1.1"/><circle cx="6.5" cy="9.3" r=".7" fill="currentColor"/></svg></span>Incidents<span class="sb-badge warn" id="sb-badge-incidents" style="display:none;"></span></button>
-    <button class="sb-item" onclick="openModal('gov-review')"><span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1L1.5 3.5v5c0 2.5 2.5 4 5 4.5 2.5-.5 5-2 5-4.5V3.5L6.5 1Z" stroke="currentColor" stroke-width="1.1" fill="none"/></svg></span>Gov. Review</button>
+    <button class="sb-item" onclick="openModal('stakeholders')" title="Stakeholders"><span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="4" r="1.8" stroke="currentColor" stroke-width="1.1"/><circle cx="2.2" cy="9" r="1.4" stroke="currentColor" stroke-width="1.1"/><circle cx="10.8" cy="9" r="1.4" stroke="currentColor" stroke-width="1.1"/><line x1="4.2" y1="5" x2="2.2" y2="7.6" stroke="currentColor" stroke-width=".9"/><line x1="8.8" y1="5" x2="10.8" y2="7.6" stroke="currentColor" stroke-width=".9"/></svg></span><span class="sb-txt">Stakeholders</span></button>
+    <button class="sb-item" onclick="openModal('incidents')" title="Incidents"><span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1.5L12 11H1L6.5 1.5Z" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linejoin="round"/><line x1="6.5" y1="5" x2="6.5" y2="7.5" stroke="currentColor" stroke-width="1.1"/><circle cx="6.5" cy="9.3" r=".7" fill="currentColor"/></svg></span><span class="sb-txt">Incidents</span><span class="sb-badge warn" id="sb-badge-incidents" style="display:none;"></span></button>
+    <button class="sb-item" onclick="openModal('gov-review')" title="Gov. Review"><span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1L1.5 3.5v5c0 2.5 2.5 4 5 4.5 2.5-.5 5-2 5-4.5V3.5L6.5 1Z" stroke="currentColor" stroke-width="1.1" fill="none"/></svg></span><span class="sb-txt">Gov. Review</span></button>
   </div>
 
   <div class="sb-spacer"></div>
-  <div class="sb-project" id="board-picker-wrap">
+  <div class="sb-project sb-project-wrap" id="board-picker-wrap">
     <div class="proj-card" id="proj-card" onclick="toggleBoardPicker()">
       <div class="proj-lbl">Active board</div>
       <div class="proj-name" id="proj-name-display">No board open</div>
@@ -1367,7 +1430,7 @@ select.fi{appearance:none;cursor:pointer;}
     <div class="tb-crumb" id="tb-crumb"><span>Blueprint AI</span><span>›</span><span style="color:var(--text2)" id="crumb-board">No board open</span></div>
     <div style="flex:1;"></div>
     <div class="board-progress" id="board-progress">
-      <span id="bp-elements">0 elements</span> · <span id="bp-lanes">0 lanes</span> · <span id="bp-steps">0 steps</span><span id="bp-orphaned" style="display:none;color:var(--amber,#d97706);cursor:help;"></span>
+      <span id="bp-elements">0 elements</span> · <span id="bp-lanes">0 lanes</span> · <span id="bp-steps">0 steps</span><span id="bp-orphaned" style="display:none;" onclick="openAgentPanel('chat');if(!_activeChatId)_createAndOpenSession();setTimeout(()=>{document.getElementById('chat-input').value='There are unplaced elements not showing on the canvas. Please help me re-add them with proper swimlane and step assignments.';document.getElementById('chat-input').dispatchEvent(new Event('input'));},100);" title="Click to ask the agent to fix unplaced elements"></span>
     </div>
     <div class="branch-wrap" id="branch-wrap" style="display:none;">
       <button class="branch-btn" onclick="toggleBranchPicker()" title="Switch branch">
@@ -1407,12 +1470,16 @@ select.fi{appearance:none;cursor:pointer;}
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:5px;margin-left:8px;">
-      <button class="btn-icon btn" onclick="openModal('new-project')" title="New project">
-        <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".5" y=".5" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/><line x1="5.5" y1="3" x2="5.5" y2="8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="3" y1="5.5" x2="8" y2="5.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-      </button>
-      <button class="btn btn-ghost" onclick="exportBoard('pdf')">Export PDF</button>
-      <button class="btn btn-ghost" onclick="exportBoard('json')">Export JSON</button>
-      <button class="btn btn-primary" onclick="openAddElement(null,null)">+ Add Element</button>
+      <div class="export-wrap">
+        <button class="btn btn-ghost export-btn" onclick="toggleExportDropdown(event)" title="Export board">
+          Export
+          <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1.5 2.5L4 5L6.5 2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="export-dropdown" id="export-dropdown">
+          <span class="export-item" onclick="closeExportDropdown();exportBoard('pdf')">Export as PDF</span>
+          <span class="export-item" onclick="closeExportDropdown();exportBoard('json')">Export as JSON</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1424,10 +1491,6 @@ select.fi{appearance:none;cursor:pointer;}
     <div style="width:1px;height:16px;background:var(--border);margin:0 5px;"></div>
     <div class="ai-badge" id="ai-cap-badge" style="display:none;"><div class="apulse"></div><span id="ai-cap-count">0</span> <span id="ai-cap-label">capabilities</span></div>
     <div style="flex:1;"></div>
-    <button class="ph-tab" style="font-size:10px;color:var(--text3);" onclick="openAgentPanel('insights')">
-      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1.1"/><line x1="5" y1="4.5" x2="5" y2="7" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><circle cx="5" cy="3.2" r=".5" fill="currentColor"/></svg>
-      <span id="ins-count-badge" style="background:var(--amber);color:white;font-size:10px;padding:0 4px;border-radius:7px;margin-left:1px;display:none;">0</span> Insights
-    </button>
   </div>
 
   <!-- Phase guidance -->
@@ -1568,11 +1631,11 @@ select.fi{appearance:none;cursor:pointer;}
         <div class="agent-avatar">
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="5" r="2.2" stroke="white" stroke-width="1.2"/><path d="M1 12c0-2.5 2.5-4.5 5.5-4.5S12 9.5 12 12" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
         </div>
-        <div>
+        <div style="flex:1;min-width:0;">
           <div class="agent-name">Blueprint Agent</div>
           <div class="agent-status"><div class="astd"></div>Reading full board in real time</div>
         </div>
-        <button class="agent-close" onclick="closeAgentPanel()">×</button>
+        <button class="agent-close" onclick="closeAgentPanel()" title="Close panel">×</button>
       </div>
 
       <div class="agent-tabs">
@@ -1628,6 +1691,17 @@ select.fi{appearance:none;cursor:pointer;}
 
       <!-- ─ INSIGHTS ─ -->
       <div id="agent-insights" style="display:none;flex:1;overflow:hidden;flex-direction:column;">
+        <!-- Gov analysis shortcuts -->
+        <div class="insights-gov-sec">
+          <div class="insights-gov-lbl">Quick analysis</div>
+          <div class="insights-gov-btns">
+            <button class="ins-gov-btn" onclick="openAgentPanel('chat');askAgent('Explain the line of visibility in this blueprint — which steps are visible to users and which are backstage, and what concerns does this raise?')"><span class="ins-gov-dot" style="background:var(--blue);"></span>Line of visibility</button>
+            <button class="ins-gov-btn" onclick="openAgentPanel('chat');askAgent('Where are the AI capability boundaries in this blueprint — which steps and swimlanes are AI-active?')"><span class="ins-gov-dot" style="background:var(--purple);"></span>AI boundary</button>
+            <button class="ins-gov-btn" onclick="openAgentPanel('chat');askAgent('Describe the human override points in this blueprint. Are they sufficient, well-designed, and correctly positioned?')"><span class="ins-gov-dot" style="background:var(--amber);"></span>Override points</button>
+            <button class="ins-gov-btn" onclick="openAgentPanel('chat');askAgent('Review the XAI touchpoints in this blueprint. Are the explanations appropriate and well-targeted for each audience?')"><span class="ins-gov-dot" style="background:var(--teal);"></span>XAI touchpoints</button>
+            <button class="ins-gov-btn" onclick="openAgentPanel('chat');askAgent('Identify the top risk hotspots in this blueprint. Which elements, steps, or intersections carry the highest risk?')"><span class="ins-gov-dot" style="background:var(--red);"></span>Risk hotspots</button>
+          </div>
+        </div>
         <div class="insights-panel">
           <div class="insights-panel-hdr">
             <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">Proactive insights</div>
@@ -1669,15 +1743,6 @@ select.fi{appearance:none;cursor:pointer;}
     </div><!-- /agent-panel -->
   </div><!-- /workspace -->
 
-  <!-- Gov bar -->
-  <div class="gov-bar">
-    <div class="gov-item" onclick="askAgent('Explain the line of visibility in this blueprint — which steps are visible to users and which are backstage, and what concerns does this raise?')"><div class="gd" style="background:var(--blue);"></div>Ask AI: line of visibility</div>
-    <div class="gov-item" onclick="askAgent('Where are the AI capability boundaries in this blueprint — which steps and swimlanes are AI-active?')"><div class="gd" style="background:var(--purple);"></div>AI boundary</div>
-    <div class="gov-item" onclick="askAgent('Describe the human override points in this blueprint. Are they sufficient, well-designed, and correctly positioned?')"><div class="gd" style="background:var(--amber);"></div>Override points</div>
-    <div class="gov-item" onclick="askAgent('Review the XAI touchpoints in this blueprint. Are the explanations appropriate and well-targeted for each audience?')"><div class="gd" style="background:var(--teal);"></div>XAI touchpoints</div>
-    <div class="gov-item" onclick="openAgentPanel('insights')"><div class="gd" style="background:var(--red);"></div>Risk hotspots</div>
-    <div style="margin-left:auto;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);padding:0 8px;white-space:nowrap;">Blueprint AI</div>
-  </div>
 
 </main>
 <!-- ═══════════ MODALS ═══════════ -->
@@ -1740,9 +1805,9 @@ select.fi{appearance:none;cursor:pointer;}
     <!-- Danger -->
     <div id="bs-tab-danger" class="modal-body" style="display:none;gap:10px;">
       <div style="background:var(--red-bg,#fff5f5);border:1px solid var(--red-bd,#fecaca);border-radius:var(--r);padding:12px;">
-        <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:4px;">Archive board</div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:10px;">This board will be hidden from all users' lists. Archived boards cannot be recovered from this UI.</div>
-        <button class="btn btn-primary btn-danger" onclick="archiveBoard()">Archive board</button>
+        <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:4px;">Delete board</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:10px;">This board and all its elements will be permanently deleted. This action cannot be undone.</div>
+        <button class="btn btn-primary btn-danger" onclick="deleteBoard()">Delete board</button>
       </div>
     </div>
   </div>
@@ -2009,6 +2074,128 @@ let boardConnectors       = [];
 let selectedConnectorId   = null;
 let showElementConnectors = localStorage.getItem('bp_show_el_conn') !== 'false';
 let _connRenderTimer      = null;
+
+// ── Sidebar toggle ─────────────────────────────────────
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const btn = document.getElementById('sb-toggle-btn');
+  if (!sb) return;
+  const collapsed = sb.classList.toggle('collapsed');
+  if (btn) {
+    btn.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+    btn.innerHTML = collapsed
+      ? `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2L8 6L4 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+      : `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  }
+  localStorage.setItem('bp_sidebar_collapsed', collapsed ? '1' : '0');
+}
+function _initSidebarState() {
+  if (localStorage.getItem('bp_sidebar_collapsed') === '1') toggleSidebar();
+}
+
+// ── Export dropdown ────────────────────────────────────
+function toggleExportDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('export-dropdown');
+  if (!dd) return;
+  const open = dd.classList.toggle('open');
+  if (open) {
+    const close = () => { dd.classList.remove('open'); document.removeEventListener('click', close); };
+    setTimeout(() => document.addEventListener('click', close), 0);
+  }
+}
+function closeExportDropdown() {
+  const dd = document.getElementById('export-dropdown');
+  if (dd) dd.classList.remove('open');
+}
+
+// ── Custom dialog helpers (replace browser prompt/confirm) ─
+let _bpDialogResolve = null;
+function _bpCloseDialog() {
+  const ov = document.getElementById('bp-dialog-overlay');
+  if (ov) ov.remove();
+  _bpDialogResolve = null;
+}
+function bpConfirm(msg, title = 'Are you sure?', confirmLabel = 'Confirm', isDanger = false) {
+  return new Promise(resolve => {
+    _bpDialogResolve = resolve;
+    const ov = document.createElement('div');
+    ov.className = 'bp-dialog-overlay';
+    ov.id = 'bp-dialog-overlay';
+    ov.innerHTML = `<div class="bp-dialog" onclick="event.stopPropagation()">
+      <div class="bp-dialog-title">${escHtml(title)}</div>
+      <div class="bp-dialog-msg">${escHtml(msg)}</div>
+      <div class="bp-dialog-btns">
+        <button class="btn btn-ghost" onclick="_bpCloseDialog();_bpDialogResolve&&_bpDialogResolve(false)">Cancel</button>
+        <button class="btn btn-primary${isDanger ? ' btn-danger' : ''}" onclick="_bpCloseDialog();_bpDialogResolve&&_bpDialogResolve(true)">${escHtml(confirmLabel)}</button>
+      </div>
+    </div>`;
+    ov.onclick = () => { _bpCloseDialog(); resolve(false); };
+    document.body.appendChild(ov);
+  });
+}
+function bpPrompt(msg, defaultValue = '', title = '') {
+  return new Promise(resolve => {
+    _bpDialogResolve = resolve;
+    const ov = document.createElement('div');
+    ov.className = 'bp-dialog-overlay';
+    ov.id = 'bp-dialog-overlay';
+    ov.innerHTML = `<div class="bp-dialog" onclick="event.stopPropagation()">
+      ${title ? `<div class="bp-dialog-title">${escHtml(title)}</div>` : ''}
+      <div class="bp-dialog-msg">${escHtml(msg)}</div>
+      <input class="bp-dialog-input" id="bp-dialog-input" type="text" value="${escHtml(defaultValue)}" />
+      <div class="bp-dialog-btns">
+        <button class="btn btn-ghost" onclick="_bpCloseDialog();_bpDialogResolve&&_bpDialogResolve(null)">Cancel</button>
+        <button class="btn btn-primary" onclick="_bpDialogConfirmInput()">OK</button>
+      </div>
+    </div>`;
+    ov.onclick = () => { _bpCloseDialog(); resolve(null); };
+    document.body.appendChild(ov);
+    const inp = document.getElementById('bp-dialog-input');
+    if (inp) {
+      inp.focus(); inp.select();
+      inp.onkeydown = e => { if (e.key === 'Enter') _bpDialogConfirmInput(); if (e.key === 'Escape') { _bpCloseDialog(); resolve(null); } };
+    }
+  });
+}
+function _bpDialogConfirmInput() {
+  const inp = document.getElementById('bp-dialog-input');
+  const val = inp ? inp.value : '';
+  _bpCloseDialog();
+  if (_bpDialogResolve) _bpDialogResolve(val);
+}
+
+// ── Session 3-dot context menu ─────────────────────────
+let _sessMenuCleanup = null;
+function openSessionDotMenu(e, sessId) {
+  e.stopPropagation();
+  if (_sessMenuCleanup) _sessMenuCleanup();
+  const sess = _chatSessions.find(s => s.id === sessId);
+  if (!sess) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  const menu = document.createElement('div');
+  menu.className = 'sess-dot-dropdown';
+  menu.style.left = Math.min(rect.left, window.innerWidth - 160) + 'px';
+  menu.style.top  = (rect.bottom + 4) + 'px';
+  const starLabel = sess.starred ? 'Unstar' : 'Star';
+  menu.innerHTML = `
+    <div class="sess-dot-item" onclick="_sddAction('star','${sessId}')">${starLabel}</div>
+    <div class="sess-dot-item" onclick="_sddAction('rename','${sessId}')">Rename</div>
+    <div class="sess-dot-item danger" onclick="_sddAction('delete','${sessId}')">Delete</div>
+  `;
+  document.body.appendChild(menu);
+  const close = ev => {
+    if (!menu.contains(ev.target)) { menu.remove(); document.removeEventListener('mousedown', close); _sessMenuCleanup = null; }
+  };
+  setTimeout(() => document.addEventListener('mousedown', close), 0);
+  _sessMenuCleanup = () => { menu.remove(); document.removeEventListener('mousedown', close); _sessMenuCleanup = null; };
+}
+async function _sddAction(action, sessId) {
+  if (_sessMenuCleanup) _sessMenuCleanup();
+  if (action === 'star')   { starChatSession(sessId); }
+  if (action === 'rename') { await renameChatSession(sessId); }
+  if (action === 'delete') { await deleteChatSession(sessId); }
+}
 
 // ── Authenticated fetch wrapper ────────────────────────
 async function apiFetch(path, opts = {}) {
@@ -2558,15 +2745,20 @@ async function removeCollaborator(userId) {
   await loadCollaborators();
 }
 
-async function archiveBoard() {
+async function deleteBoard() {
   if (!currentBoardId) return;
-  if (!confirm('Archive this board? It will be hidden from all users.')) return;
+  const board = boardsList.find(b => b.id === currentBoardId);
+  const ok = await bpConfirm(
+    `Delete "${board?.title || 'this board'}"? All elements will be permanently deleted. This cannot be undone.`,
+    'Delete board?', 'Delete', true
+  );
+  if (!ok) return;
   const res = await apiFetch(`/api/boards/${currentBoardId}`, { method: 'DELETE' });
-  if (!res || (res.status !== 204 && !res.ok)) { showToast('Could not archive board'); return; }
+  if (!res || (res.status !== 204 && !res.ok)) { showToast('Could not delete board'); return; }
   closeModal('board-settings');
   boardsList = boardsList.filter(b => b.id !== currentBoardId);
   currentBoardId = '';
-  showToast('Board archived');
+  showToast('Board deleted');
   await showBoardListModal();
 }
 
@@ -2644,7 +2836,7 @@ function updateProgressIndicator() {
   if (st) st.textContent = `${sc} step${sc !== 1 ? 's' : ''}`;
   if (orp) {
     if (orphaned.length > 0) {
-      orp.textContent = ` · ⚠ ${orphaned.length} unplaced`;
+      orp.textContent = `⚠ ${orphaned.length} unplaced`;
       orp.title = `${orphaned.length} element${orphaned.length !== 1 ? 's' : ''} exist in the database but are not assigned to a lane and step — they are invisible on the canvas. Ask the AI agent to re-add them with proper placement.`;
       orp.style.display = 'inline';
     } else {
@@ -2695,7 +2887,10 @@ function renderGrid() {
     const _ltDef = lane.lane_type && lane.lane_type !== 'custom' ? SWIMLANE_TYPES.find(lt => lt.type === lane.lane_type) : null;
     html += `<div class="bp-lane-label" data-id="${escHtml(lane.id)}">
       ${_ltDef ? `<span class="bp-lane-type-icon" title="${escHtml(_ltDef.label)}">${_ltDef.icon}</span>` : ''}
-      <span class="bp-lane-name" ondblclick="renameSwimlane('${escHtml(lane.id)}')">${escHtml(lane.name)}</span>
+      <div class="bp-lane-name-wrap">
+        <span class="bp-lane-name" ondblclick="renameSwimlane('${escHtml(lane.id)}')">${escHtml(lane.name)}</span>
+        ${_ltDef ? `<span class="bp-lane-type-badge">${escHtml(_ltDef.label)}</span>` : ''}
+      </div>
       <span class="bp-lane-actions">
         <button class="bp-act-btn" onclick="moveSwimlane('${escHtml(lane.id)}',-1)" ${isFirst ? 'disabled' : ''} title="Move up">&#8593;</button>
         <button class="bp-act-btn" onclick="moveSwimlane('${escHtml(lane.id)}',1)"  ${isLast  ? 'disabled' : ''} title="Move down">&#8595;</button>
@@ -2864,10 +3059,11 @@ function renameSwimlane(id) {
   startInlineEdit(nameEl, lane.name, val => { lane.name = val; persistStructure(); });
 }
 
-function deleteSwimlane(id) {
+async function deleteSwimlane(id) {
   const lane = boardState.swimlanes.find(l => l.id === id);
   if (!lane) return;
-  if (!confirm(`Delete swimlane "${lane.name}"?\n\nAny elements in this row will be moved to an unassigned bucket.`)) return;
+  const ok = await bpConfirm(`Delete swimlane "${lane.name}"? Any elements in this row will become unplaced.`, 'Delete swimlane?', 'Delete', true);
+  if (!ok) return;
   boardState.elements.forEach(el => { if (el.swimlane_id === id) el.swimlane_id = null; });
   boardState.swimlanes = boardState.swimlanes.filter(l => l.id !== id);
   [...boardState.swimlanes].sort((a, b) => a.order - b.order).forEach((l, i) => { l.order = i; });
@@ -2886,17 +3082,13 @@ function moveSwimlane(id, delta) {
   persistStructure();
 }
 
-function setSwimlaneDivider(id) {
+async function setSwimlaneDivider(id) {
   const lane = boardState.swimlanes.find(l => l.id === id);
   if (!lane) return;
   const current = lane.divider_type || 'none';
-  const choice = prompt(
-    `Set service design divider below "${lane.name}":\n\n` +
-    `0 — None (current: ${current})\n` +
-    `1 — Line of Interaction  (customer ↔ frontstage)\n` +
-    `2 — Line of Visibility   (frontstage ↔ backstage)\n` +
-    `3 — Line of Internal Interaction  (backstage ↔ support)\n\n` +
-    `Enter 0–3:`
+  const choice = await bpPrompt(
+    `Set service design divider below "${lane.name}":\n0 — None (current: ${current})\n1 — Line of Interaction\n2 — Line of Visibility\n3 — Line of Internal Interaction`,
+    '', 'Set divider'
   );
   if (choice === null) return;
   const types = [null, 'interaction', 'visibility', 'internal_interaction'];
@@ -2911,7 +3103,7 @@ function setSwimlaneDivider(id) {
 
 async function addStep() {
   if (!await _ensureBoard()) return;
-  const name = prompt('Step name (e.g. "Discover", "Sign Up", "Activate", "Support"):');
+  const name = await bpPrompt('Step name (e.g. "Discover", "Sign Up", "Activate", "Support")', '', 'Add step');
   if (!name || !name.trim()) return;
   boardState.steps.push({ id: crypto.randomUUID(), name: name.trim(), order: boardState.steps.length });
   renderCanvas();
@@ -2926,10 +3118,11 @@ function renameStep(id) {
   startInlineEdit(nameEl, step.name, val => { step.name = val; persistStructure(); });
 }
 
-function deleteStep(id) {
+async function deleteStep(id) {
   const step = boardState.steps.find(s => s.id === id);
   if (!step) return;
-  if (!confirm(`Delete step "${step.name}"?\n\nAny elements in this column will be moved to an unassigned bucket.`)) return;
+  const ok = await bpConfirm(`Delete step "${step.name}"? Any elements in this column will become unplaced.`, 'Delete step?', 'Delete', true);
+  if (!ok) return;
   boardState.elements.forEach(el => { if (el.step_id === id) el.step_id = null; });
   boardState.steps = boardState.steps.filter(s => s.id !== id);
   [...boardState.steps].sort((a, b) => a.order - b.order).forEach((s, i) => { s.order = i; });
@@ -2937,18 +3130,13 @@ function deleteStep(id) {
   persistStructure();
 }
 
-function setStepEmotion(id) {
+async function setStepEmotion(id) {
   const step = boardState.steps.find(s => s.id === id);
   if (!step) return;
   const current = step.emotion || 'none';
-  const choice = prompt(
-    `Customer emotion at step "${step.name}":\n\n` +
-    `0 — None (current: ${current})\n` +
-    `1 — Positive  (green)\n` +
-    `2 — Neutral   (grey)\n` +
-    `3 — Negative  (amber)\n` +
-    `4 — Critical  (red)\n\n` +
-    `Enter 0–4:`
+  const choice = await bpPrompt(
+    `Customer emotion at "${step.name}":\n0 — None (current: ${current})\n1 — Positive\n2 — Neutral\n3 — Negative\n4 — Critical`,
+    '', 'Set emotion'
   );
   if (choice === null) return;
   const emotions = [null, 'positive', 'neutral', 'negative', 'critical'];
@@ -3369,7 +3557,7 @@ function closeElementDrawer() {
 
 async function deleteElementDrawer() {
   if (!_drawerElementId || !currentBoardId) return;
-  if (!confirm('Delete this element? This cannot be undone.')) return;
+  if (!await bpConfirm('Delete this element? This cannot be undone.', 'Delete element?', 'Delete', true)) return;
   if (!currentBoardId.startsWith('local-')) {
     const res = await apiFetch(`/api/boards/${currentBoardId}/elements/${_drawerElementId}`, { method: 'DELETE' });
     if (!res || !res.ok) { showToast('Delete failed'); return; }
@@ -3562,9 +3750,8 @@ function renderChatSessionsList() {
         ${previewTxt ? `<div class="chat-sess-preview">${escHtml(previewTxt)}</div>` : ''}
       </div>
       <span class="chat-sess-meta">${_fmtRelTime(s.updatedAt)}</span>
-      <div class="chat-sess-acts">
-        <button class="chat-sess-act" onclick="event.stopPropagation();renameChatSession('${s.id}')" title="Rename">✎</button>
-        <button class="chat-sess-act del" onclick="event.stopPropagation();deleteChatSession('${s.id}')" title="Delete">🗑</button>
+      <div class="sess-dot-wrap">
+        <button class="sess-dot-btn" onclick="event.stopPropagation();openSessionDotMenu(event,'${s.id}')" title="More options">⋮</button>
       </div>
     </div>`;
   }).join('');
@@ -3705,10 +3892,10 @@ function starChatSession(id) {
   renderChatSessionsList();
 }
 
-function renameActiveChat() {
+async function renameActiveChat() {
   const sess = _getActiveSession();
   if (!sess) return;
-  const name = prompt('Rename conversation:', sess.title || '');
+  const name = await bpPrompt('Rename conversation:', sess.title || '', 'Rename');
   if (name === null) return;
   const trimmed = name.trim();
   if (!trimmed) return;
@@ -3719,10 +3906,10 @@ function renameActiveChat() {
   renderChatSessionsList();
 }
 
-function renameChatSession(id) {
+async function renameChatSession(id) {
   const sess = _chatSessions.find(s => s.id === id);
   if (!sess) return;
-  const name = prompt('Rename conversation:', sess.title || '');
+  const name = await bpPrompt('Rename conversation:', sess.title || '', 'Rename');
   if (name === null) return;
   const trimmed = name.trim();
   if (!trimmed) return;
@@ -3735,19 +3922,21 @@ function renameChatSession(id) {
   }
 }
 
-function deleteActiveChat() {
+async function deleteActiveChat() {
   const sess = _getActiveSession();
   if (!sess) return;
-  if (!confirm(`Delete "${sess.title || 'this conversation'}"? This cannot be undone.`)) return;
+  const ok = await bpConfirm(`Delete "${sess.title || 'this conversation'}"? This cannot be undone.`, 'Delete conversation?', 'Delete', true);
+  if (!ok) return;
   _chatSessions = _chatSessions.filter(s => s.id !== _activeChatId);
   _saveSessions();
   showChatSessionsList();
 }
 
-function deleteChatSession(id) {
+async function deleteChatSession(id) {
   const sess = _chatSessions.find(s => s.id === id);
   if (!sess) return;
-  if (!confirm(`Delete "${sess.title || 'this conversation'}"? This cannot be undone.`)) return;
+  const ok = await bpConfirm(`Delete "${sess.title || 'this conversation'}"? This cannot be undone.`, 'Delete conversation?', 'Delete', true);
+  if (!ok) return;
   _chatSessions = _chatSessions.filter(s => s.id !== id);
   _saveSessions();
   if (_activeChatId === id) showChatSessionsList();
@@ -5213,7 +5402,7 @@ function _clearHistorySelection() {
 
 async function groupSelectedEvents() {
   if (_histSelectedIds.size === 0) return;
-  const msg = prompt('Enter a commit message for these ' + _histSelectedIds.size + ' changes:');
+  const msg = await bpPrompt('Enter a commit message for these ' + _histSelectedIds.size + ' changes:', '', 'Group changes');
   if (!msg || !msg.trim()) return;
   try {
     const res = await apiFetch(`/api/boards/${currentBoardId}/commits`, {
@@ -5338,7 +5527,8 @@ async function createNewBranch() {
 
 async function deleteBranch(id) {
   const branch = _branches.find(b => b.id === id);
-  if (!branch || !confirm(`Delete branch "${branch.name}"?`)) return;
+  if (!branch) return;
+  if (!await bpConfirm(`Delete branch "${branch.name}"?`, 'Delete branch?', 'Delete', true)) return;
   const res = await apiFetch(`/api/boards/${currentBoardId}/branches/${id}`, { method: 'DELETE' });
   if (!res || (res.status !== 204 && !res.ok)) { showToast('Delete failed'); return; }
   _branches = _branches.filter(b => b.id !== id);
@@ -6246,7 +6436,7 @@ async function restoreChangeEvent(eventId) {
   const name = ev.after_snapshot?.name || ev.before_snapshot?.name || 'this element';
   const ts   = new Date(ev.created_at).toLocaleString();
   const verb = ev.operation === 'delete' ? 'Recreate' : 'Restore';
-  if (!confirm(`${verb} "${name}" to its state from ${ts}?\nAny changes since will be overwritten.`)) return;
+  if (!await bpConfirm(`${verb} "${name}" to its state from ${ts}? Any changes since will be overwritten.`, `${verb} element?`, verb, false)) return;
 
   try {
     const res = await apiFetch(`/api/boards/${currentBoardId}/history/${eventId}/restore`, { method: 'POST' });
@@ -6485,6 +6675,7 @@ function initRoleUI() {
 }
 
 async function initApp() {
+  _initSidebarState();
   initRoleUI();
   initChatDragDrop();
   _initCanvasConnHandlers();
@@ -6612,10 +6803,10 @@ function removeCapType(i) {
   renderCapTypes();
 }
 
-function promptAddCapType() {
-  const name = prompt('Type name (emoji + label):');
+async function promptAddCapType() {
+  const name = await bpPrompt('Type name (emoji + label, e.g. "🤖 Recommendation"):', '', 'Add capability type');
   if (!name || !name.trim()) return;
-  const desc = prompt('Short description (optional):') || '';
+  const desc = await bpPrompt('Short description (optional):', '', 'Description') || '';
   capTypes.push({ name: name.trim(), desc: desc.trim() });
   selectedCapTypeIdx = capTypes.length - 1;
   renderCapTypes();
@@ -6866,10 +7057,10 @@ function renderMonitoringPlan() {
 let riskItems = [];
 let riskCounter = 0;
 
-function openAddRiskItem() {
-  const title = prompt('Risk or governance item:');
+async function openAddRiskItem() {
+  const title = await bpPrompt('Risk or governance item:', '', 'Add risk item');
   if (!title || !title.trim()) return;
-  const sev = prompt('Severity (high / medium / low / positive):', 'medium') || 'medium';
+  const sev = await bpPrompt('Severity (high / medium / low / positive):', 'medium', 'Severity') || 'medium';
   riskItems.push({ id: ++riskCounter, title: title.trim(), sev: sev.trim().toLowerCase() });
   renderRiskChecklist();
 }
