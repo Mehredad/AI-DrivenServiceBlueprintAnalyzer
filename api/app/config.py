@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # ── Auth
     secret_key: str = "dev-secret-change-in-production"
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 15
+    access_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 7
 
     # ── Google Gemini (server-side only — never exposed to frontend)
