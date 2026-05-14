@@ -1430,7 +1430,7 @@ select.fi{appearance:none;cursor:pointer;}
     <div class="tb-crumb" id="tb-crumb"><span>Blueprint AI</span><span>›</span><span style="color:var(--text2)" id="crumb-board">No board open</span></div>
     <div style="flex:1;"></div>
     <div class="board-progress" id="board-progress">
-      <span id="bp-elements">0 elements</span> · <span id="bp-lanes">0 lanes</span> · <span id="bp-steps">0 steps</span><span id="bp-orphaned" style="display:none;" onclick="openAgentPanel('chat');if(!_activeChatId)_createAndOpenSession();setTimeout(()=>{document.getElementById('chat-input').value='There are unplaced elements not showing on the canvas. Please help me re-add them with proper swimlane and step assignments.';document.getElementById('chat-input').dispatchEvent(new Event('input'));},100);" title="Click to ask the agent to fix unplaced elements"></span>
+      <span id="bp-elements">0 elements</span> · <span id="bp-lanes">0 lanes</span> · <span id="bp-steps">0 steps</span><span id="bp-orphaned" style="display:none;" onclick="showOrphanedDialog()" title="Click to fix unplaced elements"></span>
     </div>
     <div class="branch-wrap" id="branch-wrap" style="display:none;">
       <button class="branch-btn" onclick="toggleBranchPicker()" title="Switch branch">
@@ -2816,6 +2816,68 @@ function renderCanvas() {
   updateRegistryNavVisibility();
   updateAddElementSelects();
   updateProgressIndicator();
+}
+
+function _getOrphanedElements() {
+  return (boardState.elements || []).filter(e => !e.swimlane_id || !e.step_id);
+}
+
+async function showOrphanedDialog() {
+  const orph = _getOrphanedElements();
+  if (!orph.length) return;
+  const names = orph.slice(0, 5).map(e => `• ${e.name}`).join('\n');
+  const more  = orph.length > 5 ? `\n…and ${orph.length - 5} more` : '';
+  const msg   = `${orph.length} element${orph.length !== 1 ? 's' : ''} exist in the database but have no canvas placement and are invisible to users:\n\n${names}${more}\n\nAsk the AI agent to place them, or delete them permanently.`;
+
+  // Build a custom 3-button dialog: Ask AI / Delete all / Cancel
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'bp-dialog-overlay';
+    overlay.innerHTML = `
+      <div class="bp-dialog" style="max-width:430px;">
+        <div class="bp-dialog-title">⚠ Unplaced elements</div>
+        <div class="bp-dialog-msg" style="white-space:pre-line;">${escHtml(msg)}</div>
+        <div class="bp-dialog-btns" style="justify-content:space-between;">
+          <button class="btn btn-ghost" id="_orp-cancel">Cancel</button>
+          <div style="display:flex;gap:7px;">
+            <button class="btn btn-ghost" id="_orp-delete" style="color:var(--red);border-color:var(--red);">Delete all unplaced</button>
+            <button class="btn btn-primary" id="_orp-ai">Ask AI to place them</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#_orp-cancel').addEventListener('click', () => { overlay.remove(); resolve('cancel'); });
+    overlay.querySelector('#_orp-ai').addEventListener('click', () => {
+      overlay.remove();
+      openAgentPanel('chat');
+      if (!_activeChatId) _createAndOpenSession();
+      setTimeout(() => {
+        const inp = document.getElementById('chat-input');
+        if (inp) { inp.value = 'There are unplaced elements not showing on the canvas. Please place each one on the correct swimlane and step using the update_element action — do not create duplicates.'; inp.dispatchEvent(new Event('input')); }
+      }, 100);
+      resolve('ai');
+    });
+    overlay.querySelector('#_orp-delete').addEventListener('click', async () => {
+      overlay.remove();
+      await deleteUnplacedElements();
+      resolve('delete');
+    });
+  });
+}
+
+async function deleteUnplacedElements() {
+  const orph = _getOrphanedElements();
+  if (!orph.length) return;
+  const ok = await bpConfirm(`Permanently delete ${orph.length} unplaced element${orph.length !== 1 ? 's' : ''}? This cannot be undone.`, 'Delete unplaced elements', 'Delete', true);
+  if (!ok) return;
+  let deleted = 0;
+  for (const el of orph) {
+    const res = await apiFetch(`/api/boards/${currentBoardId}/elements/${el.id}`, { method: 'DELETE' });
+    if (res && res.ok) { boardState.elements = boardState.elements.filter(e => e.id !== el.id); deleted++; }
+  }
+  renderCanvas();
+  updateProgressIndicator();
+  if (deleted) showToast(`Deleted ${deleted} unplaced element${deleted !== 1 ? 's' : ''}`);
 }
 
 function updateProgressIndicator() {
@@ -4749,7 +4811,12 @@ function _actionDescription(action) {
     case 'create_swimlane': return `Add swimlane "${payload.name}"${payload.lane_type && payload.lane_type !== 'custom' ? ` (${payload.lane_type.replace(/_/g,' ')})` : ''}`;
     case 'create_step':     return `Add step "${payload.name}"`;
     case 'create_element':  return `Add ${(payload.type||'element').replace(/_/g,' ')} "${payload.name}"`;
-    case 'update_element':  return `Update "${payload.name || payload.id}" — fields: ${Object.keys(payload.updates||{}).join(', ') || 'none'}`;
+    case 'update_element': {
+      const upd = payload.updates || {};
+      if ((upd.swimlane_id || upd.step_id) && !upd.name && !upd.notes && !upd.status)
+        return `Place "${payload.name || payload.id}" on the board`;
+      return `Update "${payload.name || payload.id}" — fields: ${Object.keys(upd).join(', ') || 'none'}`;
+    }
     case 'delete_element':  return `Delete element "${payload.name || payload.id}"`;
     case 'update_swimlane': return `Rename swimlane to "${payload.name}"`;
     case 'delete_swimlane': return `Delete swimlane "${payload.name || payload.id}"`;

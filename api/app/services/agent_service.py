@@ -297,6 +297,17 @@ async def build_board_context(db: AsyncSession, board_id: str) -> dict:
             }
             for e in placed_elements[:20]
         ],
+        # Unplaced elements exist in the DB but are NOT visible on the canvas.
+        # Use update_element with swimlane_id + step_id to place them.
+        # Never use create_element for these — that would create duplicates.
+        "unplaced_elements": [
+            {
+                "id":   str(e.id),
+                "type": e.type,
+                "name": e.name,
+            }
+            for e in orphaned_elements
+        ],
         "open_insights": [
             {"severity": i.severity, "title": i.title, "source": i.source_ref}
             for i in open_insights
@@ -387,7 +398,8 @@ Allowed action types and their payloads:
 - create_swimlane: { "name": "...", "lane_type": "customer_actions|frontstage_actions|backstage_actions|support_processes|moment_of_truth|touchpoints|systems|data_flow|handoffs|risks|opportunities|pain_points|ai_capability|research_evidence|governance|custom" }
 - create_step: { "name": "..." }
 - create_element: { "type": "customer_action|physical_evidence|frontstage_action|backstage_action|support_process|moment_of_truth|touchpoint|system|data_flow|handoff|risk|opportunity|pain_point|research_evidence|ai_capability|governance_checkpoint", "name": "...", "swimlane_id": "<REQUIRED — exact UUID from PLACEMENT REFERENCE above, swimlane_id column>", "step_id": "<REQUIRED — exact UUID from PLACEMENT REFERENCE above, step_id column>", "notes": "..." }
-- update_element: { "id": "...", "name": "...", "updates": { "name": "...", "notes": "...", "status": "..." } }
+- update_element: { "id": "...", "name": "...", "updates": { "name": "...", "notes": "...", "status": "...", "swimlane_id": "...", "step_id": "..." } }
+  → To place an unplaced element on the canvas: use update_element with updates.swimlane_id and updates.step_id copied from the PLACEMENT REFERENCE. Copy the element id from unplaced_elements[]. NEVER use create_element for elements already in unplaced_elements — that creates duplicates.
 - delete_element: { "id": "...", "name": "..." }
 - update_swimlane: { "id": "...", "name": "..." }
 - delete_swimlane: { "id": "...", "name": "..." }
