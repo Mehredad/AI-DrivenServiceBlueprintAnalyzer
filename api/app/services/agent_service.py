@@ -321,14 +321,35 @@ def _has_ai_content(ctx: dict) -> bool:
     return any(e.get("type") == "ai_capability" for e in ctx.get("elements", []))
 
 
+def _placement_reference(ctx: dict) -> str:
+    """Build a compact swimlane/step ID reference the agent must copy verbatim."""
+    state = ctx.get("board_state") or {}
+    swimlanes = state.get("swimlanes", [])
+    steps     = state.get("steps", [])
+    if not swimlanes and not steps:
+        return ""
+    lines = ["", "## PLACEMENT REFERENCE — copy these IDs verbatim when proposing create_element actions. Do NOT invent, modify, or guess IDs.", ""]
+    if swimlanes:
+        lines.append("Swimlanes (swimlane_id):")
+        for sl in swimlanes:
+            lines.append(f'  "{sl.get("name","")}"  →  "{sl.get("id","")}"')
+    if steps:
+        lines.append("Steps (step_id):")
+        for st in steps:
+            lines.append(f'  "{st.get("name","")}"  →  "{st.get("id","")}"')
+    lines.append("")
+    return "\n".join(lines)
+
+
 def _core_section(ctx: dict) -> str:
     ctx_json = json.dumps(ctx, indent=2, default=str)
+    placement_ref = _placement_reference(ctx)
     return f"""You are the Blueprint Agent -- an expert collaborator embedded in Blueprint AI, a tool for mapping end-to-end system journeys across stakeholders, services, and systems.
 
 You have real-time access to the current board:
 
 {ctx_json}
-
+{placement_ref}
 Your responsibilities:
 1. Help users understand and improve this specific board. Always reference actual elements, swimlanes, and steps by name.
 2. Identify gaps, risks, and opportunities grounded in what is actually on the board.
@@ -365,7 +386,7 @@ When the user asks you to make changes to the board, respond ONLY with a JSON ob
 Allowed action types and their payloads:
 - create_swimlane: { "name": "...", "lane_type": "customer_actions|frontstage_actions|backstage_actions|support_processes|moment_of_truth|touchpoints|systems|data_flow|handoffs|risks|opportunities|pain_points|ai_capability|research_evidence|governance|custom" }
 - create_step: { "name": "..." }
-- create_element: { "type": "customer_action|physical_evidence|frontstage_action|backstage_action|support_process|moment_of_truth|touchpoint|system|data_flow|handoff|risk|opportunity|pain_point|research_evidence|ai_capability|governance_checkpoint", "name": "...", "swimlane_id": "<UUID from board_state.swimlanes[].id — NOT the name>", "step_id": "<UUID from board_state.steps[].id — NOT the name>", "notes": "..." }
+- create_element: { "type": "customer_action|physical_evidence|frontstage_action|backstage_action|support_process|moment_of_truth|touchpoint|system|data_flow|handoff|risk|opportunity|pain_point|research_evidence|ai_capability|governance_checkpoint", "name": "...", "swimlane_id": "<REQUIRED — exact UUID from PLACEMENT REFERENCE above, swimlane_id column>", "step_id": "<REQUIRED — exact UUID from PLACEMENT REFERENCE above, step_id column>", "notes": "..." }
 - update_element: { "id": "...", "name": "...", "updates": { "name": "...", "notes": "...", "status": "..." } }
 - delete_element: { "id": "...", "name": "..." }
 - update_swimlane: { "id": "...", "name": "..." }
@@ -380,7 +401,8 @@ Rules:
 - Never claim to have made a change — only propose it. The user must approve each action before it is applied.
 - Put your full explanation in the "message" field. Explain each proposed action.
 - For analysis, questions, or reviews: respond with plain Markdown prose only — absolutely no JSON, no code blocks, no technical object notation.
-- Reference real IDs from the board context (board_state.swimlanes[].id, board_state.steps[].id, elements[].id) for ALL actions — including create_element. NEVER use the name as an ID.
+- For create_element: swimlane_id and step_id are REQUIRED. Copy them exactly from the PLACEMENT REFERENCE section above. NEVER generate, invent, or guess UUID values — if you are not certain of the correct ID, do not propose the action.
+- Reference real IDs from the board context (board_state.swimlanes[].id, board_state.steps[].id, elements[].id) for ALL other actions. NEVER use a name as an ID.
 - Reference real connector IDs from the connectors list when proposing update_connector or delete_connector.
 - For create_connector: use real element or step IDs from the board context as source/target.
 - Each action is independent — the user can approve some and reject others.
