@@ -468,12 +468,21 @@ Good response examples:
 def _parse_agent_response(text: str) -> tuple[str, list[dict]]:
     """
     Try to parse agent response as structured JSON {"message": ..., "actions": [...]}.
+    Handles plain JSON and JSON wrapped in markdown code fences (```json ... ```).
     Falls back to (text, []) if not parseable or missing the expected shape.
-    Stores the original text in the DB so history can reconstruct proposal cards.
     """
+    import re
     stripped = text.strip()
+
+    # Gemini sometimes wraps the JSON in a markdown code block
+    if not stripped.startswith('{'):
+        m = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', stripped, re.DOTALL)
+        if m:
+            stripped = m.group(1).strip()
+
     if not stripped.startswith('{'):
         return text, []
+
     try:
         data = json.loads(stripped)
         if isinstance(data, dict) and isinstance(data.get('message'), str):

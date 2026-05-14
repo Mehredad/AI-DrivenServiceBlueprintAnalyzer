@@ -1928,6 +1928,7 @@ const SUPABASE_ANON_KEY = (_sbKey.startsWith('%%'))  ? '' : _sbKey;
 // ═══════════════════════════════════════════════════════
 let authToken     = localStorage.getItem('bp_access_token')  || '';
 let refreshToken  = localStorage.getItem('bp_refresh_token') || '';
+let _tokenRefreshPromise = null;  // serialises concurrent 401 retries
 let currentUser   = null;
 let currentBoardId = new URLSearchParams(window.location.search).get('board') || '';
 let chatHistory   = [];
@@ -1960,25 +1961,36 @@ async function apiFetch(path, opts = {}) {
 
   let res = await fetch(url, { ...opts, headers });
 
-  // Auto-refresh on 401
+  // Auto-refresh on 401 — serialised so concurrent calls share one refresh attempt.
+  // Without this, multiple simultaneous 401s each try to rotate the same refresh
+  // token; only the first succeeds and the rest trigger logout().
   if (res.status === 401 && refreshToken) {
-    const refreshed = await fetch(API_BASE + '/api/auth/refresh', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    });
-    if (refreshed.ok) {
-      const tokens = await refreshed.json();
-      authToken    = tokens.access_token;
-      refreshToken = tokens.refresh_token;
-      localStorage.setItem('bp_access_token',  authToken);
-      localStorage.setItem('bp_refresh_token', refreshToken);
-      headers['Authorization'] = `Bearer ${authToken}`;
-      res = await fetch(url, { ...opts, headers });
-    } else {
-      logout();
-      return null;
+    if (!_tokenRefreshPromise) {
+      const tokenAtStart = refreshToken;
+      _tokenRefreshPromise = fetch(API_BASE + '/api/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: tokenAtStart }),
+      }).then(async (r) => {
+        if (r.ok) {
+          const tokens = await r.json();
+          authToken    = tokens.access_token;
+          refreshToken = tokens.refresh_token;
+          localStorage.setItem('bp_access_token',  authToken);
+          localStorage.setItem('bp_refresh_token', refreshToken);
+          return true;
+        }
+        logout();
+        return false;
+      }).catch(() => { logout(); return false; })
+        .finally(() => { _tokenRefreshPromise = null; });
     }
+
+    const ok = await _tokenRefreshPromise;
+    if (!ok) return null;
+
+    headers['Authorization'] = `Bearer ${authToken}`;
+    res = await fetch(url, { ...opts, headers });
   }
   return res;
 }
@@ -3446,8 +3458,14 @@ async function callBackendAgent(userMsg, attachments = []) {
 
     removeTyping(typingId);
 
-    if (!res || !res.ok) {
-      const err = await res?.json().catch(() => ({}));
+    if (!res) {
+      // apiFetch returned null — refresh token expired, logout() already called
+      chatHistory.pop();
+      return;
+    }
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
       addAgentMsg(`Agent error: ${err?.detail || 'Something went wrong. Please try again.'}`, []);
       chatHistory.pop();
       return;
@@ -3464,7 +3482,9 @@ async function callBackendAgent(userMsg, attachments = []) {
     const text = data.response || '';
     const proposedActions = Array.isArray(data.actions) ? data.actions : [];
     chatHistory.push({ role: 'assistant', content: text });
-    const agentWrap = addAgentMsg(text, getContextActions(userMsg));
+    // If agent returned empty message but with actions, show a neutral intro line
+    const displayText = text || (proposedActions.length ? '*Here are my proposed changes — review and approve each one:*' : '');
+    const agentWrap = addAgentMsg(displayText, getContextActions(userMsg));
     if (proposedActions.length) appendProposalCards(agentWrap, proposedActions, currentBoardId);
 
   } catch (err) {
