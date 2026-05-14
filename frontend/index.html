@@ -268,7 +268,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .bp-cell:hover .bp-cell-add-btn:hover{background:var(--bg2);color:var(--text);}
 /* PRD-19 — Connector SVG overlay */
 .bp-canvas-wrap{position:relative;display:inline-block;min-width:100%;}
-.connector-svg{position:absolute;top:0;left:0;pointer-events:none;overflow:visible;will-change:transform;}
+.connector-svg{position:absolute;top:0;left:0;pointer-events:none;overflow:visible;will-change:transform;z-index:0;}
+.bp-grid{position:relative;z-index:1;}
 .conn-path{pointer-events:none;transition:filter .1s;}
 .conn-hit{pointer-events:stroke;cursor:pointer;}
 .conn-tooltip{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 9px;font-size:11px;pointer-events:none;z-index:900;box-shadow:0 4px 14px rgba(0,0,0,.12);display:none;max-width:200px;line-height:1.4;}
@@ -1542,8 +1543,8 @@ select.fi{appearance:none;cursor:pointer;}
         <!-- Dynamic canvas grid — populated by renderCanvas() in PRD-02 -->
         <div class="bp-grid-scroll">
           <div class="bp-canvas-wrap" id="bp-canvas-wrap">
-            <svg id="connector-svg" class="connector-svg" width="0" height="0" aria-hidden="true"></svg>
             <div id="canvas-grid" class="bp-grid" style="display:none;"></div>
+            <svg id="connector-svg" class="connector-svg" width="0" height="0" aria-hidden="true"></svg>
           </div>
         </div>
       </div>
@@ -5957,6 +5958,8 @@ let _waypointSaveTimer = null;
 
 function _portMouseDown(type, id, e) {
   if (!currentBoardId) return;
+  // In click_connect mode let _portClick handle the second tap — don't start a drag
+  if (connectorState.mode === 'click_connect') return;
   e.preventDefault();
   e.stopPropagation();
   connectorState = { mode:'selecting_target', source:{ type, id }, target:null, waypoints:[], ghostPos:null };
