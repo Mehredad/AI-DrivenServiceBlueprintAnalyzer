@@ -224,7 +224,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .bp-act-btn.del{color:var(--red);}
 .bp-inline-edit{border:1.5px solid var(--blue);border-radius:4px;padding:2px 5px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;background:white;color:var(--text);outline:none;width:100%;min-width:60px;}
 /* ELEMENTS — PRD-03 */
-.el-card{display:flex;align-items:center;gap:4px;padding:10px 6px;border-radius:6px;border:1.5px solid var(--border);background:rgba(255,255,255,0.88);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);margin:3px;cursor:pointer;font-size:11px;line-height:1.3;transition:box-shadow .1s;width:calc(50% - 6px);min-height:48px;position:relative;overflow:visible;z-index:3;}
+.el-card{display:flex;align-items:center;gap:4px;padding:10px 6px;border-radius:6px;border:1.5px solid var(--border);background:rgba(255,255,255,0.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin:3px;cursor:pointer;font-size:11px;line-height:1.3;transition:box-shadow .1s;width:calc(50% - 6px);min-height:48px;position:relative;overflow:visible;z-index:3;}
 .el-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.1);}
 .el-icon{font-size:12px;flex-shrink:0;}
 .el-name{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -233,10 +233,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .el-status-in-progress{background:var(--blue);}
 .el-status-live{background:var(--green);}
 .el-status-deprecated{background:var(--border2);}
-.el-touchpoint{border-color:var(--blue);background:rgba(238,242,253,0.88);}
-.el-system{border-color:var(--border2);background:rgba(237,235,229,0.88);}
-.el-data_flow{border-color:var(--teal);background:rgba(230,245,242,0.88);}
-.el-handoff{border-color:var(--purple);background:rgba(245,240,254,0.88);}
+.el-touchpoint{border-color:var(--blue);background:rgba(238,242,253,0.72);}
+.el-system{border-color:var(--border2);background:rgba(237,235,229,0.72);}
+.el-data_flow{border-color:var(--teal);background:rgba(230,245,242,0.72);}
+.el-handoff{border-color:var(--purple);background:rgba(245,240,254,0.72);}
 .el-risk{border-color:var(--amber);background:var(--amber-bg);}
 .el-opportunity{border-color:var(--green);background:var(--green-bg);}
 .el-pain_point{border-color:var(--red);background:var(--red-bg);}
@@ -5662,8 +5662,9 @@ const _CONN_TYPE_LABELS = {
   dependency: 'Dependency', feedback: 'Feedback', failure: 'Failure',
 };
 
-function _strokeWidth(tier) {
-  return tier === 'step' ? 3 : tier === 'element' ? 1.5 : 2;
+function _strokeWidth(tier, type) {
+  const base = tier === 'step' ? 2.5 : tier === 'element' ? 1.8 : 2;
+  return type === 'feedback' ? Math.max(1, base * 0.6) : base;
 }
 
 function _clearConnectorSvg() {
@@ -5692,15 +5693,16 @@ function getEndpointRect(type, id, svgEl) {
   return { x, y, w: r.width, h: r.height, cx: x + r.width / 2, cy: y + r.height / 2 };
 }
 
-function _edgePts(s, t) {
+function _edgePts(s, t, srcOff, tgtOff) {
+  const so = srcOff || 0, to = tgtOff || 0;
   const dx = t.cx - s.cx, dy = t.cy - s.cy;
   let sp, tp;
   if (Math.abs(dx) >= Math.abs(dy)) {
-    if (dx >= 0) { sp = { x: s.x + s.w, y: s.cy }; tp = { x: t.x,       y: t.cy }; }
-    else          { sp = { x: s.x,       y: s.cy }; tp = { x: t.x + t.w, y: t.cy }; }
+    if (dx >= 0) { sp = { x: s.x + s.w, y: s.cy + so }; tp = { x: t.x,       y: t.cy + to }; }
+    else          { sp = { x: s.x,       y: s.cy + so }; tp = { x: t.x + t.w, y: t.cy + to }; }
   } else {
-    if (dy >= 0) { sp = { x: s.cx, y: s.y + s.h }; tp = { x: t.cx, y: t.y };       }
-    else          { sp = { x: s.cx, y: s.y };        tp = { x: t.cx, y: t.y + t.h }; }
+    if (dy >= 0) { sp = { x: s.cx + so, y: s.y + s.h }; tp = { x: t.cx + to, y: t.y };       }
+    else          { sp = { x: s.cx + so, y: s.y };       tp = { x: t.cx + to, y: t.y + t.h }; }
   }
   return { sp, tp };
 }
@@ -5728,23 +5730,49 @@ function renderConnectors() {
   const grid = document.getElementById('canvas-grid');
   if (!svg || !grid || grid.style.display === 'none') { _clearConnectorSvg(); return; }
 
-  // Size SVG to match grid
   const w = grid.scrollWidth, h = grid.scrollHeight;
   svg.style.width  = w + 'px';
   svg.style.height = h + 'px';
 
-  // Filter by visibility toggle
-  const visible = boardConnectors.filter(c =>
-    c.tier === 'step' || showElementConnectors
-  );
+  const visible = boardConnectors.filter(c => c.tier === 'step' || showElementConnectors);
 
-  // Build SVG marker defs for arrowheads
+  // ── Pass 1: resolve rects and build fan-out groups ─────────────────────
+  // Group connectors by (endpoint-id : exit-face) so multiple connectors
+  // leaving the same face of the same element spread out instead of stacking.
+  const connData   = [];
+  const fanGroups  = {}; // key: `${id}:${face}` → [connId, ...]
+
+  visible.forEach(conn => {
+    let srcR, tgtR;
+    if (conn.source_step_id)         srcR = getEndpointRect('step',    conn.source_step_id,    svg);
+    else if (conn.source_element_id) srcR = getEndpointRect('element', conn.source_element_id, svg);
+    if (conn.target_step_id)         tgtR = getEndpointRect('step',    conn.target_step_id,    svg);
+    else if (conn.target_element_id) tgtR = getEndpointRect('element', conn.target_element_id, svg);
+    if (!srcR || !tgtR) return;
+
+    const dx = tgtR.cx - srcR.cx, dy = tgtR.cy - srcR.cy;
+    let srcFace, tgtFace;
+    if (Math.abs(dx) >= Math.abs(dy)) { srcFace = dx >= 0 ? 'r' : 'l'; tgtFace = dx >= 0 ? 'l' : 'r'; }
+    else                               { srcFace = dy >= 0 ? 'b' : 't'; tgtFace = dy >= 0 ? 't' : 'b'; }
+
+    const srcId = conn.source_element_id || conn.source_step_id;
+    const tgtId = conn.target_element_id || conn.target_step_id;
+    const sk = `${srcId}:${srcFace}`, tk = `${tgtId}:${tgtFace}`;
+    if (!fanGroups[sk]) fanGroups[sk] = [];
+    if (!fanGroups[tk]) fanGroups[tk] = [];
+    if (!fanGroups[sk].includes(conn.id)) fanGroups[sk].push(conn.id);
+    if (!fanGroups[tk].includes(conn.id)) fanGroups[tk].push(conn.id);
+
+    connData.push({ conn, srcR, tgtR, srcFace, tgtFace, srcId, tgtId });
+  });
+
+  // ── SVG defs ─────────────────────────────────────────────────────────────
   let defs = '<defs>';
   Object.entries(_CONN_STYLES).forEach(([type, s]) => {
     const isOpen  = s.arrow === 'open';
-    const fill    = isOpen ? 'none'    : s.stroke;
-    const stkLine = isOpen ? s.stroke  : 'none';
-    const stkW    = isOpen ? '1.5'     : '0';
+    const fill    = isOpen ? 'none'   : s.stroke;
+    const stkLine = isOpen ? s.stroke : 'none';
+    const stkW    = isOpen ? '1.5'    : '0';
     defs += `<marker id="ma-${type}" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" markerUnits="userSpaceOnUse">
       <polygon points="0 0,10 3.5,0 7" fill="${fill}" stroke="${stkLine}" stroke-width="${stkW}"/></marker>`;
     defs += `<marker id="mb-${type}" markerWidth="14" markerHeight="10" refX="13" refY="5" orient="auto" markerUnits="userSpaceOnUse">
@@ -5752,38 +5780,36 @@ function renderConnectors() {
   });
   defs += '</defs>';
 
-  let visPaths = '';  // visual strokes — pointer-events:none, painted first
-  let hitPaths = '';  // invisible wide strokes — pointer-events:stroke, painted on top
+  const FAN_SPACING = 9; // px between connectors sharing the same exit face
+  let visPaths = '';
+  let hitPaths = '';
 
-  visible.forEach(conn => {
+  // ── Pass 2: build paths with fan-out offsets ─────────────────────────────
+  connData.forEach(({ conn, srcR, tgtR, srcFace, tgtFace, srcId, tgtId }) => {
     const style = _CONN_STYLES[conn.connector_type] || _CONN_STYLES.sequence;
-    const sw    = _strokeWidth(conn.tier);
+    const sw    = _strokeWidth(conn.tier, conn.connector_type);
 
-    // Resolve endpoints relative to the SVG's top-left
-    let srcR, tgtR;
-    if (conn.source_step_id)         srcR = getEndpointRect('step',    conn.source_step_id,    svg);
-    else if (conn.source_element_id) srcR = getEndpointRect('element', conn.source_element_id, svg);
-    if (conn.target_step_id)         tgtR = getEndpointRect('step',    conn.target_step_id,    svg);
-    else if (conn.target_element_id) tgtR = getEndpointRect('element', conn.target_element_id, svg);
+    // Fan-out: spread exit/entry points laterally on shared faces
+    const sg = fanGroups[`${srcId}:${srcFace}`] || [conn.id];
+    const tg = fanGroups[`${tgtId}:${tgtFace}`] || [conn.id];
+    const si = sg.indexOf(conn.id), sc = sg.length;
+    const ti = tg.indexOf(conn.id), tc = tg.length;
+    const srcFaceSz = (srcFace === 'r' || srcFace === 'l') ? srcR.h : srcR.w;
+    const tgtFaceSz = (tgtFace === 'r' || tgtFace === 'l') ? tgtR.h : tgtR.w;
+    const clamp = (v, lim) => Math.max(-lim, Math.min(lim, v));
+    const srcOff = sc > 1 ? clamp((si - (sc - 1) / 2) * FAN_SPACING, srcFaceSz * 0.35) : 0;
+    const tgtOff = tc > 1 ? clamp((ti - (tc - 1) / 2) * FAN_SPACING, tgtFaceSz * 0.35) : 0;
 
-    if (!srcR || !tgtR) return;
-    const { sp: src, tp: tgt } = _edgePts(srcR, tgtR);
+    const { sp: src, tp: tgt } = _edgePts(srcR, tgtR, srcOff, tgtOff);
 
     const wps = Array.isArray(conn.waypoints) ? conn.waypoints : [];
-    const markerId = sw >= 3 ? `mb-${conn.connector_type}` : `ma-${conn.connector_type}`;
+    const markerId = sw >= 2.5 ? `mb-${conn.connector_type}` : `ma-${conn.connector_type}`;
     const isSelected = conn.id === selectedConnectorId;
 
-    // Build path d
+    // All connector types use elbow routing (feedback no longer a bezier arc)
     let d;
     if (wps.length > 0) {
-      const pts = [src, ...wps, tgt];
-      d = 'M ' + pts.map(p => `${p.x} ${p.y}`).join(' L ');
-    } else if (conn.connector_type === 'feedback') {
-      const mx  = (src.x + tgt.x) / 2, my  = (src.y + tgt.y) / 2;
-      const dx  = tgt.x - src.x,       dy  = tgt.y - src.y;
-      const len = Math.sqrt(dx * dx + dy * dy) || 1;
-      const off = Math.min(50, len * 0.3);
-      d = `M ${src.x} ${src.y} Q ${mx + (-dy / len) * off} ${my + (dx / len) * off} ${tgt.x} ${tgt.y}`;
+      d = 'M ' + [src, ...wps, tgt].map(p => `${p.x} ${p.y}`).join(' L ');
     } else {
       d = _elbowPath(src.x, src.y, tgt.x, tgt.y);
     }
@@ -5793,17 +5819,15 @@ function renderConnectors() {
     const labelEsc = escHtml(conn.label || '');
     const typeEsc  = escHtml(conn.connector_type);
 
-    // Visual paths (bottom)
     if (isSelected) {
       visPaths += `<path d="${d}" fill="none" stroke="${style.stroke}" stroke-width="${sw + 5}" stroke-opacity="0.22" pointer-events="none"/>`;
     }
-    visPaths += `<path class="conn-path" data-conn-id="${conn.id}" d="${d}" fill="none" stroke="${style.stroke}" stroke-width="${sw}" ${dashAttr} marker-end="url(#${markerId})" pointer-events="none"/>`;
+    visPaths += `<path class="conn-path" data-conn-id="${conn.id}" data-stroke="${style.stroke}" d="${d}" fill="none" stroke="${style.stroke}" stroke-width="${sw}" ${dashAttr} marker-end="url(#${markerId})" pointer-events="none"/>`;
     if (conn.label) {
       const mp = wps.length > 0 ? wps[Math.floor(wps.length / 2)] : { x: (src.x + tgt.x) / 2, y: (src.y + tgt.y) / 2 };
       visPaths += `<text x="${mp.x}" y="${mp.y - 6}" text-anchor="middle" font-size="10" font-family="DM Sans,sans-serif" fill="${style.stroke}" pointer-events="none" paint-order="stroke" stroke="white" stroke-width="3" stroke-linejoin="round">${escHtml(conn.label)}</text>`;
     }
 
-    // Hit paths (top — transparent wide stroke, catches clicks/hover)
     hitPaths += `<path class="conn-hit" data-conn-id="${conn.id}" data-conn-type="${typeEsc}" data-conn-label="${labelEsc}" d="${d}" fill="none" stroke="transparent" stroke-width="16" pointer-events="stroke"/>`;
     if (isSelected && wps.length > 0) {
       wps.forEach((wp, idx) => {
@@ -5812,27 +5836,27 @@ function renderConnectors() {
     }
   });
 
-  // Write all paths into the single SVG: visual first, hit targets on top
   svg.innerHTML = defs + visPaths + hitPaths;
 
-  // Re-attach ghost line (cleared by innerHTML replace)
   if (typeof connectorState !== 'undefined' && connectorState.mode === 'selecting_target') {
     _renderGhostLine();
   }
-
   if (typeof _initWaypointDrag === 'function') _initWaypointDrag();
 
-  // Attach hover + click + contextmenu listeners to hit-area paths
   svg.querySelectorAll('.conn-hit').forEach(hit => {
-    const cId    = hit.dataset.connId;
-    const cType  = hit.dataset.connType;
-    const cLabel = hit.dataset.connLabel;
-    const visPath = svg.querySelector(`.conn-path[data-conn-id="${cId}"]`);
-    const origSw  = visPath ? parseFloat(visPath.getAttribute('stroke-width')) : 2;
+    const cId      = hit.dataset.connId;
+    const cType    = hit.dataset.connType;
+    const cLabel   = hit.dataset.connLabel;
+    const visPath  = svg.querySelector(`.conn-path[data-conn-id="${cId}"]`);
+    const origSw   = visPath ? parseFloat(visPath.getAttribute('stroke-width')) : 2;
+    const stroke   = visPath ? visPath.getAttribute('data-stroke') : '#475569';
 
     hit.addEventListener('mouseenter', e => {
       if (typeof connectorState !== 'undefined' && connectorState.mode !== 'idle') return;
-      if (visPath) { visPath.setAttribute('stroke-width', origSw + 1); visPath.style.filter = 'brightness(1.2)'; }
+      if (visPath) {
+        visPath.setAttribute('stroke-width', origSw + 2.5);
+        visPath.style.filter = `drop-shadow(0 0 7px ${stroke}) drop-shadow(0 0 3px ${stroke})`;
+      }
       showConnTooltip(e, cType, cLabel);
     });
     hit.addEventListener('mousemove', moveConnTooltip);
