@@ -4,7 +4,7 @@ Auth router — /api/auth/*
 import logging
 import secrets
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 import httpx
 
@@ -16,6 +16,7 @@ from app.models import User
 from app.schemas import UserRegister, UserLogin, TokenRefresh, TokenResponse, UserOut, UserPatch, GoogleAuth
 from app.services import auth_service
 from app.middleware.auth_middleware import get_current_user
+from app.limiter import limiter
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -25,20 +26,6 @@ async def auth_config():
     """Return public auth configuration (client IDs safe to expose)."""
     s = get_settings()
     return {"google_client_id": s.google_client_id or None}
-
-
-@router.post("/google/debug")
-async def google_debug(body: GoogleAuth):
-    """Temporary: returns raw tokeninfo response so we can see what Google sends."""
-    try:
-        async with httpx.AsyncClient(timeout=12.0) as client:
-            r = await client.get(
-                "https://oauth2.googleapis.com/tokeninfo",
-                params={"id_token": body.credential},
-            )
-        return {"status": r.status_code, "body": r.json()}
-    except Exception as exc:
-        return {"error": str(exc)}
 
 
 async def _verify_google_token(credential: str, client_id: str) -> dict:
@@ -82,7 +69,8 @@ async def _verify_google_token(credential: str, client_id: str) -> dict:
 
 
 @router.post("/google", response_model=TokenResponse)
-async def google_login(body: GoogleAuth, db: AsyncSession = Depends(get_db)):
+@limiter.limit("20/minute")
+async def google_login(request: Request, body: GoogleAuth, db: AsyncSession = Depends(get_db)):
     """Exchange a Google ID token for Blueprint AI JWT tokens."""
     s = get_settings()
     if not s.google_client_id:
@@ -137,7 +125,8 @@ async def google_login(body: GoogleAuth, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/register", response_model=TokenResponse, status_code=201)
-async def register(body: UserRegister, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def register(request: Request, body: UserRegister, db: AsyncSession = Depends(get_db)):
     if await auth_service.get_user_by_email(db, body.email):
         raise HTTPException(400, "Email already registered")
 
@@ -157,7 +146,8 @@ async def register(body: UserRegister, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(body: UserLogin, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def login(request: Request, body: UserLogin, db: AsyncSession = Depends(get_db)):
     user = await auth_service.get_user_by_email(db, body.email)
     if not user or not auth_service.verify_password(body.password, user.password_hash):
         raise HTTPException(401, "Invalid email or password")

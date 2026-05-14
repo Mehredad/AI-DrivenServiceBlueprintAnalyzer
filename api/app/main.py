@@ -17,13 +17,14 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from sqlalchemy import text
 
 from app.config import get_settings
 from app.database import AsyncSessionLocal, _db_ready
+from app.limiter import limiter
 
 from app.routers.auth         import router as auth_router
 from app.routers.boards       import router as boards_router
@@ -43,8 +44,6 @@ from app.routers.connectors   import router as connectors_router
 settings = get_settings()
 logging.basicConfig(level=getattr(logging, settings.log_level.upper(), logging.INFO))
 log = logging.getLogger(__name__)
-
-limiter = Limiter(key_func=get_remote_address, default_limits=["200/minute"])
 
 
 @asynccontextmanager
@@ -73,9 +72,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Rate limiting
+# Rate limiting — middleware enforces default_limits; decorators override per-route
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 # CORS — allow frontend Vercel domain + localhost in dev
 app.add_middleware(
@@ -125,7 +125,8 @@ class _AnalyzeRequest(pydantic.BaseModel):
 
 
 @app.post("/api/import/analyze", tags=["imports"])
-async def analyze_blueprint_public(body: _AnalyzeRequest):
+@limiter.limit("5/minute")
+async def analyze_blueprint_public(request: Request, body: _AnalyzeRequest):
     """
     Auth-free blueprint extraction. Accepts base64-encoded file data, returns
     the extracted JSON structure (same shape as ImportJob.result).
