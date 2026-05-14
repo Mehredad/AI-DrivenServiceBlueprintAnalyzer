@@ -5795,12 +5795,34 @@ function renderConnectors() {
     const markerId = sw >= 2.5 ? `mb-${conn.connector_type}` : `ma-${conn.connector_type}`;
     const isSelected = conn.id === selectedConnectorId;
 
-    // All connector types use elbow routing (feedback no longer a bezier arc)
-    let d;
-    if (wps.length > 0) {
-      d = 'M ' + [src, ...wps, tgt].map(p => `${p.x} ${p.y}`).join(' L ');
-    } else {
+    // Orthogonal (H/V) routing — single waypoint constrains the movable middle segment
+    const isHExit = srcFace === 'r' || srcFace === 'l';
+    let d, labelMid;
+    if (wps.length === 0) {
       d = _elbowPath(src.x, src.y, tgt.x, tgt.y);
+      labelMid = { x: (src.x + tgt.x) / 2, y: (src.y + tgt.y) / 2 };
+    } else if (wps.length === 1) {
+      if (isHExit) {
+        const midX = wps[0].x ?? (src.x + tgt.x) / 2;
+        d = `M ${src.x} ${src.y} H ${midX} V ${tgt.y} H ${tgt.x}`;
+        labelMid = { x: midX, y: (src.y + tgt.y) / 2 };
+      } else {
+        const midY = wps[0].y ?? (src.y + tgt.y) / 2;
+        d = `M ${src.x} ${src.y} V ${midY} H ${tgt.x} V ${tgt.y}`;
+        labelMid = { x: (src.x + tgt.x) / 2, y: midY };
+      }
+    } else {
+      // Multiple waypoints: orthogonal chain through each corner
+      if (isHExit) {
+        d = `M ${src.x} ${src.y}`;
+        wps.forEach(wp => { d += ` H ${wp.x} V ${wp.y}`; });
+        d += ` H ${tgt.x}`;
+      } else {
+        d = `M ${src.x} ${src.y}`;
+        wps.forEach(wp => { d += ` V ${wp.y} H ${wp.x}`; });
+        d += ` V ${tgt.y}`;
+      }
+      labelMid = wps[Math.floor(wps.length / 2)];
     }
 
     const dash = style.dash || (conn.tier === 'mixed' ? '8,4' : '');
@@ -5813,12 +5835,11 @@ function renderConnectors() {
     }
     visPaths += `<path class="conn-path" data-conn-id="${conn.id}" data-stroke="${style.stroke}" d="${d}" fill="none" stroke="${style.stroke}" stroke-width="${sw}" ${dashAttr} marker-end="url(#${markerId})" pointer-events="none"/>`;
     if (conn.label) {
-      const mp = wps.length > 0 ? wps[Math.floor(wps.length / 2)] : { x: (src.x + tgt.x) / 2, y: (src.y + tgt.y) / 2 };
-      visPaths += `<text x="${mp.x}" y="${mp.y - 6}" text-anchor="middle" font-size="10" font-family="DM Sans,sans-serif" fill="${style.stroke}" pointer-events="none" paint-order="stroke" stroke="white" stroke-width="3" stroke-linejoin="round">${escHtml(conn.label)}</text>`;
+      visPaths += `<text x="${labelMid.x}" y="${labelMid.y - 6}" text-anchor="middle" font-size="10" font-family="DM Sans,sans-serif" fill="${style.stroke}" pointer-events="none" paint-order="stroke" stroke="white" stroke-width="3" stroke-linejoin="round">${escHtml(conn.label)}</text>`;
     }
 
-    hitPaths += `<path class="conn-hit" data-conn-id="${conn.id}" data-conn-type="${typeEsc}" data-conn-label="${labelEsc}" d="${d}" fill="none" stroke="transparent" stroke-width="16" pointer-events="stroke"/>`;
-    if (isSelected && wps.length > 0) {
+    hitPaths += `<path class="conn-hit" data-conn-id="${conn.id}" data-conn-type="${typeEsc}" data-conn-label="${labelEsc}" data-src-face="${srcFace}" d="${d}" fill="none" stroke="transparent" stroke-width="16" pointer-events="stroke" style="cursor:grab"/>`;
+    if (isSelected && wps.length > 1) {
       wps.forEach((wp, idx) => {
         hitPaths += `<circle class="conn-wp-handle" data-conn-id="${conn.id}" data-wp-idx="${idx}" cx="${wp.x}" cy="${wp.y}" r="5" fill="white" stroke="${style.stroke}" stroke-width="1.5" pointer-events="all" style="cursor:move"/>`;
       });
@@ -5855,34 +5876,28 @@ function renderConnectors() {
     });
     hit.addEventListener('mousedown', e => {
       if (typeof connectorState !== 'undefined' && connectorState.mode !== 'idle') return;
-      const startX = e.clientX, startY = e.clientY;
-      let dragWpIdx = -1;
+      const conn = boardConnectors.find(c => c.id === cId);
+      if (!conn) return;
       const svgEl = document.getElementById('connector-svg');
       if (!svgEl) return;
+      const svgRect = svgEl.getBoundingClientRect();
+      const startX = e.clientX, startY = e.clientY;
+      // H exit: vertical middle segment dragged left/right (only X changes)
+      const isHExit = (hit.dataset.srcFace === 'r' || hit.dataset.srcFace === 'l');
+      let dragging = false;
       function onWpMove(ev) {
-        const conn = boardConnectors.find(c => c.id === cId);
-        if (!conn) return;
-        const svgRect = svgEl.getBoundingClientRect();
+        if (!dragging && Math.hypot(ev.clientX - startX, ev.clientY - startY) < 5) return;
+        dragging = true;
+        _connHitDragged = true;
         const px = ev.clientX - svgRect.left;
         const py = ev.clientY - svgRect.top;
-        if (dragWpIdx < 0) {
-          if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 5) return;
-          if (!conn.waypoints) conn.waypoints = [];
-          const pathEl = svgEl.querySelector(`.conn-path[data-conn-id="${cId}"]`);
-          const insertIdx = pathEl ? _bestInsertIdx(pathEl, px, py, conn.waypoints.length) : conn.waypoints.length;
-          conn.waypoints.splice(insertIdx, 0, { x: px, y: py });
-          dragWpIdx = insertIdx;
-          _connHitDragged = true;
-          renderConnectors();
-        } else {
-          conn.waypoints[dragWpIdx] = { x: px, y: py };
-          renderConnectors();
-        }
+        conn.waypoints = isHExit ? [{ x: px }] : [{ y: py }];
+        renderConnectors();
       }
       function onWpUp() {
         window.removeEventListener('mousemove', onWpMove);
         window.removeEventListener('mouseup', onWpUp);
-        if (dragWpIdx >= 0) {
+        if (dragging) {
           clearTimeout(_waypointSaveTimer);
           _waypointSaveTimer = setTimeout(() => _saveConnectorWaypoints(cId), 500);
         }
