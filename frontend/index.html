@@ -1210,12 +1210,11 @@ select.fi{appearance:none;cursor:pointer;}
     <button class="sb-item" id="nav-outcomes" onclick="showView('outcomes',this)">
       <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><polyline points="1,9.5 4,6 6.5,7.5 9.5,4 12,5" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linecap="round"/></svg></span>
       Outcomes
-      <span class="sb-badge" style="background:var(--green-bg);color:var(--green);">4</span>
     </button>
     <button class="sb-item" id="nav-register" onclick="showView('register',this)">
       <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x=".5" y=".5" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.1"/><line x1="3.5" y1="4" x2="9.5" y2="4" stroke="currentColor"/><line x1="3.5" y1="6.5" x2="9.5" y2="6.5" stroke="currentColor"/><line x1="3.5" y1="9" x2="6.5" y2="9" stroke="currentColor"/></svg></span>
       Capability Register
-      <span class="sb-badge">3</span>
+      <span class="sb-badge" id="sb-badge-register" style="display:none;"></span>
     </button>
     <button class="sb-item" id="nav-monitor" onclick="showView('monitor',this)">
       <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x=".5" y=".5" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.1"/><line x1="5" y1="9.5" x2="8" y2="9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
@@ -1230,7 +1229,7 @@ select.fi{appearance:none;cursor:pointer;}
   <div class="sb-sec">
     <div class="sb-label">Governance</div>
     <button class="sb-item" onclick="openModal('stakeholders')"><span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="4" r="1.8" stroke="currentColor" stroke-width="1.1"/><circle cx="2.2" cy="9" r="1.4" stroke="currentColor" stroke-width="1.1"/><circle cx="10.8" cy="9" r="1.4" stroke="currentColor" stroke-width="1.1"/><line x1="4.2" y1="5" x2="2.2" y2="7.6" stroke="currentColor" stroke-width=".9"/><line x1="8.8" y1="5" x2="10.8" y2="7.6" stroke="currentColor" stroke-width=".9"/></svg></span>Stakeholders</button>
-    <button class="sb-item" onclick="openModal('incidents')"><span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1.5L12 11H1L6.5 1.5Z" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linejoin="round"/><line x1="6.5" y1="5" x2="6.5" y2="7.5" stroke="currentColor" stroke-width="1.1"/><circle cx="6.5" cy="9.3" r=".7" fill="currentColor"/></svg></span>Incidents<span class="sb-badge warn">2</span></button>
+    <button class="sb-item" onclick="openModal('incidents')"><span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1.5L12 11H1L6.5 1.5Z" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linejoin="round"/><line x1="6.5" y1="5" x2="6.5" y2="7.5" stroke="currentColor" stroke-width="1.1"/><circle cx="6.5" cy="9.3" r=".7" fill="currentColor"/></svg></span>Incidents<span class="sb-badge warn" id="sb-badge-incidents" style="display:none;"></span></button>
     <button class="sb-item" onclick="openModal('gov-review')"><span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1L1.5 3.5v5c0 2.5 2.5 4 5 4.5 2.5-.5 5-2 5-4.5V3.5L6.5 1Z" stroke="currentColor" stroke-width="1.1" fill="none"/></svg></span>Gov. Review</button>
   </div>
 
@@ -4356,11 +4355,15 @@ async function _applyProposedAction(action, boardId) {
       };
       const resolvedSwimlane = _resolveToId(payload.swimlane_id, boardState.swimlanes);
       const resolvedStep     = _resolveToId(payload.step_id,     boardState.steps);
-      if (payload.swimlane_id && !resolvedSwimlane) {
-        throw new Error(`Cannot place element: swimlane "${payload.swimlane_id}" not found on this board. Ask the agent to retry with a valid swimlane.`);
+      if (!resolvedSwimlane) {
+        throw new Error(payload.swimlane_id
+          ? `Cannot place element: swimlane "${payload.swimlane_id}" not found on this board. Ask the agent to retry with a valid swimlane from the board.`
+          : `Cannot place element: no swimlane specified. Ask the agent to retry and include a swimlane_id from this board.`);
       }
-      if (payload.step_id && !resolvedStep) {
-        throw new Error(`Cannot place element: step "${payload.step_id}" not found on this board. Ask the agent to retry with a valid step.`);
+      if (!resolvedStep) {
+        throw new Error(payload.step_id
+          ? `Cannot place element: step "${payload.step_id}" not found on this board. Ask the agent to retry with a valid step from the board.`
+          : `Cannot place element: no step specified. Ask the agent to retry and include a step_id from this board.`);
       }
       const body = {
         type: payload.type || 'touchpoint',
@@ -6339,6 +6342,8 @@ function renderCapRegister() {
   const countEl = document.getElementById('inv-count');
   if (countEl) countEl.textContent = capabilities.length + ' capabilit' + (capabilities.length === 1 ? 'y' : 'ies');
 
+  const sbReg = document.getElementById('sb-badge-register');
+  if (sbReg) { if (capabilities.length > 0) { sbReg.textContent = capabilities.length; sbReg.style.display = ''; } else { sbReg.style.display = 'none'; } }
   const riskDot = r => ({ High: 'h', Medium: 'm', Low: 'l' }[r] || 'l');
   const rows = capabilities.map(c => `
     <tr>
@@ -6468,6 +6473,8 @@ function renderIncidents() {
           </div>`).join('')
       : '<div style="text-align:center;color:var(--text3);font-size:11px;padding:12px;">No open incidents. Use the form below to report one.</div>';
   }
+  const sbInc = document.getElementById('sb-badge-incidents');
+  if (sbInc) { if (active.length > 0) { sbInc.textContent = active.length; sbInc.style.display = ''; } else { sbInc.style.display = 'none'; } }
   const previewEl = document.getElementById('monitor-incidents-preview');
   if (previewEl) {
     const latest = active.slice(0, 2);
