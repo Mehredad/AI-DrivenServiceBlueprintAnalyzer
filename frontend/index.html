@@ -36,15 +36,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .logo-name{font-family:'Fraunces',serif;font-size:16px;font-weight:400;letter-spacing:-.3px;}
 .logo-ver{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.5px;margin-top:1px;}
 .sb-sec{padding:8px 10px 4px;}
-.sb-label{font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);padding:0 6px;margin-bottom:3px;}
-.sb-item{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:var(--r);cursor:pointer;font-size:12px;color:var(--text2);border:none;background:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif;font-weight:500;transition:background .1s;}
+.sb-label{font-size:11px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);padding:0 6px;margin-bottom:3px;}
+.sb-item{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:var(--r);cursor:pointer;font-size:14px;color:var(--text2);border:none;background:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif;font-weight:500;transition:background .1s;}
 .sb-item:hover{background:var(--bg);}
 .sb-item.active{background:var(--bg2);color:var(--text);font-weight:600;}
-.sb-icon{width:15px;height:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:.5;}
+.sb-icon{width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:.5;}
 .sb-item.active .sb-icon{opacity:1;}
 .sb-badge{margin-left:auto;font-size:10px;font-family:'JetBrains Mono',monospace;background:var(--bg2);color:var(--text3);padding:1px 5px;border-radius:8px;}
 .sb-badge.warn{background:var(--red-bg);color:var(--red);}
-.agent-sb-btn{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:var(--r);cursor:pointer;font-size:12px;color:var(--text);border:1px solid var(--border);background:var(--bg2);width:100%;text-align:left;font-family:'DM Sans',sans-serif;font-weight:600;transition:all .15s;}
+.agent-sb-btn{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:var(--r);cursor:pointer;font-size:14px;color:var(--text);border:1px solid var(--border);background:var(--bg2);width:100%;text-align:left;font-family:'DM Sans',sans-serif;font-weight:600;transition:all .15s;}
 .agent-sb-btn:hover{background:var(--text);color:white;border-color:var(--text);}
 .adw{width:18px;height:18px;border-radius:50%;background:var(--text);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .agent-sb-btn:hover .adw{background:rgba(255,255,255,.2);}
@@ -854,6 +854,11 @@ select.fi{appearance:none;cursor:pointer;}
 .sidebar.collapsed .sb-sec{padding:8px 4px 4px;}
 .sb-toggle{width:22px;height:22px;border:none;border-radius:4px;background:none;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:all .12s;line-height:1;padding:0;}
 .sb-toggle:hover{background:var(--bg2);color:var(--text);}
+.sb-edge-toggle{width:0;overflow:visible;position:relative;z-index:20;flex-shrink:0;align-self:flex-start;margin-top:16px;}
+.sb-edge-toggle .sb-toggle{position:absolute;left:-11px;background:var(--surface);border:1px solid var(--border);border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.sb-edge-toggle .sb-toggle:hover{background:var(--bg2);}
+.sb-collapsed-footer{display:none;padding:0 4px 4px;}
+.sidebar.collapsed .sb-collapsed-footer{display:block;}
 
 /* ── Session 3-dot menu ── */
 .sess-dot-wrap{position:relative;flex-shrink:0;}
@@ -1282,9 +1287,6 @@ select.fi{appearance:none;cursor:pointer;}
         <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1" width="4.5" height="4.5" rx=".8" fill="white"/><rect x="7" y="1" width="5" height="4.5" rx=".8" fill="white" opacity=".6"/><rect x="1" y="7.5" width="5" height="4.5" rx=".8" fill="white" opacity=".6"/><rect x="7.5" y="7.5" width="4.5" height="4.5" rx=".8" fill="white" opacity=".28"/></svg>
       </div>
       <div class="sb-txt"><div class="logo-name">Blueprint AI</div></div>
-      <button class="sb-toggle" onclick="toggleSidebar()" id="sb-toggle-btn" title="Collapse sidebar" style="margin-left:auto;">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
     </div>
   </div>
 
@@ -1327,6 +1329,11 @@ select.fi{appearance:none;cursor:pointer;}
     <button class="sb-item" onclick="openModal('gov-review')" title="Gov. Review"><span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1L1.5 3.5v5c0 2.5 2.5 4 5 4.5 2.5-.5 5-2 5-4.5V3.5L6.5 1Z" stroke="currentColor" stroke-width="1.1" fill="none"/></svg></span><span class="sb-txt">Gov. Review</span></button>
   </div>
 
+  <div class="sb-collapsed-footer">
+    <button class="sb-item" onclick="openBoardSettings()" title="Board settings">
+      <span class="sb-icon" style="font-size:14px;opacity:.6;">⚙</span>
+    </button>
+  </div>
   <div class="sb-spacer"></div>
   <div class="sb-project sb-project-wrap" id="board-picker-wrap">
     <div class="proj-card" id="proj-card" onclick="toggleBoardPicker()">
@@ -1347,6 +1354,11 @@ select.fi{appearance:none;cursor:pointer;}
     </div>
   </div>
 </aside>
+<div class="sb-edge-toggle" id="sb-edge-wrap">
+  <button class="sb-toggle" onclick="toggleSidebar()" id="sb-toggle-btn" title="Collapse sidebar">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+</div>
 
 <!-- ═══ TOUR OVERLAY ═══ -->
 <div class="tour-overlay" id="tour-overlay">
