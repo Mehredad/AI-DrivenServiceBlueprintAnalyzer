@@ -5795,32 +5795,37 @@ function renderConnectors() {
     const markerId = sw >= 2.5 ? `mb-${conn.connector_type}` : `ma-${conn.connector_type}`;
     const isSelected = conn.id === selectedConnectorId;
 
-    // Orthogonal (H/V) routing — single waypoint constrains the movable middle segment
+    // Orthogonal routing: 0 wps = default elbow; 1 wp = free corner (both X and Y);
+    // 2+ wps = chain of corners. Waypoint {x, y} routes H→V for H-exit, V→H for V-exit.
     const isHExit = srcFace === 'r' || srcFace === 'l';
     let d, labelMid;
     if (wps.length === 0) {
       d = _elbowPath(src.x, src.y, tgt.x, tgt.y);
       labelMid = { x: (src.x + tgt.x) / 2, y: (src.y + tgt.y) / 2 };
     } else if (wps.length === 1) {
+      // Both x and y of the waypoint matter — corner at (wx, wy).
+      // Fall back to tgt values so old single-axis waypoints render correctly.
+      const wx = wps[0].x ?? tgt.x;
+      const wy = wps[0].y ?? tgt.y;
       if (isHExit) {
-        const midX = wps[0].x ?? (src.x + tgt.x) / 2;
-        d = `M ${src.x} ${src.y} H ${midX} V ${tgt.y} H ${tgt.x}`;
-        labelMid = { x: midX, y: (src.y + tgt.y) / 2 };
+        // H srcX srcY → corner (wx,srcY) → corner (wx,wy) → H tgt.x → V tgt.y
+        d = `M ${src.x} ${src.y} H ${wx} V ${wy} H ${tgt.x} V ${tgt.y}`;
+        labelMid = { x: wx, y: wy };
       } else {
-        const midY = wps[0].y ?? (src.y + tgt.y) / 2;
-        d = `M ${src.x} ${src.y} V ${midY} H ${tgt.x} V ${tgt.y}`;
-        labelMid = { x: (src.x + tgt.x) / 2, y: midY };
+        // V srcX srcY → corner (srcX,wy) → corner (wx,wy) → V tgt.y → H tgt.x
+        d = `M ${src.x} ${src.y} V ${wy} H ${wx} V ${tgt.y} H ${tgt.x}`;
+        labelMid = { x: wx, y: wy };
       }
     } else {
       // Multiple waypoints: orthogonal chain through each corner
       if (isHExit) {
         d = `M ${src.x} ${src.y}`;
         wps.forEach(wp => { d += ` H ${wp.x} V ${wp.y}`; });
-        d += ` H ${tgt.x}`;
+        d += ` H ${tgt.x} V ${tgt.y}`;
       } else {
         d = `M ${src.x} ${src.y}`;
         wps.forEach(wp => { d += ` V ${wp.y} H ${wp.x}`; });
-        d += ` V ${tgt.y}`;
+        d += ` V ${tgt.y} H ${tgt.x}`;
       }
       labelMid = wps[Math.floor(wps.length / 2)];
     }
@@ -5882,8 +5887,6 @@ function renderConnectors() {
       if (!svgEl) return;
       const svgRect = svgEl.getBoundingClientRect();
       const startX = e.clientX, startY = e.clientY;
-      // H exit: vertical middle segment dragged left/right (only X changes)
-      const isHExit = (hit.dataset.srcFace === 'r' || hit.dataset.srcFace === 'l');
       let dragging = false;
       function onWpMove(ev) {
         if (!dragging && Math.hypot(ev.clientX - startX, ev.clientY - startY) < 5) return;
@@ -5891,7 +5894,7 @@ function renderConnectors() {
         _connHitDragged = true;
         const px = ev.clientX - svgRect.left;
         const py = ev.clientY - svgRect.top;
-        conn.waypoints = isHExit ? [{ x: px }] : [{ y: py }];
+        conn.waypoints = [{ x: px, y: py }];
         renderConnectors();
       }
       function onWpUp() {
