@@ -5795,26 +5795,27 @@ function renderConnectors() {
     const markerId = sw >= 2.5 ? `mb-${conn.connector_type}` : `ma-${conn.connector_type}`;
     const isSelected = conn.id === selectedConnectorId;
 
-    // Orthogonal routing: 0 wps = default elbow; 1 wp = free corner (both X and Y);
-    // 2+ wps = chain of corners. Waypoint {x, y} routes H→V for H-exit, V→H for V-exit.
+    // Orthogonal routing: 0 wps = default elbow; 1 wp = single axis constraint
+    // (midX for H-exit, midY for V-exit) keeping arrowhead direction correct;
+    // 2+ wps = orthogonal chain through corners.
     const isHExit = srcFace === 'r' || srcFace === 'l';
     let d, labelMid;
     if (wps.length === 0) {
       d = _elbowPath(src.x, src.y, tgt.x, tgt.y);
       labelMid = { x: (src.x + tgt.x) / 2, y: (src.y + tgt.y) / 2 };
     } else if (wps.length === 1) {
-      // Both x and y of the waypoint matter — corner at (wx, wy).
-      // Fall back to tgt values so old single-axis waypoints render correctly.
-      const wx = wps[0].x ?? tgt.x;
-      const wy = wps[0].y ?? tgt.y;
       if (isHExit) {
-        // H srcX srcY → corner (wx,srcY) → corner (wx,wy) → H tgt.x → V tgt.y
-        d = `M ${src.x} ${src.y} H ${wx} V ${wy} H ${tgt.x} V ${tgt.y}`;
-        labelMid = { x: wx, y: wy };
+        // Vertical middle segment slides left/right; H segments stretch.
+        // Path: H→midX, V→tgtY, H→tgtX  (3 segments, ends H → arrow correct)
+        const midX = wps[0].x ?? (src.x + tgt.x) / 2;
+        d = `M ${src.x} ${src.y} H ${midX} V ${tgt.y} H ${tgt.x}`;
+        labelMid = { x: midX, y: (src.y + tgt.y) / 2 };
       } else {
-        // V srcX srcY → corner (srcX,wy) → corner (wx,wy) → V tgt.y → H tgt.x
-        d = `M ${src.x} ${src.y} V ${wy} H ${wx} V ${tgt.y} H ${tgt.x}`;
-        labelMid = { x: wx, y: wy };
+        // Horizontal middle segment slides up/down; V segments stretch.
+        // Path: V→midY, H→tgtX, V→tgtY  (3 segments, ends V → arrow correct)
+        const midY = wps[0].y ?? (src.y + tgt.y) / 2;
+        d = `M ${src.x} ${src.y} V ${midY} H ${tgt.x} V ${tgt.y}`;
+        labelMid = { x: (src.x + tgt.x) / 2, y: midY };
       }
     } else {
       // Multiple waypoints: orthogonal chain through each corner
@@ -5887,6 +5888,7 @@ function renderConnectors() {
       if (!svgEl) return;
       const svgRect = svgEl.getBoundingClientRect();
       const startX = e.clientX, startY = e.clientY;
+      const isHExit = (hit.dataset.srcFace === 'r' || hit.dataset.srcFace === 'l');
       let dragging = false;
       function onWpMove(ev) {
         if (!dragging && Math.hypot(ev.clientX - startX, ev.clientY - startY) < 5) return;
@@ -5894,7 +5896,7 @@ function renderConnectors() {
         _connHitDragged = true;
         const px = ev.clientX - svgRect.left;
         const py = ev.clientY - svgRect.top;
-        conn.waypoints = [{ x: px, y: py }];
+        conn.waypoints = isHExit ? [{ x: px }] : [{ y: py }];
         renderConnectors();
       }
       function onWpUp() {
