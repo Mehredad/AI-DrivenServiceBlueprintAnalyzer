@@ -5843,7 +5843,7 @@ function renderConnectors() {
       visPaths += `<text x="${labelMid.x}" y="${labelMid.y - 6}" text-anchor="middle" font-size="10" font-family="DM Sans,sans-serif" fill="${style.stroke}" pointer-events="none" paint-order="stroke" stroke="white" stroke-width="3" stroke-linejoin="round">${escHtml(conn.label)}</text>`;
     }
 
-    hitPaths += `<path class="conn-hit" data-conn-id="${conn.id}" data-conn-type="${typeEsc}" data-conn-label="${labelEsc}" data-src-face="${srcFace}" d="${d}" fill="none" stroke="transparent" stroke-width="16" pointer-events="stroke" style="cursor:grab"/>`;
+    hitPaths += `<path class="conn-hit" data-conn-id="${conn.id}" data-conn-type="${typeEsc}" data-conn-label="${labelEsc}" data-src-face="${srcFace}" d="${d}" fill="none" stroke="transparent" stroke-width="16" pointer-events="stroke" style="cursor:default"/>`;
     if (isSelected && wps.length > 1) {
       wps.forEach((wp, idx) => {
         hitPaths += `<circle class="conn-wp-handle" data-conn-id="${conn.id}" data-wp-idx="${idx}" cx="${wp.x}" cy="${wp.y}" r="5" fill="white" stroke="${style.stroke}" stroke-width="1.5" pointer-events="all" style="cursor:move"/>`;
