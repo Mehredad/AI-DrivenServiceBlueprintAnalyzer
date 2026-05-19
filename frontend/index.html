@@ -3667,10 +3667,12 @@ async function saveElementDrawer() {
     meta,
   };
 
-  // Optimistic update — apply immediately so canvas reflects changes now
+  // Optimistic update — apply immediately so canvas reflects changes now.
+  // Preserve updated_at / updated_by_actor from the existing element so the AI
+  // badge doesn't flicker; the server's authoritative values arrive below.
   const idx = boardState.elements.findIndex(e => e.id === _drawerElementId);
   const prev = idx !== -1 ? { ...boardState.elements[idx] } : null;
-  if (idx !== -1) boardState.elements[idx] = { ...el, ...body, updated_at: new Date().toISOString() };
+  if (idx !== -1) boardState.elements[idx] = { ...el, ...body };
 
   const savedId = _drawerElementId;
   closeElementDrawer();
@@ -3694,16 +3696,20 @@ async function saveElementDrawer() {
       showToast('Save failed — changes reverted');
       return;
     }
-    // Sync server-authoritative fields (e.g. updated_at)
+    // Sync server-authoritative fields (updated_at, updated_by_actor, etc.)
     const updated = await res.json();
     const i = boardState.elements.findIndex(e => e.id === updated.id);
-    if (i !== -1) boardState.elements[i] = updated;
+    if (i !== -1) { boardState.elements[i] = updated; renderCanvas(); }
   }
 }
 
 function closeElementDrawer() {
   document.getElementById('element-drawer').classList.remove('open');
   _drawerElementId = null;
+  const saveBtn = document.getElementById('el-save-btn');
+  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
+  const delBtn = document.getElementById('el-delete-btn');
+  if (delBtn) { delBtn.disabled = false; delBtn.textContent = 'Delete'; }
 }
 
 async function deleteElementDrawer() {
