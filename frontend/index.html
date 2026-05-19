@@ -210,9 +210,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .bp-cell-add-hint{display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:10px;color:var(--text3);cursor:pointer;gap:3px;}
 .bp-cell:hover .bp-cell-add-hint{display:flex;}
 .bp-add-swimlane-row{grid-column:1/-1;border-top:1px solid var(--border);display:flex;align-items:center;padding:0 10px;height:36px;background:var(--bg);}
-.bp-lane-divider{grid-column:1/-1;height:22px;display:flex;align-items:center;justify-content:center;position:relative;user-select:none;}
+.bp-lane-divider{grid-column:1/-1;height:22px;display:flex;align-items:center;justify-content:flex-start;position:relative;user-select:none;}
 .bp-lane-divider::before{content:'';position:absolute;left:0;right:0;top:50%;height:2px;z-index:0;}
-.bp-lane-divider span{position:relative;z-index:1;font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.6px;text-transform:uppercase;padding:0 8px;background:var(--bg);}
+.bp-lane-divider span{position:sticky;left:0;z-index:9;font-size:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.6px;text-transform:uppercase;padding:0 12px;background:var(--bg);white-space:nowrap;}
 .bp-lane-divider-interaction{color:var(--teal);}
 .bp-lane-divider-interaction::before{background:var(--teal);}
 .bp-lane-divider-visibility{color:var(--blue);}
@@ -913,6 +913,21 @@ select.fi{appearance:none;cursor:pointer;}
 /* ── Orphaned badge as actionable button ── */
 #bp-orphaned{cursor:pointer;border:1px solid var(--amber-bd,#f5c07a);background:var(--amber-bg,#fef3e6);border-radius:5px;padding:1px 7px;margin-left:5px;transition:all .12s;color:var(--amber);font-family:'JetBrains Mono',monospace;font-size:10px;white-space:nowrap;}
 #bp-orphaned:hover{background:var(--amber);color:white;border-color:var(--amber);}
+
+/* ── Skeleton loading ── */
+@keyframes sk-shine{from{background-position:200% 0}to{background-position:-200% 0}}
+.sk{background:linear-gradient(90deg,var(--border) 25%,var(--bg2) 50%,var(--border) 75%);background-size:200% 100%;animation:sk-shine 1.5s ease-in-out infinite;border-radius:4px;}
+.sk-card{width:calc(80% - 12px);height:48px;border-radius:6px;margin:3px 6px;}
+.sk-line{height:11px;border-radius:3px;}
+.sk-circle{border-radius:50%;}
+/* history skeleton items */
+.sk-hist-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface);}
+/* chat skeleton bubbles */
+.sk-bubble-wrap{display:flex;align-items:flex-end;gap:8px;margin:6px 14px;}
+.sk-bubble-wrap.right{flex-direction:row-reverse;}
+.sk-bubble{border-radius:12px;height:40px;}
+/* chat session skeleton */
+.sk-sess{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);}
 </style>
 </head>
 <body>
@@ -2561,6 +2576,7 @@ async function persistBoard(statePatch) {
 }
 
 async function loadBoard(boardId) {
+  _showCanvasSkeleton();
   const res = await apiFetch(`/api/boards/${boardId}`);
   if (!res || !res.ok) return;
   const board = await res.json();
@@ -3015,7 +3031,7 @@ function renderGrid() {
     html += '<div class="bp-cell-spacer"></div>';
     // Lane divider row (spans full grid width)
     if (lane.divider_type) {
-      const _divLabels = { interaction: '— Line of Interaction —', visibility: '— Line of Visibility —', internal_interaction: '— Line of Internal Interaction —' };
+      const _divLabels = { interaction: 'Line of Interaction', visibility: 'Line of Visibility', internal_interaction: 'Line of Internal Interaction' };
       html += `<div class="bp-lane-divider bp-lane-divider-${escHtml(lane.divider_type)}"><span>${_divLabels[lane.divider_type] || ''}</span></div>`;
     }
   });
@@ -3921,6 +3937,7 @@ function renderChatSessionsList() {
 }
 
 async function initChatSessions(boardId) {
+  _showChatSessionsSkeleton();
   _loadSessions(boardId);
   if (_chatSessions.length > 0) {
     // Open the most recently updated session
@@ -3928,6 +3945,7 @@ async function initChatSessions(boardId) {
     _openChatSession(latest.id);
   } else {
     // No sessions yet — try to migrate DB history into a first session
+    _showChatSkeleton();
     const migrated = await _migrateDbHistory(boardId);
     if (!migrated) {
       // Fresh start — auto-open a new empty session
@@ -4539,16 +4557,17 @@ function initChatDragDrop() {
 async function loadChatHistory(boardId) {
   const area = document.getElementById('chat-area');
   if (!area) return;
-  area.innerHTML = '';
+  _showChatSkeleton();
   chatHistory = [];
   _chatHistoryOffset = 0;
   _chatHistoryBoard  = boardId;
   _chatHistoryHasMore = false;
-  if (!authToken || !boardId) return;
+  if (!authToken || !boardId) { area.innerHTML = ''; return; }
   try {
     const res = await apiFetch(`/api/agent/boards/${boardId}/history?limit=50&offset=0`);
-    if (!res || !res.ok) return;
+    if (!res || !res.ok) { area.innerHTML = ''; return; }
     const messages = await res.json();
+    area.innerHTML = ''; // clear skeleton — real content follows
     if (messages.length === 50) {
       _chatHistoryHasMore = true;
       _prependLoadEarlierBtn(area);
@@ -6587,7 +6606,7 @@ function _portMove(cardEl, e) {
 
 async function loadHistory(reset) {
   if (!currentBoardId) return;
-  if (reset) _historyOffset = 0;
+  if (reset) { _historyOffset = 0; _showHistorySkeleton(); }
   const limit = 50;
   try {
     const res = await apiFetch(`/api/boards/${currentBoardId}/history?limit=${limit + 1}&offset=${_historyOffset}`);
@@ -6972,6 +6991,83 @@ function showToast(msg) {
 // ═══════════════════════════════════════════════════════
 // UTILS
 // ═══════════════════════════════════════════════════════
+
+// ── Skeleton loaders ────────────────────────────────────
+
+function _showCanvasSkeleton() {
+  const emptyEl      = document.getElementById('canvas-empty-state');
+  const emptyStepsEl = document.getElementById('canvas-empty-steps');
+  const gridEl       = document.getElementById('canvas-grid');
+  if (emptyEl)      emptyEl.style.display      = 'none';
+  if (emptyStepsEl) emptyStepsEl.style.display  = 'none';
+  if (!gridEl) return;
+  const STEPS = 4, LANES = 3;
+  gridEl.style.display = 'grid';
+  gridEl.style.gridTemplateColumns = `160px repeat(${STEPS},minmax(180px,1fr)) 56px`;
+  // cards per cell [lane][step]
+  const cards = [[2,1,0,1],[1,0,2,0],[0,1,1,2]];
+  let h = '';
+  h += '<div class="bp-corner"></div>';
+  for (let s = 0; s < STEPS; s++) h += `<div class="bp-step-header" style="gap:8px;"><div class="sk sk-line" style="width:${55+s*18}px;"></div></div>`;
+  h += '<div class="bp-cell-spacer"></div>';
+  for (let l = 0; l < LANES; l++) {
+    h += `<div class="bp-lane-label"><div class="sk sk-line" style="width:72px;"></div></div>`;
+    for (let s = 0; s < STEPS; s++) {
+      h += '<div class="bp-cell" style="min-height:100px;">';
+      for (let c = 0; c < cards[l][s]; c++) h += '<div class="sk sk-card"></div>';
+      h += '</div>';
+    }
+    h += '<div class="bp-cell-spacer"></div>';
+  }
+  gridEl.innerHTML = h;
+}
+
+function _showHistorySkeleton() {
+  const list  = document.getElementById('history-list');
+  const empty = document.getElementById('history-empty');
+  if (!list) return;
+  if (empty) empty.style.display = 'none';
+  list.innerHTML = [110,160,130,90].map(w => `
+    <div class="sk-hist-item">
+      <div class="sk sk-circle" style="width:34px;height:34px;flex-shrink:0;"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:7px;">
+        <div class="sk sk-line" style="width:${w}px;"></div>
+        <div class="sk sk-line" style="width:${Math.round(w*.6)}px;height:9px;"></div>
+      </div>
+      <div class="sk sk-line" style="width:44px;height:9px;"></div>
+    </div>`).join('');
+}
+
+function _showChatSkeleton() {
+  const area = document.getElementById('chat-area');
+  if (!area) return;
+  const bubbles = [
+    {right:false, w:180, h:38},
+    {right:true,  w:110, h:32},
+    {right:false, w:240, h:56},
+    {right:false, w:160, h:32},
+    {right:true,  w:80,  h:32},
+  ];
+  area.innerHTML = bubbles.map(({right, w, h}) => `
+    <div class="sk-bubble-wrap ${right ? 'right' : ''}">
+      ${!right ? '<div class="sk sk-circle" style="width:26px;height:26px;flex-shrink:0;"></div>' : ''}
+      <div class="sk sk-bubble" style="width:${w}px;height:${h}px;"></div>
+    </div>`).join('');
+}
+
+function _showChatSessionsSkeleton() {
+  const list = document.getElementById('chat-sessions-list');
+  if (!list) return;
+  list.innerHTML = [120,90,145].map(w => `
+    <div class="sk-sess">
+      <div class="sk sk-circle" style="width:20px;height:20px;flex-shrink:0;"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+        <div class="sk sk-line" style="width:${w}px;"></div>
+        <div class="sk sk-line" style="width:${Math.round(w*.55)}px;height:9px;"></div>
+      </div>
+      <div class="sk sk-line" style="width:36px;height:9px;"></div>
+    </div>`).join('');
+}
 
 // Puts a button into a loading state. Returns a restore function.
 function _btnLoading(btn, text = 'Saving…') {
