@@ -193,17 +193,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .bp-meta{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);display:flex;align-items:center;gap:7px;}
 
 /* CANVAS GRID — PRD-02 */
-.bp-grid{display:grid;grid-template-columns:160px repeat(var(--step-count,1),minmax(130px,1fr)) 56px;width:max-content;min-width:100%;}
+.bp-grid{display:grid;grid-template-columns:160px repeat(var(--step-count,1),minmax(180px,1fr)) 56px;width:max-content;min-width:100%;}
 .bp-corner{position:sticky;top:0;left:0;z-index:10;background:var(--bg2);border-right:1px solid var(--border);border-bottom:1px solid var(--border);height:42px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);}
 .bp-step-header{position:sticky;top:0;z-index:9;background:var(--bg);border-right:1px solid var(--border2);border-bottom:1px solid var(--border);height:42px;display:flex;align-items:center;padding:0 10px;gap:4px;font-size:11px;font-weight:600;}
 .bp-step-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.bp-step-actions{display:none;align-items:center;gap:3px;flex-shrink:0;}
+.bp-step-actions{display:none;position:absolute;top:100%;right:-1px;align-items:center;gap:3px;background:var(--bg);border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;padding:3px 4px;box-shadow:0 4px 10px rgba(0,0,0,.1);z-index:20;white-space:nowrap;}
 .bp-step-header:hover .bp-step-actions{display:flex;}
 .bp-add-step-cell{position:sticky;top:0;z-index:9;background:var(--bg);border-bottom:1px solid var(--border);height:42px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
 .bp-lane-label{position:sticky;left:0;z-index:8;background:var(--bg2);border-right:1px solid var(--border);border-bottom:1px solid var(--border2);min-height:100px;display:flex;align-items:center;padding:0 10px;gap:6px;font-size:11px;font-weight:600;}
 .bp-lane-name{overflow:hidden;text-overflow:ellipsis;word-break:break-word;line-height:1.3;}
 .bp-lane-type-icon{font-size:13px;flex-shrink:0;opacity:.45;line-height:1;}
-.bp-lane-actions{display:none;flex-direction:column;gap:3px;flex-shrink:0;}
+.bp-lane-actions{display:none;flex-direction:column;position:absolute;left:100%;top:8px;gap:3px;background:var(--bg2);border:1px solid var(--border);border-left:none;border-radius:0 6px 6px 0;padding:4px 4px 4px 3px;box-shadow:4px 0 10px rgba(0,0,0,.1);z-index:20;}
 .bp-lane-label:hover .bp-lane-actions{display:flex;}
 .bp-cell{min-height:100px;border-right:1px solid var(--border2);border-bottom:1px solid var(--border2);position:relative;background:var(--surface);display:flex;flex-wrap:wrap;align-content:flex-start;padding:4px;overflow:hidden;min-width:0;}
 .bp-cell-spacer{min-height:100px;background:var(--bg);border-bottom:1px solid var(--border2);}
@@ -227,7 +227,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .step-resize-handle:hover,.step-resize-handle.resizing{background:var(--blue);opacity:.35;}
 .bp-inline-edit{border:1.5px solid var(--blue);border-radius:4px;padding:2px 5px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;background:white;color:var(--text);outline:none;width:100%;min-width:60px;}
 /* ELEMENTS — PRD-03 */
-.el-card{display:flex;align-items:center;gap:4px;padding:10px 6px;border-radius:6px;border:1.5px solid var(--border);background:rgba(255,255,255,0.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin:3px;cursor:pointer;font-size:11px;line-height:1.3;transition:box-shadow .1s;width:calc(50% - 6px);min-height:48px;position:relative;overflow:visible;z-index:3;}
+.el-card{display:flex;align-items:center;gap:4px;padding:6px 6px;border-radius:6px;border:1.5px solid var(--border);background:rgba(255,255,255,0.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin:3px 6px;cursor:pointer;font-size:11px;line-height:1.3;transition:box-shadow .1s;width:calc(80% - 12px);height:48px;position:relative;overflow:visible;z-index:3;}
 .el-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.1);}
 .el-icon{font-size:12px;flex-shrink:0;}
 .el-name{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -282,9 +282,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .conn-toggle-btn:hover{border-color:var(--border2);color:var(--text);}
 .conn-toggle-btn.active{background:var(--blue-bg);border-color:var(--blue-bd);color:var(--blue);}
 /* PRD-20 — Connector ports (drag-to-connect) */
-.conn-port{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--blue);border:2.5px solid white;opacity:0;pointer-events:none;z-index:15;cursor:crosshair;box-shadow:0 0 0 1.5px var(--blue);transition:opacity .12s,box-shadow .12s;}
-.el-card:hover .conn-port{opacity:1;pointer-events:auto;}
-.conn-port:hover{opacity:1!important;box-shadow:0 0 0 4px var(--blue-bd);}
+.conn-port{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--blue);border:2.5px solid white;opacity:0;pointer-events:none;z-index:15;cursor:crosshair;box-shadow:0 0 0 1.5px var(--blue);transition:opacity .1s;}
+.conn-port[data-edge="top"]   {top:-5px;left:50%;transform:translateX(-50%);}
+.conn-port[data-edge="right"] {right:-5px;top:50%;transform:translateY(-50%);}
+.conn-port[data-edge="bottom"]{bottom:-5px;left:50%;transform:translateX(-50%);}
+.conn-port[data-edge="left"]  {left:-5px;top:50%;transform:translateY(-50%);}
+.conn-port.active{opacity:1;pointer-events:auto;}
+.conn-port:hover{box-shadow:0 0 0 5px var(--blue-bd);}
 .bp-step-header{overflow:visible;}
 .bp-canvas-wrap.conn-dragging{cursor:crosshair!important;user-select:none;}
 .bp-canvas-wrap.conn-dragging .el-card{outline:1.5px dashed var(--border2);outline-offset:2px;}
@@ -2063,14 +2067,11 @@ let _connRenderTimer      = null;
 
 // Step column widths — keyed by step ID, set by drag-resize
 const _stepColWidths = {};
-const _DEFAULT_STEP_W = 130;
-
-function _getStepColWidth(id) { return _stepColWidths[id] || _DEFAULT_STEP_W; }
 
 function _buildGridTemplate() {
   const steps = [...(boardState.steps || [])].sort((a, b) => a.order - b.order);
   if (!steps.length) return '160px 56px';
-  return '160px ' + steps.map(s => _getStepColWidth(s.id) + 'px').join(' ') + ' 56px';
+  return '160px ' + steps.map(s => _stepColWidths[s.id] ? `${_stepColWidths[s.id]}px` : 'minmax(180px,1fr)').join(' ') + ' 56px';
 }
 
 function _applyGridTemplate() {
@@ -2088,7 +2089,7 @@ function _initStepResize() {
     e.preventDefault();
     const stepId = handle.dataset.stepId;
     const startX = e.clientX;
-    const startW = _getStepColWidth(stepId);
+    const startW = _stepColWidths[stepId] || handle.closest('.bp-step-header').getBoundingClientRect().width;
     handle.classList.add('resizing');
     function onMove(ev) {
       _stepColWidths[stepId] = Math.max(80, Math.min(400, startW + ev.clientX - startX));
@@ -3190,16 +3191,41 @@ function moveSwimlane(id, delta) {
 async function setSwimlaneDivider(id) {
   const lane = boardState.swimlanes.find(l => l.id === id);
   if (!lane) return;
-  const current = lane.divider_type || 'none';
-  const choice = await bpPrompt(
-    `Set service design divider below "${lane.name}":\n0 — None (current: ${current})\n1 — Line of Interaction\n2 — Line of Visibility\n3 — Line of Internal Interaction`,
-    '', 'Set divider'
-  );
-  if (choice === null) return;
-  const types = [null, 'interaction', 'visibility', 'internal_interaction'];
-  const idx = parseInt(choice, 10);
-  if (isNaN(idx) || idx < 0 || idx > 3) return;
-  lane.divider_type = types[idx];
+  const current = lane.divider_type || null;
+  const opts = [
+    { val: null,                   label: 'None',                         sub: 'Remove divider',               lineStyle: 'none',   color: 'var(--text3)' },
+    { val: 'interaction',          label: 'Line of Interaction',          sub: 'Customer-facing boundary',     lineStyle: 'solid',  color: 'var(--teal)' },
+    { val: 'visibility',           label: 'Line of Visibility',           sub: 'Visible vs. backstage',        lineStyle: 'solid',  color: 'var(--blue)' },
+    { val: 'internal_interaction', label: 'Line of Internal Interaction', sub: 'Internal process boundary',    lineStyle: 'dashed', color: 'var(--text3)' },
+  ];
+  const chosen = await new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.className = 'bp-dialog-overlay';
+    ov.innerHTML = `<div class="bp-dialog" style="max-width:420px;" onclick="event.stopPropagation()">
+      <div class="bp-dialog-title">Set Divider — ${escHtml(lane.name)}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 10px;">
+        ${opts.map(o => {
+          const active = current === o.val;
+          const lineHtml = o.lineStyle === 'none'
+            ? `<span style="font-size:16px;color:var(--border2);">✕</span>`
+            : `<div style="width:100%;height:2.5px;background:${o.color};border-radius:2px;${o.lineStyle==='dashed'?'background:repeating-linear-gradient(90deg,'+o.color+' 0,'+o.color+' 8px,transparent 8px,transparent 14px);':''}"></div>`;
+          return `<button class="_div-opt" data-val="${o.val||''}" style="display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:12px 12px 10px;border-radius:8px;cursor:pointer;border:2px solid ${active?o.color:'var(--border)'};background:${active?'var(--bg2)':'var(--surface)'};font-family:inherit;text-align:left;">
+            <div style="height:14px;display:flex;align-items:center;">${lineHtml}</div>
+            <div style="font-size:11px;font-weight:700;color:${o.val?o.color:'var(--text2)'};">${escHtml(o.label)}</div>
+            <div style="font-size:10px;color:var(--text3);line-height:1.3;">${escHtml(o.sub)}</div>
+          </button>`;
+        }).join('')}
+      </div>
+      <div style="text-align:right;"><button class="btn btn-ghost" id="_bpDivCancel" style="height:28px;font-size:11px;">Cancel</button></div>
+    </div>`;
+    const close = v => { ov.remove(); resolve(v); };
+    ov.addEventListener('click', () => close(undefined));
+    ov.querySelector('#_bpDivCancel').addEventListener('click', e => { e.stopPropagation(); close(undefined); });
+    ov.querySelectorAll('._div-opt').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); close(btn.dataset.val); }));
+    document.body.appendChild(ov);
+  });
+  if (chosen === undefined) return;
+  lane.divider_type = chosen || null;
   renderCanvas();
   persistStructure();
 }
@@ -3490,12 +3516,16 @@ function renderElementCard(el) {
     (Date.now() - new Date(el.updated_at).getTime() < 86400000);
   const aiBadge = recentAgent ? '<span class="el-ai-badge">AI</span>' : '';
   const _eid = escHtml(el.id);
-  return `<div class="el-card el-${escHtml(el.type)}${dimCls}" data-el-id="${_eid}" title="${escHtml(el.name)}" onclick="elCardClicked('${_eid}',event)" oncontextmenu="elCardContextMenu(event,'${_eid}')" onmousemove="_portMove(this,event)">
+  const _pd = `onmousedown="event.stopPropagation();_portMouseDown('element','${_eid}',event)" onclick="event.stopPropagation();_portClick('element','${_eid}',event)" onmouseenter="_portEnter()" onmouseleave="_portLeave(this.closest('.el-card'),event)"`;
+  return `<div class="el-card el-${escHtml(el.type)}${dimCls}" data-el-id="${_eid}" title="${escHtml(el.name)}" onclick="elCardClicked('${_eid}',event)" oncontextmenu="elCardContextMenu(event,'${_eid}')" onmousemove="_portMove(this,event)" onmouseleave="_portLeave(this,event)">
     <span class="el-icon">${t.icon}</span>
     <span class="el-name">${escHtml(el.name)}</span>
     ${aiBadge}
     <span class="el-status el-status-${escHtml((el.status||'draft').replace('-','_'))}"></span>
-    <span class="conn-port" onmousedown="event.stopPropagation();_portMouseDown('element','${_eid}',event)" onclick="event.stopPropagation();_portClick('element','${_eid}',event)"></span>
+    <span class="conn-port" data-edge="top"    ${_pd}></span>
+    <span class="conn-port" data-edge="right"  ${_pd}></span>
+    <span class="conn-port" data-edge="bottom" ${_pd}></span>
+    <span class="conn-port" data-edge="left"   ${_pd}></span>
   </div>`;
 }
 
@@ -6499,22 +6529,33 @@ function _bestInsertIdx(pathEl, px, py, nWps) {
   return Math.min(Math.floor(bestT * (nWps + 1)), nWps);
 }
 
+let _portHideTimer = null;
+
+function _portEnter() {
+  clearTimeout(_portHideTimer);
+}
+
+function _portLeave(cardEl, e) {
+  if (e && e.relatedTarget && e.relatedTarget.classList && e.relatedTarget.classList.contains('conn-port')) return;
+  clearTimeout(_portHideTimer);
+  _portHideTimer = setTimeout(() => {
+    if (cardEl) cardEl.querySelectorAll('.conn-port').forEach(p => p.classList.remove('active'));
+  }, 120);
+}
+
 function _portMove(cardEl, e) {
-  const port = cardEl.querySelector('.conn-port');
-  if (!port) return;
+  clearTimeout(_portHideTimer);
   const r = cardEl.getBoundingClientRect();
   const mx = e.clientX - r.left;
   const my = e.clientY - r.top;
   const dL = mx, dR = r.width - mx, dT = my, dB = r.height - my;
   const min = Math.min(dL, dR, dT, dB);
-  let cx, cy;
-  if (min === dL)      { cx = 0;        cy = my; }
-  else if (min === dR) { cx = r.width;  cy = my; }
-  else if (min === dT) { cx = mx;       cy = 0; }
-  else                 { cx = mx;       cy = r.height; }
-  port.style.left      = (cx - 4.5) + 'px';
-  port.style.top       = (cy - 4.5) + 'px';
-  port.style.transform = 'none';
+  let edge;
+  if      (min === dT) edge = 'top';
+  else if (min === dB) edge = 'bottom';
+  else if (min === dL) edge = 'left';
+  else                 edge = 'right';
+  cardEl.querySelectorAll('.conn-port').forEach(p => p.classList.toggle('active', p.dataset.edge === edge));
 }
 
 async function loadHistory(reset) {
