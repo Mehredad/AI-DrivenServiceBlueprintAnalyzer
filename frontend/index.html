@@ -1774,7 +1774,7 @@ select.fi{appearance:none;cursor:pointer;}
       <div class="fg"><div class="fl">Title</div><input class="fi" id="bs-title" type="text" maxlength="500" placeholder="Board title"/></div>
       <div class="fg"><div class="fl">Domain <span style="color:var(--text3);font-size:10px;">(optional)</span></div><input class="fi" id="bs-domain" type="text" maxlength="100" placeholder="e.g. healthcare"/></div>
       <div class="fg"><div class="fl">Owner</div><input class="fi" id="bs-owner" type="text" disabled style="opacity:.6;"/></div>
-      <div class="modal-foot" style="padding:0;margin-top:4px;"><button class="btn btn-ghost" onclick="closeModal('board-settings')">Cancel</button><button class="btn btn-primary" onclick="saveBoardSettings()">Save changes</button></div>
+      <div class="modal-foot" style="padding:0;margin-top:4px;"><button class="btn btn-ghost" onclick="closeModal('board-settings')">Cancel</button><button class="btn btn-primary" id="bs-save-btn" onclick="saveBoardSettings()">Save changes</button></div>
     </div>
 
     <!-- Collaborators -->
@@ -2726,11 +2726,12 @@ async function saveBoardSettings() {
   const title  = document.getElementById('bs-title')?.value.trim();
   const domain = document.getElementById('bs-domain')?.value.trim() || null;
   if (!title) { showToast('Title is required'); return; }
+  const restoreBtn = _btnLoading(document.getElementById('bs-save-btn'), 'Saving…');
   const res = await apiFetch(`/api/boards/${currentBoardId}`, {
     method: 'PATCH',
     body: JSON.stringify({ title, domain }),
   });
-  if (!res || !res.ok) { showToast('Could not save — try again'); return; }
+  if (!res || !res.ok) { restoreBtn(); showToast('Could not save — try again'); return; }
   const board = await res.json();
   boardState.title = board.title;
   const projName = document.getElementById('proj-name-display');
@@ -3642,6 +3643,11 @@ async function saveElementDrawer() {
   const name = document.getElementById('eld-name')?.value?.trim();
   if (!name) { showToast('Name is required'); return; }
 
+  // Prevent double-submit
+  const saveBtn = document.getElementById('el-save-btn');
+  if (saveBtn && saveBtn.disabled) return;
+  if (saveBtn) saveBtn.disabled = true;
+
   const meta = {};
   document.querySelectorAll('#el-drawer-body [id^="el-meta-"]').forEach(field => {
     const key = field.id.replace('el-meta-', '');
@@ -3661,25 +3667,38 @@ async function saveElementDrawer() {
     meta,
   };
 
-  if (!currentBoardId.startsWith('local-')) {
-    const res = await apiFetch(`/api/boards/${currentBoardId}/elements/${_drawerElementId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(body),
-    });
-    if (!res || !res.ok) { showToast('Save failed'); return; }
-    const updated = await res.json();
-    const idx = boardState.elements.findIndex(e => e.id === _drawerElementId);
-    if (idx !== -1) boardState.elements[idx] = updated;
-  } else {
-    const idx = boardState.elements.findIndex(e => e.id === _drawerElementId);
-    if (idx !== -1) boardState.elements[idx] = { ...el, ...body, updated_at: new Date().toISOString() };
-  }
+  // Optimistic update — apply immediately so canvas reflects changes now
+  const idx = boardState.elements.findIndex(e => e.id === _drawerElementId);
+  const prev = idx !== -1 ? { ...boardState.elements[idx] } : null;
+  if (idx !== -1) boardState.elements[idx] = { ...el, ...body, updated_at: new Date().toISOString() };
 
+  const savedId = _drawerElementId;
   closeElementDrawer();
   renderCanvas();
   updateAiBadge();
   updateRegistryNavVisibility();
   showToast('Element saved');
+
+  if (!currentBoardId.startsWith('local-')) {
+    const res = await apiFetch(`/api/boards/${currentBoardId}/elements/${savedId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+    if (!res || !res.ok) {
+      // Revert optimistic update
+      if (prev !== null) {
+        const i = boardState.elements.findIndex(e => e.id === savedId);
+        if (i !== -1) boardState.elements[i] = prev;
+      }
+      renderCanvas();
+      showToast('Save failed — changes reverted');
+      return;
+    }
+    // Sync server-authoritative fields (e.g. updated_at)
+    const updated = await res.json();
+    const i = boardState.elements.findIndex(e => e.id === updated.id);
+    if (i !== -1) boardState.elements[i] = updated;
+  }
 }
 
 function closeElementDrawer() {
@@ -3690,9 +3709,10 @@ function closeElementDrawer() {
 async function deleteElementDrawer() {
   if (!_drawerElementId || !currentBoardId) return;
   if (!await bpConfirm('Delete this element? This cannot be undone.', 'Delete element?', 'Delete', true)) return;
+  const restoreBtn = _btnLoading(document.getElementById('el-delete-btn'), 'Deleting…');
   if (!currentBoardId.startsWith('local-')) {
     const res = await apiFetch(`/api/boards/${currentBoardId}/elements/${_drawerElementId}`, { method: 'DELETE' });
-    if (!res || !res.ok) { showToast('Delete failed'); return; }
+    if (!res || !res.ok) { restoreBtn(); showToast('Delete failed'); return; }
   }
   boardState.elements = boardState.elements.filter(e => e.id !== _drawerElementId);
   closeElementDrawer();
@@ -6342,6 +6362,7 @@ function closeConnectorDrawer() {
 
 async function saveConnectorDrawer() {
   if (!_connDrawerId) return;
+  const restoreBtn = _btnLoading(document.getElementById('conn-save-btn'));
   const type  = document.getElementById('conn-edit-type')?.value;
   const label = document.getElementById('conn-edit-label')?.value.trim() || null;
   const notes = document.getElementById('conn-edit-notes')?.value.trim() || null;
@@ -6349,14 +6370,14 @@ async function saveConnectorDrawer() {
     const res = await apiFetch(`/api/boards/${currentBoardId}/connectors/${_connDrawerId}`, {
       method: 'PATCH', body: JSON.stringify({ connector_type: type, label, notes }),
     });
-    if (!res || !res.ok) { showToast('Save failed'); return; }
+    if (!res || !res.ok) { restoreBtn(); showToast('Save failed'); return; }
     const updated = await res.json();
     const idx = boardConnectors.findIndex(c => c.id === _connDrawerId);
     if (idx >= 0) boardConnectors[idx] = updated;
     closeConnectorDrawer();
     renderConnectors();
     showToast('Connector saved');
-  } catch { showToast('Save failed'); }
+  } catch { restoreBtn(); showToast('Save failed'); }
 }
 
 function deleteConnectorInDrawer() {
@@ -6945,6 +6966,17 @@ function showToast(msg) {
 // ═══════════════════════════════════════════════════════
 // UTILS
 // ═══════════════════════════════════════════════════════
+
+// Puts a button into a loading state. Returns a restore function.
+function _btnLoading(btn, text = 'Saving…') {
+  if (!btn) return () => {};
+  const origText     = btn.textContent;
+  const origDisabled = btn.disabled;
+  btn.disabled    = true;
+  btn.textContent = text;
+  return () => { btn.disabled = origDisabled; btn.textContent = origText; };
+}
+
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function getTime() { const n = new Date(); return n.getHours() + ':' + String(n.getMinutes()).padStart(2,'0'); }
 function formatMsgTime(isoTs) {
@@ -8027,9 +8059,9 @@ initApp();
   </div>
   <div class="el-drawer-body" id="el-drawer-body"></div>
   <div class="el-drawer-foot">
-    <button class="btn btn-ghost" onclick="deleteElementDrawer()" style="color:var(--red);border-color:var(--red-bd);">Delete</button>
+    <button class="btn btn-ghost" id="el-delete-btn" onclick="deleteElementDrawer()" style="color:var(--red);border-color:var(--red-bd);">Delete</button>
     <button class="btn btn-ghost" onclick="closeElementDrawer()" style="margin-left:auto;">Cancel</button>
-    <button class="btn btn-primary" onclick="saveElementDrawer()">Save</button>
+    <button class="btn btn-primary" id="el-save-btn" onclick="saveElementDrawer()">Save</button>
   </div>
 </div>
 
@@ -8045,9 +8077,9 @@ initApp();
   </div>
   <div class="el-drawer-body" id="conn-drawer-body"></div>
   <div class="el-drawer-foot">
-    <button class="btn btn-ghost" onclick="deleteConnectorInDrawer()" style="color:var(--red);border-color:var(--red-bd);">Delete</button>
+    <button class="btn btn-ghost" id="conn-delete-btn" onclick="deleteConnectorInDrawer()" style="color:var(--red);border-color:var(--red-bd);">Delete</button>
     <button class="btn btn-ghost" onclick="closeConnectorDrawer()" style="margin-left:auto;">Cancel</button>
-    <button class="btn btn-primary" onclick="saveConnectorDrawer()">Save</button>
+    <button class="btn btn-primary" id="conn-save-btn" onclick="saveConnectorDrawer()">Save</button>
   </div>
 </div>
 
