@@ -170,8 +170,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .ins-strip-dismiss:hover{opacity:.7;}
 
 /* PHASE GUIDE */
-.phase-guide{border-bottom:1px solid var(--blue-bd);display:flex;align-items:center;padding:0 14px;gap:7px;font-size:11px;color:var(--blue);background:var(--blue-bg);flex-shrink:0;transition:all .2s;overflow:hidden;}
-.phase-guide.vis{height:34px;}
+.phase-guide{border-bottom:1px solid var(--blue-bd);display:flex;align-items:center;padding:0 14px;gap:7px;font-size:13px;color:var(--blue);background:var(--blue-bg);flex-shrink:0;transition:all .2s;overflow:hidden;}
+.phase-guide.vis{height:40px;}
 .phase-guide.hid{height:0;border:none;padding:0;}
 .phase-guide.h{background:var(--teal-bg);border-color:var(--teal-bd);color:var(--teal);}
 .phase-guide.i{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber);}
@@ -193,17 +193,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .bp-meta{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);display:flex;align-items:center;gap:7px;}
 
 /* CANVAS GRID — PRD-02 */
-.bp-grid{display:grid;grid-template-columns:160px repeat(var(--step-count,1),minmax(180px,1fr)) 56px;width:max-content;min-width:100%;}
+.bp-grid{display:grid;grid-template-columns:160px repeat(var(--step-count,1),minmax(130px,1fr)) 56px;width:max-content;min-width:100%;}
 .bp-corner{position:sticky;top:0;left:0;z-index:10;background:var(--bg2);border-right:1px solid var(--border);border-bottom:1px solid var(--border);height:42px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);}
 .bp-step-header{position:sticky;top:0;z-index:9;background:var(--bg);border-right:1px solid var(--border2);border-bottom:1px solid var(--border);height:42px;display:flex;align-items:center;padding:0 10px;gap:4px;font-size:11px;font-weight:600;}
 .bp-step-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.bp-step-actions{display:none;align-items:center;gap:2px;flex-shrink:0;}
+.bp-step-actions{display:none;align-items:center;gap:3px;flex-shrink:0;}
 .bp-step-header:hover .bp-step-actions{display:flex;}
 .bp-add-step-cell{position:sticky;top:0;z-index:9;background:var(--bg);border-bottom:1px solid var(--border);height:42px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
 .bp-lane-label{position:sticky;left:0;z-index:8;background:var(--bg2);border-right:1px solid var(--border);border-bottom:1px solid var(--border2);min-height:100px;display:flex;align-items:center;padding:0 10px;gap:6px;font-size:11px;font-weight:600;}
 .bp-lane-name{overflow:hidden;text-overflow:ellipsis;word-break:break-word;line-height:1.3;}
 .bp-lane-type-icon{font-size:13px;flex-shrink:0;opacity:.45;line-height:1;}
-.bp-lane-actions{display:none;flex-direction:column;gap:2px;flex-shrink:0;}
+.bp-lane-actions{display:none;flex-direction:column;gap:3px;flex-shrink:0;}
 .bp-lane-label:hover .bp-lane-actions{display:flex;}
 .bp-cell{min-height:100px;border-right:1px solid var(--border2);border-bottom:1px solid var(--border2);position:relative;background:var(--surface);display:flex;flex-wrap:wrap;align-content:flex-start;padding:4px;overflow:hidden;min-width:0;}
 .bp-cell-spacer{min-height:100px;background:var(--bg);border-bottom:1px solid var(--border2);}
@@ -219,10 +219,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .bp-lane-divider-visibility::before{background:var(--blue);}
 .bp-lane-divider-internal_interaction{color:var(--text3);}
 .bp-lane-divider-internal_interaction::before{background:var(--border2);}
-.bp-act-btn{width:20px;height:20px;border:1px solid var(--border);border-radius:4px;background:transparent;color:var(--text2);font-size:9px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:inherit;transition:background .1s;padding:0;line-height:1;}
+.bp-act-btn{width:26px;height:26px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text2);font-size:13px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:inherit;transition:background .1s;padding:0;line-height:1;}
 .bp-act-btn:hover{background:var(--bg2);border-color:var(--border2);}
 .bp-act-btn:disabled{opacity:.3;cursor:default;}
 .bp-act-btn.del{color:var(--red);}
+.step-resize-handle{position:absolute;right:-2px;top:0;bottom:0;width:8px;cursor:col-resize;z-index:20;border-radius:2px;transition:background .12s;}
+.step-resize-handle:hover,.step-resize-handle.resizing{background:var(--blue);opacity:.35;}
 .bp-inline-edit{border:1.5px solid var(--blue);border-radius:4px;padding:2px 5px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;background:white;color:var(--text);outline:none;width:100%;min-width:60px;}
 /* ELEMENTS — PRD-03 */
 .el-card{display:flex;align-items:center;gap:4px;padding:10px 6px;border-radius:6px;border:1.5px solid var(--border);background:rgba(255,255,255,0.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin:3px;cursor:pointer;font-size:11px;line-height:1.3;transition:box-shadow .1s;width:calc(50% - 6px);min-height:48px;position:relative;overflow:visible;z-index:3;}
@@ -2059,6 +2061,49 @@ let selectedConnectorId   = null;
 let showElementConnectors = localStorage.getItem('bp_show_el_conn') !== 'false';
 let _connRenderTimer      = null;
 
+// Step column widths — keyed by step ID, set by drag-resize
+const _stepColWidths = {};
+const _DEFAULT_STEP_W = 130;
+
+function _getStepColWidth(id) { return _stepColWidths[id] || _DEFAULT_STEP_W; }
+
+function _buildGridTemplate() {
+  const steps = [...(boardState.steps || [])].sort((a, b) => a.order - b.order);
+  if (!steps.length) return '160px 56px';
+  return '160px ' + steps.map(s => _getStepColWidth(s.id) + 'px').join(' ') + ' 56px';
+}
+
+function _applyGridTemplate() {
+  const g = document.getElementById('canvas-grid');
+  if (g) g.style.gridTemplateColumns = _buildGridTemplate();
+}
+
+function _initStepResize() {
+  const scroll = document.querySelector('.bp-grid-scroll');
+  if (!scroll || scroll._stepResizeReady) return;
+  scroll._stepResizeReady = true;
+  scroll.addEventListener('mousedown', e => {
+    const handle = e.target.closest('.step-resize-handle');
+    if (!handle) return;
+    e.preventDefault();
+    const stepId = handle.dataset.stepId;
+    const startX = e.clientX;
+    const startW = _getStepColWidth(stepId);
+    handle.classList.add('resizing');
+    function onMove(ev) {
+      _stepColWidths[stepId] = Math.max(80, Math.min(400, startW + ev.clientX - startX));
+      _applyGridTemplate();
+    }
+    function onUp() {
+      handle.classList.remove('resizing');
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+}
+
 // ── Sidebar toggle ─────────────────────────────────────
 function toggleSidebar() {
   const sb = document.getElementById('sidebar');
@@ -2927,11 +2972,12 @@ function renderGrid() {
       <span style="width:7px;height:7px;border-radius:50%;background:${dotColor};flex-shrink:0;cursor:pointer;border:1px solid var(--border2);transition:background .1s;" onclick="setStepEmotion('${_sid}')" title="Set customer emotion at this step"></span>
       <span class="bp-step-name" ondblclick="renameStep('${_sid}')">${motIcon}${escHtml(step.name)}</span>
       <span class="bp-step-actions">
-        <button class="bp-act-btn" onclick="toggleMomentOfTruth('${_sid}')" title="Toggle moment of truth" style="${step.is_moment_of_truth ? 'color:var(--amber);' : ''}">&#9733;</button>
-        <button class="bp-act-btn" onclick="moveStep('${_sid}',-1)" ${isFirst ? 'disabled' : ''} title="Move left">&#8592;</button>
-        <button class="bp-act-btn" onclick="moveStep('${_sid}',1)"  ${isLast  ? 'disabled' : ''} title="Move right">&#8594;</button>
-        <button class="bp-act-btn del" onclick="deleteStep('${_sid}')" title="Delete step">&#215;</button>
+        <button class="bp-act-btn" onclick="toggleMomentOfTruth('${_sid}')" title="Toggle moment of truth" style="${step.is_moment_of_truth ? 'color:var(--amber);' : ''}">★</button>
+        <button class="bp-act-btn" onclick="moveStep('${_sid}',-1)" ${isFirst ? 'disabled' : ''} title="Move left">←</button>
+        <button class="bp-act-btn" onclick="moveStep('${_sid}',1)"  ${isLast  ? 'disabled' : ''} title="Move right">→</button>
+        <button class="bp-act-btn del" onclick="deleteStep('${_sid}')" title="Delete step">✕</button>
       </span>
+      <div class="step-resize-handle" data-step-id="${_sid}"></div>
     </div>`;
   });
 
@@ -2950,10 +2996,10 @@ function renderGrid() {
         ${_ltDef ? `<span class="bp-lane-type-badge">${escHtml(_ltDef.label)}</span>` : ''}
       </div>
       <span class="bp-lane-actions">
-        <button class="bp-act-btn" onclick="moveSwimlane('${escHtml(lane.id)}',-1)" ${isFirst ? 'disabled' : ''} title="Move up">&#8593;</button>
-        <button class="bp-act-btn" onclick="moveSwimlane('${escHtml(lane.id)}',1)"  ${isLast  ? 'disabled' : ''} title="Move down">&#8595;</button>
-        <button class="bp-act-btn" onclick="setSwimlaneDivider('${escHtml(lane.id)}')" title="Set divider below lane">&#8213;</button>
-        <button class="bp-act-btn del" onclick="deleteSwimlane('${escHtml(lane.id)}')" title="Delete swimlane">&#215;</button>
+        <button class="bp-act-btn" onclick="moveSwimlane('${escHtml(lane.id)}',-1)" ${isFirst ? 'disabled' : ''} title="Move up">↑</button>
+        <button class="bp-act-btn" onclick="moveSwimlane('${escHtml(lane.id)}',1)"  ${isLast  ? 'disabled' : ''} title="Move down">↓</button>
+        <button class="bp-act-btn" onclick="setSwimlaneDivider('${escHtml(lane.id)}')" title="Set divider below lane">─</button>
+        <button class="bp-act-btn del" onclick="deleteSwimlane('${escHtml(lane.id)}')" title="Delete swimlane">✕</button>
       </span>
     </div>`;
     steps.forEach(step => {
@@ -2976,6 +3022,7 @@ function renderGrid() {
   html += `<div class="bp-add-swimlane-row"><button class="btn btn-ghost" style="height:26px;font-size:10px;" onclick="addSwimlane()">+ Swimlane</button></div>`;
 
   grid.innerHTML = html;
+  _applyGridTemplate();
 }
 
 function persistStructure() {
@@ -6882,6 +6929,7 @@ async function initApp() {
   initRoleUI();
   initChatDragDrop();
   _initCanvasConnHandlers();
+  _initStepResize();
   // PRD-19: sync connector toggle button and conn-mode class to persisted state
   const _ctBtn = document.getElementById('conn-toggle-btn');
   if (_ctBtn) _ctBtn.classList.toggle('active', showElementConnectors);
