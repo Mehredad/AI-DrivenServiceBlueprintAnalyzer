@@ -704,6 +704,9 @@ select.fi{appearance:none;cursor:pointer;}
 /* TOAST */
 .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:white;padding:8px 14px;border-radius:22px;font-size:11px;font-family:'DM Sans',sans-serif;font-weight:500;display:flex;align-items:center;gap:6px;z-index:999;transition:transform .25s cubic-bezier(.16,1,.3,1);pointer-events:none;white-space:nowrap;}
 .toast.show{transform:translateX(-50%) translateY(0);}
+.toast.toast--success{background:#166534;}
+.toast.toast--warning{background:#A35800;}
+.toast.toast--error{background:#B91C1C;}
 
 /* SCROLLBARS */
 ::-webkit-scrollbar{width:4px;height:4px;}
@@ -1996,7 +1999,7 @@ select.fi{appearance:none;cursor:pointer;}
 </div><div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('add-metric')">Cancel</button><button class="btn btn-primary" onclick="addMonitoringMetric()">Add metric</button></div></div></div>
 
 <div class="toast" id="toast">
-  <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="white" stroke-width="1.1"/><polyline points="3,5.5 5,7.5 8.5,3.5" stroke="white" stroke-width="1.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <span id="toast-icon"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="white" stroke-width="1.1"/><polyline points="3,5.5 5,7.5 8.5,3.5" stroke="white" stroke-width="1.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
   <span id="toast-msg">Done</span>
 </div>
 
@@ -6979,13 +6982,21 @@ function selAuto(el) {
 // ═══════════════════════════════════════════════════════
 // TOAST
 // ═══════════════════════════════════════════════════════
+const _TOAST_ICONS = {
+  default: `<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="white" stroke-width="1.1"/><polyline points="3,5.5 5,7.5 8.5,3.5" stroke="white" stroke-width="1.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  success: `<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="white" stroke-width="1.1"/><polyline points="3,5.5 5,7.5 8.5,3.5" stroke="white" stroke-width="1.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  warning: `<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="white" stroke-width="1.1"/><line x1="5.5" y1="3.5" x2="5.5" y2="6.5" stroke="white" stroke-width="1.1" stroke-linecap="round"/><circle cx="5.5" cy="8" r=".65" fill="white"/></svg>`,
+  error:   `<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="white" stroke-width="1.1"/><line x1="3.8" y1="3.8" x2="7.2" y2="7.2" stroke="white" stroke-width="1.1" stroke-linecap="round"/><line x1="7.2" y1="3.8" x2="3.8" y2="7.2" stroke="white" stroke-width="1.1" stroke-linecap="round"/></svg>`,
+};
 let toastTimer;
-function showToast(msg) {
+function showToast(msg, type = 'default', duration = 2600) {
   const t = document.getElementById('toast');
+  document.getElementById('toast-icon').innerHTML = _TOAST_ICONS[type] || _TOAST_ICONS.default;
   document.getElementById('toast-msg').textContent = msg;
+  t.className = 'toast' + (type !== 'default' ? ` toast--${type}` : '');
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+  toastTimer = setTimeout(() => t.classList.remove('show'), duration);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -8003,8 +8014,8 @@ async function lpAuthSubmit() {
       lpSwitchTab('login');
       document.getElementById('lp-email').value = email;
       errEl.style.color = 'var(--green)';
-      errEl.textContent = 'Account created! Check your email, then sign in below.';
-      showToast('Welcome to Blueprint AI!');
+      errEl.textContent = 'Account created! Sign in below — we\'ve sent a welcome email to ' + email + '.';
+      showToast('Welcome to Blueprint AI! Check your inbox.', 'success', 4500);
     } else {
       const res = await fetch(API_BASE + '/api/auth/login', {
         method: 'POST',
