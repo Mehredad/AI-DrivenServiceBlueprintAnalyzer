@@ -15,6 +15,7 @@ from app.database import get_db
 from app.models import User
 from app.schemas import UserRegister, UserLogin, TokenRefresh, TokenResponse, UserOut, UserPatch, GoogleAuth
 from app.services import auth_service
+from app.services.email_service import send_welcome_email
 from app.middleware.auth_middleware import get_current_user
 from app.limiter import limiter
 
@@ -142,6 +143,7 @@ async def register(request: Request, body: UserRegister, db: AsyncSession = Depe
     access, expires_in = auth_service.create_access_token(user.id, user.role)
     refresh = await auth_service.create_refresh_token(db, user.id)
     await db.commit()
+    await send_welcome_email(user.email, user.full_name or "")
     return TokenResponse(access_token=access, refresh_token=refresh, expires_in=expires_in)
 
 

@@ -58,6 +58,11 @@ class Settings(BaseSettings):
     # Create credentials at console.cloud.google.com → APIs & Services → Credentials
     google_client_id: str = ""
 
+    # ── Transactional email (Resend)
+    resend_api_key: str = ""
+    from_email: str = "Blueprint AI <onboarding@resend.dev>"
+    app_url: str = ""
+
     # ── CORS
     allowed_origins: str = "http://localhost:3000,http://localhost:8000"
 
