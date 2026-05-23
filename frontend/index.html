@@ -7993,7 +7993,10 @@ async function lpAuthSubmit() {
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         const detail = err.detail;
-        errEl.textContent = Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : (detail || 'Registration failed.');
+        const clean = d => (d.msg || '').replace(/^Value error,\s*/i, '');
+        errEl.textContent = Array.isArray(detail) ? detail.map(clean).join(' · ') : (detail || 'Registration failed.');
+        btn.disabled = false;
+        btn.textContent = 'Create account';
         return;
       }
       const tokens = await res.json();
@@ -8007,15 +8010,19 @@ async function lpAuthSubmit() {
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         const detail = err.detail;
-        errEl.textContent = Array.isArray(detail) ? detail.map(d => d.msg).join(', ') : (detail || 'Login failed. Check your credentials.');
+        const clean = d => (d.msg || '').replace(/^Value error,\s*/i, '');
+        errEl.textContent = Array.isArray(detail) ? detail.map(clean).join(' · ') : (detail || 'Login failed. Check your credentials.');
+        btn.disabled = false;
+        btn.textContent = 'Sign in';
         return;
       }
       const tokens = await res.json();
       await _lpStoreAndEnter(tokens);
     }
-  } finally {
+  } catch (e) {
+    errEl.textContent = 'Something went wrong. Please try again.';
     btn.disabled = false;
-    lpSwitchTab(_lpTab); // restore button label
+    btn.textContent = _lpTab === 'register' ? 'Create account' : 'Sign in';
   }
 }
 
