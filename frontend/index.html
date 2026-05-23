@@ -7977,6 +7977,7 @@ async function lpAuthSubmit() {
   const password = document.getElementById('lp-password').value;
   const errEl    = document.getElementById('lp-error');
   const btn      = document.getElementById('lp-submit-btn');
+  errEl.style.color = '';
   errEl.textContent = '';
   btn.disabled = true;
   btn.textContent = 'Please wait…';
@@ -7999,8 +8000,11 @@ async function lpAuthSubmit() {
         btn.textContent = 'Create account';
         return;
       }
-      const tokens = await res.json();
-      await _lpStoreAndEnter(tokens);
+      lpSwitchTab('login');
+      document.getElementById('lp-email').value = email;
+      errEl.style.color = 'var(--green)';
+      errEl.textContent = 'Account created! Check your email, then sign in below.';
+      showToast('Welcome to Blueprint AI!');
     } else {
       const res = await fetch(API_BASE + '/api/auth/login', {
         method: 'POST',
