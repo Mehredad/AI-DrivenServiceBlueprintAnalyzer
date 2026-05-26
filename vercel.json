@@ -15,11 +15,11 @@
       "use": "@vercel/static"
     },
     {
-      "src": "frontend/templates/(.*)",
+      "src": "frontend/templates/**",
       "use": "@vercel/static"
     },
     {
-      "src": "frontend/demos/(.*)",
+      "src": "frontend/demos/**",
       "use": "@vercel/static"
     }
   ],
