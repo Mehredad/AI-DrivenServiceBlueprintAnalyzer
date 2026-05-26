@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blueprint AI — AI audits your blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F3EF;--bg2:#EDEBE5;--bg3:#E3E0D8;--surface:#FFFFFF;
+  --border:#D9D6CE;--border2:#C3BFB5;
+  --text:#1D1C18;--text2:#5A5850;--text3:#9A9790;
+  --blue:#1A4FD8;--blue-bg:#EEF2FD;--blue-bd:#C0CFFA;
+  --teal:#0A7065;--teal-bg:#E6F5F2;--teal-bd:#9DD6CC;
+  --amber:#A35800;--amber-bg:#FEF3E6;--amber-bd:#F5C07A;
+  --red:#B91C1C;--red-bg:#FEF2F2;--red-bd:#FECACA;
+  --purple:#6D28D9;--purple-bg:#F5F0FE;--purple-bd:#DDD6FE;
+  --green:#166534;--green-bg:#F0FDF4;--green-bd:#BBF7D0;
+  --r:8px;--rl:12px;--rxl:16px;
+  --sh:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --sh2:0 10px 30px rgba(0,0,0,.12),0 3px 10px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:#1d1c18;color:var(--text);font-size:13px;line-height:1.5;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.stage-wrap{position:relative;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;}
+.stage{width:1200px;height:675px;position:relative;background:var(--bg);overflow:hidden;transform-origin:center center;box-shadow:0 30px 80px rgba(0,0,0,.4);}
+
+/* App chrome */
+.app-chrome{position:absolute;inset:0;display:flex;flex-direction:column;}
+.topbar{height:42px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;}
+.logo-mark{width:22px;height:22px;background:var(--text);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-mark::after{content:'';width:8px;height:8px;border:1.5px solid #fff;border-radius:2px;}
+.logo-name{font-family:'Fraunces',serif;font-size:14px;font-weight:400;letter-spacing:-.2px;}
+.tb-crumb{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:6px;margin-left:6px;}
+.tb-crumb::before{content:'';width:1px;height:14px;background:var(--border);margin-right:4px;}
+.tb-spacer{flex:1;}
+.tb-role{display:flex;gap:2px;background:var(--bg2);border-radius:6px;padding:2px;border:1px solid var(--border);}
+.tb-role-btn{padding:4px 9px;border-radius:4px;font-size:10px;font-weight:600;color:var(--text2);}
+.tb-role-btn.active{background:var(--surface);color:var(--text);box-shadow:var(--sh);}
+.tb-pill{display:flex;align-items:center;gap:5px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;}
+.tb-pill .dot{width:5px;height:5px;border-radius:50%;background:var(--text3);}
+.tb-audit-btn{
+  display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;
+  background:var(--text);color:#fff;padding:5px 10px;border-radius:6px;
+  font-family:'DM Sans',sans-serif;
+}
+.tb-audit-btn .audit-dot{width:5px;height:5px;border-radius:50%;background:var(--purple-bd);}
+
+.subbar{height:34px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:14px;flex-shrink:0;}
+.ph-tab{font-size:10px;font-weight:600;color:var(--text3);display:flex;align-items:center;gap:5px;padding:7px 0;border-bottom:2px solid transparent;}
+.ph-tab .ph-dot{width:5px;height:5px;border-radius:50%;}
+.ph-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+.ph-tab.active .ph-dot{background:var(--blue);}
+.ph-tab.h .ph-dot{background:var(--teal);}
+.ph-tab.i .ph-dot{background:var(--amber);}
+
+.canvas-area{flex:1;position:relative;padding:18px;overflow:hidden;}
+.bp-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);box-shadow:var(--sh);height:100%;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.bp-head{padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.bp-head-title{font-family:'Fraunces',serif;font-size:13px;font-weight:400;flex:1;}
+.bp-head-meta{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);display:flex;align-items:center;gap:8px;}
+.bp-head-meta span{display:inline-flex;align-items:center;gap:4px;}
+.bp-head-meta .mdot{width:5px;height:5px;border-radius:50%;background:var(--text3);}
+
+.bp-grid{flex:1;display:grid;grid-template-columns:140px repeat(5, 1fr);grid-template-rows:36px repeat(4, 1fr);background:var(--bg2);gap:1px;position:relative;}
+.bp-corner{background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:9px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);}
+.bp-step-header{background:var(--bg);display:flex;align-items:center;justify-content:flex-start;padding:0 12px;gap:6px;font-size:11px;font-weight:600;color:var(--text);}
+.bp-step-header .stepnum{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);font-weight:500;}
+.bp-lane-label{background:var(--bg);display:flex;align-items:center;gap:8px;padding:0 12px;font-size:11px;font-weight:600;color:var(--text);}
+.lane-icon{width:18px;height:18px;border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;}
+.lane-icon.l-customer{background:var(--blue-bg);color:var(--blue);}
+.lane-icon.l-frontstage{background:var(--teal-bg);color:var(--teal);}
+.lane-icon.l-backstage{background:var(--purple-bg);color:var(--purple);}
+.lane-icon.l-systems{background:var(--bg2);color:var(--text2);}
+.lane-meta{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);font-weight:500;margin-top:1px;}
+.lane-name-wrap{display:flex;flex-direction:column;line-height:1.2;}
+
+.bp-cell{background:var(--surface);padding:6px;display:flex;flex-direction:column;gap:4px;min-width:0;position:relative;}
+.el-card{background:var(--surface);border:1.5px solid var(--border);border-radius:6px;padding:6px 7px;font-size:10px;font-weight:600;display:flex;align-items:center;gap:5px;line-height:1.25;box-shadow:0 1px 2px rgba(0,0,0,.03);position:relative;}
+.el-card .el-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.el-card .el-name{flex:1;color:var(--text);overflow:hidden;text-overflow:ellipsis;}
+.el-card.touchpoint{background:var(--blue-bg);border-color:var(--blue-bd);}
+.el-card.touchpoint .el-dot{background:var(--blue);}
+.el-card.data{background:var(--teal-bg);border-color:var(--teal-bd);}
+.el-card.data .el-dot{background:var(--teal);}
+.el-card.handoff{background:var(--purple-bg);border-color:var(--purple-bd);}
+.el-card.handoff .el-dot{background:var(--purple);}
+.el-card.ai{background:var(--purple-bg);border-color:var(--purple-bd);}
+.el-card.ai .el-dot{background:var(--purple);}
+.el-card.system{background:var(--bg2);border-color:var(--border2);}
+.el-card.system .el-dot{background:var(--text2);}
+.el-card .ai-tag{font-size:7px;font-weight:700;background:rgba(109,40,217,.13);color:var(--purple);border-radius:3px;padding:1px 4px;letter-spacing:.4px;}
+
+/* ─── Scan shimmer overlay ─── */
+.scan-overlay{
+  position:absolute;inset:0;
+  pointer-events:none;
+  overflow:hidden;
+  opacity:0;
+  animation:scan-show 11000ms infinite ease-out;
+}
+@keyframes scan-show{
+  0%,18%   {opacity:0;}
+  19%      {opacity:1;}
+  44%      {opacity:1;}
+  47%      {opacity:0;}
+  100%     {opacity:0;}
+}
+.scan-line{
+  position:absolute;left:0;right:0;height:80px;top:-80px;
+  background:linear-gradient(180deg,
+    rgba(109,40,217,0) 0%,
+    rgba(109,40,217,.05) 30%,
+    rgba(109,40,217,.16) 50%,
+    rgba(109,40,217,.05) 70%,
+    rgba(109,40,217,0) 100%);
+  animation:scan-move 11000ms infinite cubic-bezier(.5,0,.5,1);
+}
+@keyframes scan-move{
+  0%,18%   {top:-80px;}
+  20%      {top:-80px;}
+  44%      {top:100%;}
+  47%      {top:100%;}
+  100%     {top:100%;}
+}
+.scan-line::after{
+  content:'';position:absolute;left:0;right:0;top:50%;height:1.5px;
+  background:linear-gradient(90deg,
+    transparent 0%,
+    rgba(109,40,217,.35) 10%,
+    rgba(109,40,217,.7) 50%,
+    rgba(109,40,217,.35) 90%,
+    transparent 100%);
+  box-shadow:0 0 12px rgba(109,40,217,.5);
+}
+
+/* Hit markers — small ticks that appear on cells during scan */
+.hit-marker{
+  position:absolute;
+  width:18px;height:18px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;
+  z-index:6;
+  opacity:0;
+  transform:scale(.4);
+  box-shadow:0 2px 8px rgba(0,0,0,.18);
+}
+.hit-marker.red{background:var(--red);}
+.hit-marker.amber{background:var(--amber);}
+.hit-marker.green{background:var(--green);}
+.hit-marker::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:1.5px solid currentColor;opacity:.25;}
+.hit-marker.h1{top:14%;left:48%;animation:hit-pop 11000ms infinite cubic-bezier(.34,1.56,.64,1);}
+.hit-marker.h2{top:51%;left:60%;animation:hit-pop 11000ms infinite cubic-bezier(.34,1.56,.64,1);}
+.hit-marker.h3{top:79%;left:75%;animation:hit-pop 11000ms infinite cubic-bezier(.34,1.56,.64,1);}
+@keyframes hit-pop{
+  0%,28%  {opacity:0;transform:scale(.4);}
+  31%     {opacity:1;transform:scale(1.1);}
+  34%     {opacity:1;transform:scale(1);}
+  88%     {opacity:1;transform:scale(1);}
+  92%     {opacity:0;transform:scale(.6);}
+  100%    {opacity:0;}
+}
+.hit-marker.h2{animation-delay:0ms;}
+.hit-marker.h2{animation-name:hit-pop-2;}
+.hit-marker.h3{animation-name:hit-pop-3;}
+@keyframes hit-pop-2{
+  0%,33%  {opacity:0;transform:scale(.4);}
+  36%     {opacity:1;transform:scale(1.1);}
+  39%     {opacity:1;transform:scale(1);}
+  88%     {opacity:1;transform:scale(1);}
+  92%     {opacity:0;transform:scale(.6);}
+  100%    {opacity:0;}
+}
+@keyframes hit-pop-3{
+  0%,40%  {opacity:0;transform:scale(.4);}
+  43%     {opacity:1;transform:scale(1.1);}
+  46%     {opacity:1;transform:scale(1);}
+  88%     {opacity:1;transform:scale(1);}
+  92%     {opacity:0;transform:scale(.6);}
+  100%    {opacity:0;}
+}
+
+/* ─── Agent panel slides in from right ─── */
+.agent-panel{
+  position:absolute;
+  top:42px;right:0;bottom:0;
+  width:340px;
+  background:var(--surface);
+  border-left:1px solid var(--border);
+  box-shadow:-12px 0 30px rgba(0,0,0,.08);
+  z-index:20;
+  display:flex;flex-direction:column;
+  transform:translateX(100%);
+  animation:panel-in 11000ms infinite cubic-bezier(.4,0,.2,1);
+}
+@keyframes panel-in{
+  0%,9%    {transform:translateX(100%);}
+  14%      {transform:translateX(0);}
+  88%      {transform:translateX(0);}
+  93%      {transform:translateX(100%);}
+  100%     {transform:translateX(100%);}
+}
+.agent-head{
+  padding:11px 13px;border-bottom:1px solid var(--border);background:var(--text);
+  display:flex;align-items:center;gap:8px;flex-shrink:0;color:#fff;
+}
+.agent-avatar{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-family:'Fraunces',serif;}
+.agent-name{font-size:12px;font-weight:600;}
+.agent-status{font-size:9px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,.6);display:flex;align-items:center;gap:5px;margin-top:1px;}
+.agent-status::before{content:'';width:5px;height:5px;border-radius:50%;background:#9DD6CC;animation:status-pulse 1.8s ease-in-out infinite;}
+@keyframes status-pulse{50%{opacity:.4;}}
+.agent-close{margin-left:auto;color:rgba(255,255,255,.6);font-size:14px;}
+
+.agent-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg);padding:0 10px;gap:14px;flex-shrink:0;}
+.agent-tab{font-size:10px;font-weight:600;color:var(--text3);padding:8px 0;border-bottom:2px solid transparent;}
+.agent-tab.active{color:var(--text);border-bottom-color:var(--text);}
+
+.agent-body{flex:1;overflow:hidden;padding:12px;display:flex;flex-direction:column;gap:10px;}
+.agent-prompt{
+  font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;
+  text-transform:uppercase;letter-spacing:.5px;
+  display:flex;align-items:center;gap:6px;
+}
+.agent-prompt::before{
+  content:'';width:4px;height:4px;border-radius:50%;background:var(--purple);
+  box-shadow:0 0 0 3px var(--purple-bg);
+}
+
+.agent-running{
+  display:flex;align-items:center;gap:9px;
+  background:var(--purple-bg);border:1px solid var(--purple-bd);
+  border-radius:8px;padding:9px 11px;
+  font-size:11px;color:var(--purple);font-weight:600;
+  animation:agent-running-life 11000ms infinite ease;
+}
+@keyframes agent-running-life{
+  0%,15%  {opacity:0;transform:translateY(4px);}
+  19%     {opacity:1;transform:translateY(0);}
+  46%     {opacity:1;}
+  49%     {opacity:0;transform:translateY(-2px);height:0;padding:0;margin:0;border:none;}
+  88%     {opacity:0;}
+  100%    {opacity:0;}
+}
+.agent-running .run-spinner{
+  width:12px;height:12px;border-radius:50%;
+  border:2px solid var(--purple-bd);border-top-color:var(--purple);
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.agent-running .run-progress{
+  margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;
+  letter-spacing:.4px;
+}
+
+.insight-summary{
+  display:flex;align-items:center;gap:8px;
+  font-size:11px;color:var(--text);font-weight:600;
+  padding:0 2px;
+  opacity:0;
+  animation:summary-life 11000ms infinite ease;
+}
+@keyframes summary-life{
+  0%,48%  {opacity:0;}
+  51%     {opacity:1;}
+  88%     {opacity:1;}
+  93%     {opacity:0;}
+  100%    {opacity:0;}
+}
+.insight-summary .summary-count{
+  font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);
+  margin-left:auto;font-weight:500;
+}
+.insight-summary .summary-icon{
+  width:14px;height:14px;border-radius:3px;background:var(--bg2);
+  display:flex;align-items:center;justify-content:center;color:var(--text2);
+  font-size:9px;
+}
+
+.insight-list{display:flex;flex-direction:column;gap:8px;}
+.insight-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:11px 12px;display:flex;flex-direction:column;gap:6px;
+  box-shadow:0 1px 2px rgba(0,0,0,.03);
+  opacity:0;transform:translateX(12px);
+  position:relative;overflow:hidden;
+}
+.insight-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+}
+.insight-card.sev-high::before{background:var(--red);}
+.insight-card.sev-med::before{background:var(--amber);}
+.insight-card.sev-low::before{background:var(--green);}
+.insight-head{display:flex;align-items:center;gap:7px;}
+.insight-sev{
+  width:7px;height:7px;border-radius:50%;flex-shrink:0;
+}
+.sev-high .insight-sev{background:var(--red);box-shadow:0 0 0 3px var(--red-bg);}
+.sev-med  .insight-sev{background:var(--amber);box-shadow:0 0 0 3px var(--amber-bg);}
+.sev-low  .insight-sev{background:var(--green);box-shadow:0 0 0 3px var(--green-bg);}
+.insight-type{
+  font-size:9px;font-family:'JetBrains Mono',monospace;
+  text-transform:uppercase;letter-spacing:.5px;
+  color:var(--text3);font-weight:500;
+}
+.sev-high .insight-type{color:var(--red);}
+.sev-med  .insight-type{color:var(--amber);}
+.sev-low  .insight-type{color:var(--green);}
+.insight-id{
+  margin-left:auto;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);
+  background:var(--bg);padding:2px 5px;border-radius:3px;
+}
+.insight-title{font-size:12px;font-weight:600;color:var(--text);line-height:1.35;}
+.insight-where{
+  font-size:10px;color:var(--text3);display:flex;align-items:center;gap:5px;
+}
+.insight-where .where-pill{
+  font-family:'JetBrains Mono',monospace;font-size:9px;
+  background:var(--bg);border:1px solid var(--border);border-radius:3px;
+  padding:1px 5px;color:var(--text2);
+}
+.insight-actions{display:flex;gap:6px;margin-top:2px;}
+.ins-action{
+  font-size:9px;font-weight:600;
+  padding:3px 7px;border-radius:4px;font-family:'DM Sans',sans-serif;
+  background:var(--bg);border:1px solid var(--border);color:var(--text2);
+}
+.ins-action.primary{background:var(--text);color:#fff;border-color:var(--text);}
+
+.insight-card.c1{animation:ins-in-1 11000ms infinite cubic-bezier(.4,0,.2,1);}
+.insight-card.c2{animation:ins-in-2 11000ms infinite cubic-bezier(.4,0,.2,1);}
+.insight-card.c3{animation:ins-in-3 11000ms infinite cubic-bezier(.4,0,.2,1);}
+@keyframes ins-in-1{
+  0%,49%  {opacity:0;transform:translateX(12px);}
+  53%     {opacity:1;transform:translateX(0);}
+  88%     {opacity:1;transform:translateX(0);}
+  93%     {opacity:0;transform:translateX(8px);}
+  100%    {opacity:0;}
+}
+@keyframes ins-in-2{
+  0%,55%  {opacity:0;transform:translateX(12px);}
+  59%     {opacity:1;transform:translateX(0);}
+  88%     {opacity:1;transform:translateX(0);}
+  93%     {opacity:0;transform:translateX(8px);}
+  100%    {opacity:0;}
+}
+@keyframes ins-in-3{
+  0%,61%  {opacity:0;transform:translateX(12px);}
+  65%     {opacity:1;transform:translateX(0);}
+  88%     {opacity:1;transform:translateX(0);}
+  93%     {opacity:0;transform:translateX(8px);}
+  100%    {opacity:0;}
+}
+
+/* Caption */
+.caption{position:absolute;left:0;right:0;bottom:18px;display:flex;justify-content:center;z-index:40;pointer-events:none;}
+.caption-inner{display:flex;align-items:center;gap:8px;background:rgba(29,28,24,.92);color:#F5F3EF;border-radius:99px;padding:8px 16px;font-size:12px;font-weight:500;letter-spacing:.1px;box-shadow:0 6px 20px rgba(0,0,0,.25);backdrop-filter:blur(6px);}
+.caption-inner .cap-dot{width:5px;height:5px;border-radius:50%;background:#DDD6FE;box-shadow:0 0 0 3px rgba(221,214,254,.18);}
+.caption-inner .cap-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:#9A9790;}
+
+/* Audit button pulse early in loop */
+.tb-audit-btn{animation:audit-btn-pulse 11000ms infinite ease-out;}
+@keyframes audit-btn-pulse{
+  0%   {box-shadow:0 0 0 0 rgba(109,40,217,.4);}
+  3%   {box-shadow:0 0 0 8px rgba(109,40,217,0);}
+  9%   {box-shadow:0 0 0 0 rgba(109,40,217,0);}
+  100% {box-shadow:0 0 0 0 rgba(109,40,217,0);}
+}
+
+/* Caption life */
+.caption-inner{opacity:0;transform:translateY(8px);animation:cap-life 11000ms infinite ease-out;}
+@keyframes cap-life{
+  0%,3%   {opacity:0;transform:translateY(8px);}
+  9%      {opacity:1;transform:translateY(0);}
+  90%     {opacity:1;transform:translateY(0);}
+  95%     {opacity:0;transform:translateY(4px);}
+  100%    {opacity:0;}
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{animation:none !important;transition:none !important;}
+  .scan-overlay{display:none !important;}
+  .agent-running{display:none !important;}
+  .agent-panel{transform:translateX(0) !important;}
+  .insight-card, .hit-marker, .caption-inner, .insight-summary{opacity:1 !important;transform:none !important;}
+}
+</style>
+</head>
+<body>
+<div class="stage-wrap">
+  <div class="stage">
+
+    <div class="app-chrome">
+      <div class="topbar">
+        <div class="logo-mark"></div>
+        <div class="logo-name">Blueprint AI</div>
+        <div class="tb-crumb">workspace / fintech-onboarding</div>
+        <div class="tb-spacer"></div>
+        <div class="tb-audit-btn"><span class="audit-dot"></span>Audit blueprint</div>
+        <div class="tb-pill"><span class="dot"></span>main</div>
+      </div>
+
+      <div class="subbar">
+        <div class="ph-tab active"><span class="ph-dot"></span>Understand</div>
+        <div class="ph-tab h"><span class="ph-dot"></span>Hypothesize</div>
+        <div class="ph-tab i"><span class="ph-dot"></span>Implement</div>
+      </div>
+
+      <div class="canvas-area">
+        <div class="bp-wrap">
+          <div class="bp-head">
+            <div class="bp-head-title">Customer onboarding — Fintech app</div>
+            <div class="bp-head-meta">
+              <span><span class="mdot"></span>4 lanes</span>
+              <span><span class="mdot"></span>5 steps</span>
+              <span><span class="mdot"></span>11 elements</span>
+            </div>
+          </div>
+
+          <div class="bp-grid">
+            <div class="bp-corner">SWIMLANE / STEP</div>
+            <div class="bp-step-header"><span class="stepnum">01</span>Discover</div>
+            <div class="bp-step-header"><span class="stepnum">02</span>Sign up</div>
+            <div class="bp-step-header"><span class="stepnum">03</span>Verify ID</div>
+            <div class="bp-step-header"><span class="stepnum">04</span>Fund account</div>
+            <div class="bp-step-header"><span class="stepnum">05</span>Activate</div>
+
+            <div class="bp-lane-label"><div class="lane-icon l-customer">◐</div><div class="lane-name-wrap"><span>Customer</span><span class="lane-meta">ACTIONS</span></div></div>
+            <div class="bp-cell"><div class="el-card touchpoint"><span class="el-dot"></span><span class="el-name">Browse landing</span></div></div>
+            <div class="bp-cell"><div class="el-card touchpoint"><span class="el-dot"></span><span class="el-name">Enter details</span></div><div class="el-card data"><span class="el-dot"></span><span class="el-name">Email OTP</span></div></div>
+            <div class="bp-cell"><div class="el-card touchpoint"><span class="el-dot"></span><span class="el-name">Upload ID</span></div></div>
+            <div class="bp-cell"><div class="el-card touchpoint"><span class="el-dot"></span><span class="el-name">Link bank</span></div></div>
+            <div class="bp-cell"></div>
+
+            <div class="bp-lane-label"><div class="lane-icon l-frontstage">◑</div><div class="lane-name-wrap"><span>Frontstage</span><span class="lane-meta">EMPLOYEE</span></div></div>
+            <div class="bp-cell"></div>
+            <div class="bp-cell"><div class="el-card handoff"><span class="el-dot"></span><span class="el-name">Welcome email</span></div></div>
+            <div class="bp-cell"></div>
+            <div class="bp-cell"></div>
+            <div class="bp-cell"><div class="el-card touchpoint"><span class="el-dot"></span><span class="el-name">First-use tour</span></div></div>
+
+            <div class="bp-lane-label"><div class="lane-icon l-backstage">●</div><div class="lane-name-wrap"><span>Backstage</span><span class="lane-meta">PROCESSES</span></div></div>
+            <div class="bp-cell"></div>
+            <div class="bp-cell"></div>
+            <div class="bp-cell"><div class="el-card ai"><span class="el-dot"></span><span class="el-name">KYC review</span><span class="ai-tag">AI</span></div></div>
+            <div class="bp-cell"><div class="el-card ai"><span class="el-dot"></span><span class="el-name">Risk scoring</span><span class="ai-tag">AI</span></div></div>
+            <div class="bp-cell"></div>
+
+            <div class="bp-lane-label"><div class="lane-icon l-systems">▣</div><div class="lane-name-wrap"><span>Systems</span><span class="lane-meta">DATA &amp; APIs</span></div></div>
+            <div class="bp-cell"></div>
+            <div class="bp-cell"><div class="el-card system"><span class="el-dot"></span><span class="el-name">User DB write</span></div></div>
+            <div class="bp-cell"></div>
+            <div class="bp-cell"><div class="el-card data"><span class="el-dot"></span><span class="el-name">Payments API</span></div></div>
+            <div class="bp-cell"></div>
+          </div>
+
+          <!-- Scan overlay -->
+          <div class="scan-overlay">
+            <div class="scan-line"></div>
+          </div>
+
+          <!-- Hit markers landing on cells during scan -->
+          <div class="hit-marker red h1">!</div>
+          <div class="hit-marker amber h2">!</div>
+          <div class="hit-marker green h3">+</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Agent panel slides in from right -->
+    <div class="agent-panel">
+      <div class="agent-head">
+        <div class="agent-avatar">B</div>
+        <div>
+          <div class="agent-name">Blueprint Agent</div>
+          <div class="agent-status">connected · gemini 1.5 pro</div>
+        </div>
+        <div class="agent-close">×</div>
+      </div>
+      <div class="agent-tabs">
+        <div class="agent-tab">Chat</div>
+        <div class="agent-tab active">Insights</div>
+        <div class="agent-tab">History</div>
+      </div>
+      <div class="agent-body">
+        <div class="agent-prompt">Audit blueprint · 11 elements · 4 lanes</div>
+
+        <div class="agent-running">
+          <div class="run-spinner"></div>
+          <span>Scanning for gaps &amp; risks…</span>
+          <span class="run-progress">3/11</span>
+        </div>
+
+        <div class="insight-summary">
+          <div class="summary-icon">✓</div>
+          3 insights surfaced
+          <span class="summary-count">scanned in 1.4s</span>
+        </div>
+
+        <div class="insight-list">
+          <div class="insight-card sev-high c1">
+            <div class="insight-head">
+              <span class="insight-sev"></span>
+              <span class="insight-type">Gap · high</span>
+              <span class="insight-id">INS-01</span>
+            </div>
+            <div class="insight-title">No support process for failed ID verification</div>
+            <div class="insight-where">
+              <span class="where-pill">Verify ID</span>
+              <span>·</span>
+              <span class="where-pill">Backstage</span>
+            </div>
+            <div class="insight-actions">
+              <span class="ins-action primary">Add element</span>
+              <span class="ins-action">Dismiss</span>
+            </div>
+          </div>
+
+          <div class="insight-card sev-med c2">
+            <div class="insight-head">
+              <span class="insight-sev"></span>
+              <span class="insight-type">Risk · medium</span>
+              <span class="insight-id">INS-02</span>
+            </div>
+            <div class="insight-title">KYC review has no human override checkpoint</div>
+            <div class="insight-where">
+              <span class="where-pill">Verify ID</span>
+              <span>·</span>
+              <span class="where-pill">Backstage · AI</span>
+            </div>
+            <div class="insight-actions">
+              <span class="ins-action primary">Open</span>
+              <span class="ins-action">Suggest fix</span>
+            </div>
+          </div>
+
+          <div class="insight-card sev-low c3">
+            <div class="insight-head">
+              <span class="insight-sev"></span>
+              <span class="insight-type">Suggestion · low</span>
+              <span class="insight-id">INS-03</span>
+            </div>
+            <div class="insight-title">Line of visibility missing between steps 03 and 04</div>
+            <div class="insight-where">
+              <span class="where-pill">Verify ID → Fund</span>
+            </div>
+            <div class="insight-actions">
+              <span class="ins-action primary">Add divider</span>
+              <span class="ins-action">Dismiss</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="caption">
+      <div class="caption-inner">
+        <span class="cap-dot"></span>
+        <span class="cap-num">02 / USP</span>
+        AI audits your blueprint for gaps and risks.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const stage = document.querySelector('.stage');
+  function fit(){
+    const scale = Math.min(window.innerWidth/1200, window.innerHeight/675);
+    stage.style.transform = 'scale(' + scale + ')';
+  }
+  fit();
+  window.addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blueprint AI — Populate from prompt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F3EF;--bg2:#EDEBE5;--bg3:#E3E0D8;--surface:#FFFFFF;
+  --border:#D9D6CE;--border2:#C3BFB5;
+  --text:#1D1C18;--text2:#5A5850;--text3:#9A9790;
+  --blue:#1A4FD8;--blue-bg:#EEF2FD;--blue-bd:#C0CFFA;
+  --teal:#0A7065;--teal-bg:#E6F5F2;--teal-bd:#9DD6CC;
+  --amber:#A35800;--amber-bg:#FEF3E6;--amber-bd:#F5C07A;
+  --red:#B91C1C;--red-bg:#FEF2F2;--red-bd:#FECACA;
+  --purple:#6D28D9;--purple-bg:#F5F0FE;--purple-bd:#DDD6FE;
+  --green:#166534;--green-bg:#F0FDF4;--green-bd:#BBF7D0;
+  --r:8px;--rl:12px;--rxl:16px;
+  --sh:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --sh2:0 10px 30px rgba(0,0,0,.12),0 3px 10px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:#1d1c18;
+  color:var(--text);
+  font-size:13px;line-height:1.5;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+
+/* ── 16:9 stage that scales to viewport ── */
+.stage-wrap{
+  position:relative;
+  width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;
+}
+.stage{
+  width:1200px;height:675px;
+  position:relative;
+  background:var(--bg);
+  overflow:hidden;
+  transform-origin:center center;
+  box-shadow:0 30px 80px rgba(0,0,0,.4);
+}
+
+/* ── App chrome ── */
+.app-chrome{position:absolute;inset:0;display:flex;flex-direction:column;}
+.topbar{
+  height:42px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;
+}
+.logo-mark{
+  width:22px;height:22px;background:var(--text);border-radius:5px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.logo-mark::after{
+  content:'';width:8px;height:8px;border:1.5px solid #fff;border-radius:2px;
+}
+.logo-name{font-family:'Fraunces',serif;font-size:14px;font-weight:400;letter-spacing:-.2px;}
+.tb-crumb{
+  font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;
+  display:flex;align-items:center;gap:6px;margin-left:6px;
+}
+.tb-crumb::before{content:'';width:1px;height:14px;background:var(--border);margin-right:4px;}
+.tb-spacer{flex:1;}
+.tb-role{
+  display:flex;gap:2px;background:var(--bg2);border-radius:6px;padding:2px;border:1px solid var(--border);
+}
+.tb-role-btn{
+  padding:4px 9px;border-radius:4px;font-size:10px;font-weight:600;color:var(--text2);
+}
+.tb-role-btn.active{background:var(--surface);color:var(--text);box-shadow:var(--sh);}
+.tb-pill{
+  display:flex;align-items:center;gap:5px;font-size:10px;font-family:'JetBrains Mono',monospace;
+  color:var(--text2);background:var(--bg2);border:1px solid var(--border);
+  border-radius:6px;padding:4px 8px;
+}
+.tb-pill .dot{width:5px;height:5px;border-radius:50%;background:var(--text3);}
+
+/* ── Sub bar (phase tabs) ── */
+.subbar{
+  height:34px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 14px;gap:14px;flex-shrink:0;
+}
+.ph-tab{
+  font-size:10px;font-weight:600;color:var(--text3);
+  display:flex;align-items:center;gap:5px;padding:7px 0;border-bottom:2px solid transparent;
+}
+.ph-tab .ph-dot{width:5px;height:5px;border-radius:50%;}
+.ph-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+.ph-tab.active .ph-dot{background:var(--blue);}
+.ph-tab.h .ph-dot{background:var(--teal);}
+.ph-tab.i .ph-dot{background:var(--amber);}
+
+/* ── Canvas area ── */
+.canvas-area{
+  flex:1;position:relative;padding:18px;overflow:hidden;
+}
+.bp-wrap{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);
+  box-shadow:var(--sh);height:100%;display:flex;flex-direction:column;overflow:hidden;
+  position:relative;
+}
+.bp-head{
+  padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg);
+  display:flex;align-items:center;gap:10px;flex-shrink:0;
+}
+.bp-head-title{
+  font-family:'Fraunces',serif;font-size:13px;font-weight:400;flex:1;
+  display:flex;align-items:center;gap:8px;
+}
+.bp-head-title .title-text{
+  font-family:'Fraunces',serif;font-size:13px;font-weight:400;color:var(--text);
+  white-space:nowrap;
+}
+.bp-head-meta{
+  font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);
+  display:flex;align-items:center;gap:8px;
+}
+.bp-head-meta span{display:inline-flex;align-items:center;gap:4px;}
+.bp-head-meta .mdot{width:5px;height:5px;border-radius:50%;background:var(--text3);}
+
+/* ── Grid ── */
+.bp-grid{
+  flex:1;display:grid;
+  grid-template-columns:140px repeat(5, 1fr);
+  grid-template-rows:36px repeat(4, 1fr);
+  background:var(--bg2);
+  gap:1px;
+  position:relative;
+}
+.bp-corner{
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-family:'JetBrains Mono',monospace;
+  text-transform:uppercase;letter-spacing:.5px;color:var(--text3);
+}
+.bp-step-header{
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:flex-start;padding:0 12px;gap:6px;
+  font-size:11px;font-weight:600;color:var(--text);
+}
+.bp-step-header .stepnum{
+  font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);
+  font-weight:500;
+}
+.bp-lane-label{
+  background:var(--bg);
+  display:flex;align-items:center;gap:8px;padding:0 12px;
+  font-size:11px;font-weight:600;color:var(--text);
+}
+.lane-icon{
+  width:18px;height:18px;border-radius:5px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;
+}
+.lane-icon.l-customer{background:var(--blue-bg);color:var(--blue);}
+.lane-icon.l-frontstage{background:var(--teal-bg);color:var(--teal);}
+.lane-icon.l-backstage{background:var(--purple-bg);color:var(--purple);}
+.lane-icon.l-systems{background:var(--bg2);color:var(--text2);}
+.lane-meta{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);font-weight:500;margin-top:1px;}
+.lane-name-wrap{display:flex;flex-direction:column;line-height:1.2;}
+
+.bp-cell{
+  background:var(--surface);
+  padding:6px;display:flex;flex-direction:column;gap:4px;
+  min-width:0;position:relative;
+}
+
+/* ── Element chips ── */
+.el-card{
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:6px;
+  padding:6px 7px;
+  font-size:10px;font-weight:600;
+  display:flex;align-items:center;gap:5px;
+  line-height:1.25;
+  box-shadow:0 1px 2px rgba(0,0,0,.03);
+  position:relative;
+}
+.el-card .el-dot{
+  width:6px;height:6px;border-radius:50%;flex-shrink:0;
+}
+.el-card .el-name{
+  flex:1;color:var(--text);
+  overflow:hidden;text-overflow:ellipsis;
+}
+.el-card.touchpoint{background:var(--blue-bg);border-color:var(--blue-bd);}
+.el-card.touchpoint .el-dot{background:var(--blue);}
+.el-card.data{background:var(--teal-bg);border-color:var(--teal-bd);}
+.el-card.data .el-dot{background:var(--teal);}
+.el-card.handoff{background:var(--purple-bg);border-color:var(--purple-bd);}
+.el-card.handoff .el-dot{background:var(--purple);}
+.el-card.ai{background:var(--purple-bg);border-color:var(--purple-bd);}
+.el-card.ai .el-dot{background:var(--purple);}
+.el-card.system{background:var(--bg2);border-color:var(--border2);}
+.el-card.system .el-dot{background:var(--text2);}
+.el-card .ai-tag{
+  font-size:7px;font-weight:700;background:rgba(109,40,217,.13);color:var(--purple);
+  border-radius:3px;padding:1px 4px;letter-spacing:.4px;
+}
+
+/* ── Prompt bar (the hero element) ── */
+.prompt-card{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:560px;
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:14px;
+  box-shadow:var(--sh2);
+  padding:18px 18px 14px;
+  z-index:30;
+  display:flex;flex-direction:column;gap:10px;
+}
+.prompt-label{
+  font-size:9px;font-family:'JetBrains Mono',monospace;
+  text-transform:uppercase;letter-spacing:.6px;color:var(--text3);
+  display:flex;align-items:center;gap:6px;
+}
+.prompt-label::before{
+  content:'';width:5px;height:5px;border-radius:50%;background:var(--purple);
+  box-shadow:0 0 0 3px var(--purple-bg);
+}
+.prompt-input{
+  font-family:'Fraunces',serif;font-size:20px;font-weight:300;
+  color:var(--text);
+  line-height:1.35;
+  min-height:54px;
+  display:flex;align-items:flex-start;
+}
+.prompt-typed{display:inline;}
+.prompt-caret{
+  display:inline-block;width:2px;height:22px;
+  background:var(--text);
+  margin-left:1px;
+  vertical-align:middle;
+  animation:caret-blink 0.9s steps(2) infinite;
+}
+@keyframes caret-blink{50%{opacity:0;}}
+.prompt-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding-top:8px;border-top:1px solid var(--border);
+}
+.prompt-hints{
+  display:flex;gap:6px;
+}
+.prompt-hint{
+  font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);
+  background:var(--bg);border:1px solid var(--border);border-radius:4px;
+  padding:3px 6px;
+}
+.prompt-go{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:600;color:#fff;background:var(--text);
+  padding:6px 11px;border-radius:6px;
+}
+.prompt-go .kbd{
+  font-family:'JetBrains Mono',monospace;font-size:9px;
+  background:rgba(255,255,255,.15);padding:1px 4px;border-radius:3px;
+}
+
+/* Thinking pulse during AI work */
+.thinking-pill{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  display:flex;align-items:center;gap:8px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:99px;padding:10px 16px;
+  box-shadow:var(--sh2);
+  font-size:11px;font-weight:600;color:var(--text2);
+  z-index:25;
+}
+.thinking-pill .ai-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--purple);
+  box-shadow:0 0 0 3px var(--purple-bg);
+  animation:ai-pulse 1s ease-in-out infinite;
+}
+@keyframes ai-pulse{
+  0%,100%{transform:scale(1);opacity:1;}
+  50%{transform:scale(.6);opacity:.5;}
+}
+
+/* Caption */
+.caption{
+  position:absolute;left:0;right:0;bottom:18px;
+  display:flex;justify-content:center;
+  z-index:40;pointer-events:none;
+}
+.caption-inner{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(29,28,24,.92);
+  color:#F5F3EF;
+  border-radius:99px;
+  padding:8px 16px;
+  font-size:12px;font-weight:500;
+  letter-spacing:.1px;
+  box-shadow:0 6px 20px rgba(0,0,0,.25);
+  backdrop-filter:blur(6px);
+}
+.caption-inner .cap-dot{
+  width:5px;height:5px;border-radius:50%;background:#F5C07A;
+  box-shadow:0 0 0 3px rgba(245,192,122,.18);
+}
+.caption-inner .cap-num{
+  font-family:'JetBrains Mono',monospace;font-size:10px;color:#9A9790;
+}
+
+/* ────────────────────────────────────────────────────────
+   ANIMATION — single 11s loop
+   timeline (s):
+   0.0  start: prompt card visible, board empty/dim
+   0.2  begin typing
+   2.0  done typing (1.8s of typing)
+   2.4  prompt fades, thinking pill appears
+   3.0  thinking fades
+   3.0  swimlane labels slide in (stagger .12)
+   3.6  lane separators / step headers appear (stagger .1)
+   4.6  elements pop in (stagger .18)
+   7.5  hold
+   9.5  fade back to start
+   11.0 loop
+──────────────────────────────────────────────────────── */
+.scene{
+  animation:scene-loop 11000ms infinite;
+}
+@keyframes scene-loop{
+  /* Just a no-op driver so children inherit timing reference */
+  0%,100%{opacity:1;}
+}
+
+/* Prompt card */
+.prompt-card{
+  animation:prompt-life 11000ms infinite;
+  animation-timing-function:cubic-bezier(.4,0,.2,1);
+  opacity:0;
+}
+@keyframes prompt-life{
+  0%   {opacity:0;transform:translate(-50%,-46%) scale(.96);}
+  3%   {opacity:1;transform:translate(-50%,-50%) scale(1);}
+  20%  {opacity:1;transform:translate(-50%,-50%) scale(1);}
+  22%  {opacity:1;transform:translate(-50%,-50%) scale(1.01);}
+  25%  {opacity:0;transform:translate(-50%,-54%) scale(.97);}
+  100% {opacity:0;transform:translate(-50%,-46%) scale(.96);}
+}
+
+/* Typed text reveal — width-based mask */
+.prompt-typed{
+  white-space:nowrap;
+  overflow:hidden;
+  display:inline-block;
+  max-width:100%;
+  width:0;
+  animation:type-text 11000ms infinite steps(48,end);
+}
+@keyframes type-text{
+  0%   {width:0;}
+  3%   {width:0;}
+  21%  {width:100%;}
+  25%  {width:100%;}
+  100% {width:100%;}
+}
+.prompt-caret{
+  animation:caret-life 11000ms infinite;
+}
+@keyframes caret-life{
+  0%   {opacity:0;}
+  4%   {opacity:1;}
+  21%  {opacity:1;}
+  23%  {opacity:0;}
+  100% {opacity:0;}
+}
+
+/* Thinking pill */
+.thinking-pill{
+  opacity:0;
+  animation:thinking-life 11000ms infinite ease-out;
+}
+@keyframes thinking-life{
+  0%   {opacity:0;transform:translate(-50%,-50%) scale(.96);}
+  23%  {opacity:0;transform:translate(-50%,-50%) scale(.96);}
+  26%  {opacity:1;transform:translate(-50%,-50%) scale(1);}
+  30%  {opacity:1;transform:translate(-50%,-50%) scale(1);}
+  33%  {opacity:0;transform:translate(-50%,-50%) scale(1.02);}
+  100% {opacity:0;}
+}
+
+/* Title text fill */
+.bp-head-title .title-text{
+  clip-path:inset(0 100% 0 0);
+  animation:title-fill 11000ms infinite cubic-bezier(.4,0,.2,1);
+}
+@keyframes title-fill{
+  0%,30% {clip-path:inset(0 100% 0 0);}
+  35%    {clip-path:inset(0 0% 0 0);}
+  90%    {clip-path:inset(0 0% 0 0);}
+  95%    {clip-path:inset(0 100% 0 0);}
+  100%   {clip-path:inset(0 100% 0 0);}
+}
+
+/* Lane labels — slide in from left */
+.bp-lane-label{
+  opacity:0;transform:translateX(-30px);
+  animation:lane-in 11000ms infinite cubic-bezier(.4,0,.2,1);
+}
+.bp-lane-label.l1{animation-delay:0ms;}
+.bp-lane-label.l2{animation-delay:0ms;}
+.bp-lane-label.l3{animation-delay:0ms;}
+.bp-lane-label.l4{animation-delay:0ms;}
+/* per-lane offsets via individual keyframe percentages */
+.bp-lane-label.l1{animation-name:lane-in-1;}
+.bp-lane-label.l2{animation-name:lane-in-2;}
+.bp-lane-label.l3{animation-name:lane-in-3;}
+.bp-lane-label.l4{animation-name:lane-in-4;}
+@keyframes lane-in-1{
+  0%,31% {opacity:0;transform:translateX(-30px);}
+  35%    {opacity:1;transform:translateX(0);}
+  92%    {opacity:1;transform:translateX(0);}
+  97%    {opacity:0;transform:translateX(-20px);}
+  100%   {opacity:0;}
+}
+@keyframes lane-in-2{
+  0%,32.5% {opacity:0;transform:translateX(-30px);}
+  36.5%    {opacity:1;transform:translateX(0);}
+  92%      {opacity:1;transform:translateX(0);}
+  97%      {opacity:0;transform:translateX(-20px);}
+  100%     {opacity:0;}
+}
+@keyframes lane-in-3{
+  0%,34% {opacity:0;transform:translateX(-30px);}
+  38%    {opacity:1;transform:translateX(0);}
+  92%    {opacity:1;transform:translateX(0);}
+  97%    {opacity:0;transform:translateX(-20px);}
+  100%   {opacity:0;}
+}
+@keyframes lane-in-4{
+  0%,35.5% {opacity:0;transform:translateX(-30px);}
+  39.5%    {opacity:1;transform:translateX(0);}
+  92%      {opacity:1;transform:translateX(0);}
+  97%      {opacity:0;transform:translateX(-20px);}
+  100%     {opacity:0;}
+}
+
+/* Step headers — fade/scale in left to right */
+.bp-step-header{
+  opacity:0;transform:translateY(-6px);
+}
+.bp-step-header.s1{animation:step-in-1 11000ms infinite cubic-bezier(.4,0,.2,1);}
+.bp-step-header.s2{animation:step-in-2 11000ms infinite cubic-bezier(.4,0,.2,1);}
+.bp-step-header.s3{animation:step-in-3 11000ms infinite cubic-bezier(.4,0,.2,1);}
+.bp-step-header.s4{animation:step-in-4 11000ms infinite cubic-bezier(.4,0,.2,1);}
+.bp-step-header.s5{animation:step-in-5 11000ms infinite cubic-bezier(.4,0,.2,1);}
+@keyframes step-in-1{
+  0%,37%{opacity:0;transform:translateY(-6px);}
+  40%   {opacity:1;transform:translateY(0);}
+  92%   {opacity:1;transform:translateY(0);}
+  97%   {opacity:0;transform:translateY(-4px);}
+  100%  {opacity:0;}
+}
+@keyframes step-in-2{
+  0%,38%{opacity:0;transform:translateY(-6px);}
+  41%   {opacity:1;transform:translateY(0);}
+  92%   {opacity:1;transform:translateY(0);}
+  97%   {opacity:0;transform:translateY(-4px);}
+  100%  {opacity:0;}
+}
+@keyframes step-in-3{
+  0%,39%{opacity:0;transform:translateY(-6px);}
+  42%   {opacity:1;transform:translateY(0);}
+  92%   {opacity:1;transform:translateY(0);}
+  97%   {opacity:0;transform:translateY(-4px);}
+  100%  {opacity:0;}
+}
+@keyframes step-in-4{
+  0%,40%{opacity:0;transform:translateY(-6px);}
+  43%   {opacity:1;transform:translateY(0);}
+  92%   {opacity:1;transform:translateY(0);}
+  97%   {opacity:0;transform:translateY(-4px);}
+  100%  {opacity:0;}
+}
+@keyframes step-in-5{
+  0%,41%{opacity:0;transform:translateY(-6px);}
+  44%   {opacity:1;transform:translateY(0);}
+  92%   {opacity:1;transform:translateY(0);}
+  97%   {opacity:0;transform:translateY(-4px);}
+  100%  {opacity:0;}
+}
+
+/* Element pop-ins. Each gets an unique delay between ~46%–68% */
+.el-card{
+  opacity:0;transform:scale(.7) translateY(6px);
+  transform-origin:center;
+}
+.el-card{animation-duration:11000ms;animation-iteration-count:infinite;animation-timing-function:cubic-bezier(.34,1.5,.64,1);}
+@keyframes pop-in{
+  0%,var(--at,46%) {opacity:0;transform:scale(.7) translateY(6px);}
+  /* set in per-element below */
+}
+
+.el-card.e1 {animation-name:pop-1;}
+.el-card.e2 {animation-name:pop-2;}
+.el-card.e3 {animation-name:pop-3;}
+.el-card.e4 {animation-name:pop-4;}
+.el-card.e5 {animation-name:pop-5;}
+.el-card.e6 {animation-name:pop-6;}
+.el-card.e7 {animation-name:pop-7;}
+.el-card.e8 {animation-name:pop-8;}
+.el-card.e9 {animation-name:pop-9;}
+.el-card.e10{animation-name:pop-10;}
+.el-card.e11{animation-name:pop-11;}
+
+@keyframes pop-1 {0%,45%{opacity:0;transform:scale(.7) translateY(6px);} 49%{opacity:1;transform:scale(1) translateY(0);} 92%{opacity:1;} 97%{opacity:0;transform:scale(.85);} 100%{opacity:0;}}
+@keyframes pop-2 {0%,47%{opacity:0;transform:scale(.7) translateY(6px);} 51%{opacity:1;transform:scale(1) translateY(0);} 92%{opacity:1;} 97%{opacity:0;transform:scale(.85);} 100%{opacity:0;}}
+@keyframes pop-3 {0%,49%{opacity:0;transform:scale(.7) translateY(6px);} 53%{opacity:1;transform:scale(1) translateY(0);} 92%{opacity:1;} 97%{opacity:0;transform:scale(.85);} 100%{opacity:0;}}
+@keyframes pop-4 {0%,51%{opacity:0;transform:scale(.7) translateY(6px);} 55%{opacity:1;transform:scale(1) translateY(0);} 92%{opacity:1;} 97%{opacity:0;transform:scale(.85);} 100%{opacity:0;}}
+@keyframes pop-5 {0%,53%{opacity:0;transform:scale(.7) translateY(6px);} 57%{opacity:1;transform:scale(1) translateY(0);} 92%{opacity:1;} 97%{opacity:0;transform:scale(.85);} 100%{opacity:0;}}
+@keyframes pop-6 {0%,55%{opacity:0;transform:scale(.7) translateY(6px);} 59%{opacity:1;transform:scale(1) translateY(0);} 92%{opacity:1;} 97%{opacity:0;transform:scale(.85);} 100%{opacity:0;}}
+@keyframes pop-7 {0%,57%{opacity:0;transform:scale(.7) translateY(6px);} 61%{opacity:1;transform:scale(1) translateY(0);} 92%{opacity:1;} 97%{opacity:0;transform:scale(.85);} 100%{opacity:0;}}
+@keyframes pop-8 {0%,59%{opacity:0;transform:scale(.7) translateY(6px);} 63%{opacity:1;transform:scale(1) translateY(0);} 92%{opacity:1;} 97%{opacity:0;transform:scale(.85);} 100%{opacity:0;}}
+@keyframes pop-9 {0%,61%{opacity:0;transform:scale(.7) translateY(6px);} 65%{opacity:1;transform:scale(1) translateY(0);} 92%{opacity:1;} 97%{opacity:0;transform:scale(.85);} 100%{opacity:0;}}
+@keyframes pop-10{0%,63%{opacity:0;transform:scale(.7) translateY(6px);} 67%{opacity:1;transform:scale(1) translateY(0);} 92%{opacity:1;} 97%{opacity:0;transform:scale(.85);} 100%{opacity:0;}}
+@keyframes pop-11{0%,65%{opacity:0;transform:scale(.7) translateY(6px);} 69%{opacity:1;transform:scale(1) translateY(0);} 92%{opacity:1;} 97%{opacity:0;transform:scale(.85);} 100%{opacity:0;}}
+
+/* Cell background subtle fill */
+.bp-cell{
+  background:var(--surface);
+}
+
+/* Soft "scan" highlight that sweeps across when elements populate */
+.scan-glow{
+  position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(105deg, transparent 30%, rgba(109,40,217,.07) 47%, rgba(109,40,217,.13) 50%, rgba(109,40,217,.07) 53%, transparent 70%);
+  background-size:300% 100%;
+  background-position:100% 0;
+  opacity:0;
+  animation:scan-sweep 11000ms infinite linear;
+  mix-blend-mode:multiply;
+}
+@keyframes scan-sweep{
+  0%,33%   {background-position:120% 0;opacity:0;}
+  34%      {opacity:1;}
+  46%      {background-position:-50% 0;opacity:1;}
+  50%      {opacity:0;}
+  100%     {opacity:0;}
+}
+
+/* Caption swap (single caption here) */
+.caption-inner{
+  opacity:0;
+  transform:translateY(8px);
+  animation:cap-life 11000ms infinite ease-out;
+}
+@keyframes cap-life{
+  0%,4%   {opacity:0;transform:translateY(8px);}
+  9%      {opacity:1;transform:translateY(0);}
+  90%     {opacity:1;transform:translateY(0);}
+  95%     {opacity:0;transform:translateY(4px);}
+  100%    {opacity:0;}
+}
+
+/* Subtle drift on stage for "always something moving" feel */
+.bp-wrap{
+  animation:drift 11000ms infinite ease-in-out;
+}
+@keyframes drift{
+  0%,100%{transform:translateY(0);}
+  45%    {transform:translateY(-1px);}
+  70%    {transform:translateY(1px);}
+}
+
+/* Reduced motion: hold final state */
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation:none !important;
+    transition:none !important;
+  }
+  .prompt-card{display:none !important;}
+  .thinking-pill{display:none !important;}
+  .scan-glow{display:none !important;}
+  .bp-head-title .title-text{clip-path:none !important;animation:none !important;}
+  .bp-lane-label, .bp-step-header, .el-card, .caption-inner{
+    opacity:1 !important;transform:none !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="stage-wrap">
+  <div class="stage" id="stage">
+    <div class="scene">
+
+      <!-- ─── App chrome ─── -->
+      <div class="app-chrome">
+
+        <div class="topbar">
+          <div class="logo-mark"></div>
+          <div class="logo-name">Blueprint AI</div>
+          <div class="tb-crumb">workspace / fintech-onboarding</div>
+          <div class="tb-spacer"></div>
+          <div class="tb-role">
+            <div class="tb-role-btn active">Designer</div>
+            <div class="tb-role-btn">PM</div>
+            <div class="tb-role-btn">Eng</div>
+          </div>
+          <div class="tb-pill"><span class="dot"></span>main</div>
+        </div>
+
+        <div class="subbar">
+          <div class="ph-tab active"><span class="ph-dot"></span>Understand</div>
+          <div class="ph-tab h"><span class="ph-dot"></span>Hypothesize</div>
+          <div class="ph-tab i"><span class="ph-dot"></span>Implement</div>
+        </div>
+
+        <div class="canvas-area">
+          <div class="bp-wrap">
+            <div class="bp-head">
+              <div class="bp-head-title">
+                <span class="title-text">Customer onboarding — Fintech app</span>
+              </div>
+              <div class="bp-head-meta">
+                <span><span class="mdot"></span>4 lanes</span>
+                <span><span class="mdot"></span>5 steps</span>
+                <span><span class="mdot"></span>11 elements</span>
+              </div>
+            </div>
+
+            <div class="bp-grid">
+              <!-- Header row -->
+              <div class="bp-corner">SWIMLANE / STEP</div>
+              <div class="bp-step-header s1"><span class="stepnum">01</span>Discover</div>
+              <div class="bp-step-header s2"><span class="stepnum">02</span>Sign up</div>
+              <div class="bp-step-header s3"><span class="stepnum">03</span>Verify ID</div>
+              <div class="bp-step-header s4"><span class="stepnum">04</span>Fund account</div>
+              <div class="bp-step-header s5"><span class="stepnum">05</span>Activate</div>
+
+              <!-- Lane 1: Customer -->
+              <div class="bp-lane-label l1">
+                <div class="lane-icon l-customer">◐</div>
+                <div class="lane-name-wrap">
+                  <span>Customer</span>
+                  <span class="lane-meta">ACTIONS</span>
+                </div>
+              </div>
+              <div class="bp-cell">
+                <div class="el-card touchpoint e1"><span class="el-dot"></span><span class="el-name">Browse landing</span></div>
+              </div>
+              <div class="bp-cell">
+                <div class="el-card touchpoint e2"><span class="el-dot"></span><span class="el-name">Enter details</span></div>
+                <div class="el-card data e3"><span class="el-dot"></span><span class="el-name">Email OTP</span></div>
+              </div>
+              <div class="bp-cell">
+                <div class="el-card touchpoint e4"><span class="el-dot"></span><span class="el-name">Upload ID</span></div>
+              </div>
+              <div class="bp-cell">
+                <div class="el-card touchpoint e5"><span class="el-dot"></span><span class="el-name">Link bank</span></div>
+              </div>
+              <div class="bp-cell"></div>
+
+              <!-- Lane 2: Frontstage -->
+              <div class="bp-lane-label l2">
+                <div class="lane-icon l-frontstage">◑</div>
+                <div class="lane-name-wrap">
+                  <span>Frontstage</span>
+                  <span class="lane-meta">EMPLOYEE</span>
+                </div>
+              </div>
+              <div class="bp-cell"></div>
+              <div class="bp-cell">
+                <div class="el-card handoff e6"><span class="el-dot"></span><span class="el-name">Welcome email</span></div>
+              </div>
+              <div class="bp-cell"></div>
+              <div class="bp-cell"></div>
+              <div class="bp-cell">
+                <div class="el-card touchpoint e7"><span class="el-dot"></span><span class="el-name">First-use tour</span></div>
+              </div>
+
+              <!-- Lane 3: Backstage -->
+              <div class="bp-lane-label l3">
+                <div class="lane-icon l-backstage">●</div>
+                <div class="lane-name-wrap">
+                  <span>Backstage</span>
+                  <span class="lane-meta">PROCESSES</span>
+                </div>
+              </div>
+              <div class="bp-cell"></div>
+              <div class="bp-cell"></div>
+              <div class="bp-cell">
+                <div class="el-card ai e8"><span class="el-dot"></span><span class="el-name">KYC review</span><span class="ai-tag">AI</span></div>
+              </div>
+              <div class="bp-cell">
+                <div class="el-card ai e9"><span class="el-dot"></span><span class="el-name">Risk scoring</span><span class="ai-tag">AI</span></div>
+              </div>
+              <div class="bp-cell"></div>
+
+              <!-- Lane 4: Systems -->
+              <div class="bp-lane-label l4">
+                <div class="lane-icon l-systems">▣</div>
+                <div class="lane-name-wrap">
+                  <span>Systems</span>
+                  <span class="lane-meta">DATA &amp; APIs</span>
+                </div>
+              </div>
+              <div class="bp-cell"></div>
+              <div class="bp-cell">
+                <div class="el-card system e10"><span class="el-dot"></span><span class="el-name">User DB write</span></div>
+              </div>
+              <div class="bp-cell"></div>
+              <div class="bp-cell">
+                <div class="el-card data e11"><span class="el-dot"></span><span class="el-name">Payments API</span></div>
+              </div>
+              <div class="bp-cell"></div>
+            </div>
+
+            <div class="scan-glow"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Prompt card (hero element, sits above board) ─── -->
+      <div class="prompt-card">
+        <div class="prompt-label">New blueprint · prompt to populate</div>
+        <div class="prompt-input">
+          <span class="prompt-typed">Map the customer onboarding journey for a fintech app</span><span class="prompt-caret"></span>
+        </div>
+        <div class="prompt-row">
+          <div class="prompt-hints">
+            <div class="prompt-hint">+ context</div>
+            <div class="prompt-hint">+ import</div>
+          </div>
+          <div class="prompt-go">Generate <span class="kbd">⏎</span></div>
+        </div>
+      </div>
+
+      <!-- ─── Thinking pill (after submit) ─── -->
+      <div class="thinking-pill">
+        <span class="ai-dot"></span>
+        Drafting blueprint…
+      </div>
+
+      <!-- ─── Caption ─── -->
+      <div class="caption">
+        <div class="caption-inner">
+          <span class="cap-dot"></span>
+          <span class="cap-num">01 / USP</span>
+          Build a full blueprint from one prompt.
+        </div>
+      </div>
+
+    </div><!-- /scene -->
+  </div><!-- /stage -->
+</div>
+
+<script>
+// Scale the 1200×675 stage to fit any viewport while preserving 16:9.
+(function(){
+  const stage = document.getElementById('stage');
+  function fit(){
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const scale = Math.min(vw/1200, vh/675);
+    stage.style.transform = 'scale(' + scale + ')';
+  }
+  fit();
+  window.addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>

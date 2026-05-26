@@ -740,7 +740,8 @@ select.fi{appearance:none;cursor:pointer;}
 .lp-nav-btns{display:flex;align-items:center;gap:8px;}
 .lp-nav .btn{font-size:14px;padding:8px 16px;min-height:36px;}
 .lp-inner{max-width:1160px;margin:0 auto;width:100%;padding:0 48px;}
-.lp-hero{padding:80px 48px 64px;max-width:760px;margin:0 auto;width:100%;}
+.lp-hero{padding:80px 48px 72px;max-width:1160px;margin:0 auto;width:100%;}
+.lp-hero-text{max-width:680px;}
 .lp-badge{display:inline-flex;align-items:center;gap:6px;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);border-radius:20px;padding:4px 12px;font-size:12px;font-family:'JetBrains Mono',monospace;font-weight:500;letter-spacing:.5px;margin-bottom:24px;}
 .lp-h1{font-family:'Fraunces',serif;font-size:50px;font-weight:300;line-height:1.06;letter-spacing:-1.5px;margin-bottom:20px;color:var(--text);}
 .lp-h1 em{font-style:italic;color:var(--blue);}
@@ -844,17 +845,49 @@ select.fi{appearance:none;cursor:pointer;}
 /* MOBILE RESPONSIVE */
 @media(max-width:1024px){
   .lp-hero{padding:48px 32px;}
-  .lp-why-grid,.lp-how-steps,.lp-feat-grid{grid-template-columns:1fr 1fr;}
+  .lp-feat-grid{grid-template-columns:1fr 1fr;}
 }
 @media(max-width:640px){
   .lp-h1{font-size:34px;letter-spacing:-.8px;}
   .lp-hero{padding:32px 20px;}
-  .lp-why-grid,.lp-how-steps,.lp-feat-grid{grid-template-columns:1fr;}
-  .lp-why-inner,.lp-how-inner,.lp-features-inner,.lp-compare-inner,.lp-research-inner{padding:0 20px;}
+  .lp-feat-grid{grid-template-columns:1fr;}
+  .lp-compare-inner,.lp-research-inner{padding:0 20px;}
   .lp-nav{padding:12px 20px;}
   .lp-footer{padding:16px 20px;flex-direction:column;gap:14px;text-align:center;}
   .lp-footer-links{flex-wrap:wrap;justify-content:center;}
   .lp-hero-ctas{flex-direction:column;align-items:flex-start;}
+}
+
+/* DEMO FEATURE SECTIONS */
+.lp-demo-wrap{position:relative;width:100%;border-radius:var(--rxl);overflow:hidden;border:1px solid var(--border);background:#1d1c18;aspect-ratio:16/9;box-shadow:0 20px 60px rgba(0,0,0,.1),0 4px 16px rgba(0,0,0,.06);}
+.lp-demo-iframe{width:100%;height:100%;border:none;display:block;pointer-events:none;}
+.lp-hero-demo{margin-top:48px;box-shadow:0 32px 80px rgba(0,0,0,.14),0 8px 24px rgba(0,0,0,.08);}
+.lp-feat-section{padding:72px 0;border-top:1px solid var(--border);}
+.lp-feat-section--alt{background:var(--surface);}
+.lp-feat-section-inner{max-width:1160px;margin:0 auto;padding:0 48px;}
+.lp-feat-hdr{max-width:700px;margin-bottom:40px;}
+.lp-feat-hdr h2{font-family:'Fraunces',serif;font-size:32px;font-weight:300;letter-spacing:-.8px;margin:12px 0 14px;color:var(--text);line-height:1.15;}
+.lp-feat-hdr p{font-size:16px;color:var(--text2);line-height:1.7;}
+.lp-demo-row{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.lp-demo-cap{padding:14px 0 0;}
+.lp-demo-cap h3{font-family:'Fraunces',serif;font-size:18px;font-weight:400;margin-bottom:7px;color:var(--text);}
+.lp-demo-cap p{font-size:14px;color:var(--text2);line-height:1.65;}
+.lp-feat-split{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;}
+.lp-feat-split--rev .lp-demo-wrap{order:1;}
+.lp-feat-split--rev .lp-feat-split-text{order:2;}
+.lp-feat-split-text h2{font-family:'Fraunces',serif;font-size:32px;font-weight:300;letter-spacing:-.8px;margin:12px 0 16px;color:var(--text);line-height:1.15;}
+.lp-feat-split-text p{font-size:16px;color:var(--text2);line-height:1.7;}
+@media(max-width:1024px){
+  .lp-hero{padding:48px 32px 56px;}
+  .lp-feat-section-inner{padding:0 32px;}
+  .lp-demo-row{grid-template-columns:1fr;}
+  .lp-feat-split{grid-template-columns:1fr;gap:32px;}
+  .lp-feat-split--rev .lp-demo-wrap,.lp-feat-split--rev .lp-feat-split-text{order:unset;}
+}
+@media(max-width:640px){
+  .lp-feat-section-inner{padding:0 20px;}
+  .lp-hero{padding:32px 20px 48px;}
+  .lp-feat-hdr h2,.lp-feat-split-text h2{font-size:26px;}
 }
 
 /* ── Collapsible sidebar ── */
@@ -958,110 +991,148 @@ select.fi{appearance:none;cursor:pointer;}
 
   <!-- HERO -->
   <div class="lp-hero">
-    <div class="lp-badge">Beta &middot; By invite only</div>
-    <h1 class="lp-h1">Service blueprinting<br>for the <em>AI era</em></h1>
-    <p class="lp-sub">Map every actor, step, and AI capability in your service — on one shared canvas built for cross-functional teams.</p>
-    <div class="lp-roles">
-      <span class="lp-role-chip">PM</span>
-      <span class="lp-role-chip">Service Designer</span>
-      <span class="lp-role-chip">UX Researcher</span>
-      <span class="lp-role-chip">Developer</span>
-      <span class="lp-role-chip">Delivery Lead</span>
-      <span class="lp-role-chip">Governance</span>
+    <div class="lp-hero-text">
+      <div class="lp-badge">Beta &middot; By invite only</div>
+      <h1 class="lp-h1">Turn any service — even a legacy system — into a structured blueprint your whole team can act on.</h1>
+      <p class="lp-sub">Map, audit, and modernise complex services on one shared canvas — with an AI that actually understands the flow, not just the sticky notes.</p>
+      <div class="lp-roles">
+        <span class="lp-role-chip">Service Designer</span>
+        <span class="lp-role-chip">PM</span>
+        <span class="lp-role-chip">UX Researcher</span>
+        <span class="lp-role-chip">Developer</span>
+        <span class="lp-role-chip">Delivery Lead</span>
+        <span class="lp-role-chip">Governance</span>
+      </div>
+      <div class="lp-hero-ctas">
+        <button class="lp-btn-primary" onclick="lpOpenCapture()">Start for free</button>
+        <button class="btn btn-ghost lp-signin-btn" style="display:none;font-size:15px;padding:10px 20px;height:auto;" onclick="lpOpenAuth('login')">Sign in →</button>
+      </div>
     </div>
-    <div class="lp-hero-ctas">
-      <button class="lp-btn-primary" onclick="lpOpenCapture()">Start for free</button>
-      <button class="btn btn-ghost lp-signin-btn" style="display:none;font-size:15px;padding:10px 20px;height:auto;" onclick="lpOpenAuth('login')">Sign in →</button>
-    </div>
-    <div style="display:flex;gap:32px;margin-top:4px;">
-      <div><div style="font-family:'Fraunces',serif;font-size:28px;font-weight:400;letter-spacing:-1px;color:var(--text);">6</div><div style="font-size:13px;color:var(--text2);margin-top:2px;">stakeholder lenses</div></div>
-      <div><div style="font-family:'Fraunces',serif;font-size:28px;font-weight:400;letter-spacing:-1px;color:var(--text);">1</div><div style="font-size:13px;color:var(--text2);margin-top:2px;">shared live canvas</div></div>
-      <div><div style="font-family:'Fraunces',serif;font-size:28px;font-weight:400;letter-spacing:-1px;color:var(--blue);">AI</div><div style="font-size:13px;color:var(--text2);margin-top:2px;">reads your blueprint</div></div>
+    <div class="lp-demo-wrap lp-hero-demo">
+      <iframe src="/demos/01-populate-from-prompt.html" class="lp-demo-iframe" loading="lazy" sandbox="allow-scripts" scrolling="no" frameborder="0" title="Demo: build a blueprint from one prompt" tabindex="-1" aria-hidden="true"></iframe>
     </div>
   </div>
 
-  <!-- WHY BLUEPRINT AI EXISTS (FR-2) -->
-  <div class="lp-why">
-    <div class="lp-why-inner">
-      <div class="lp-section-label">Why it exists</div>
-      <div class="lp-section-title">Three things that broke when AI entered services</div>
-      <div class="lp-why-grid">
-        <div class="lp-why-item">
-          <div class="lp-why-num">01</div>
-          <div class="lp-why-text">Services increasingly involve AI capabilities — but the tools teams use to design services were built before AI was mainstream.</div>
+  <!-- SECTION: START FROM WHAT YOU HAVE (demos 06 + 05) -->
+  <div class="lp-feat-section">
+    <div class="lp-feat-section-inner">
+      <div class="lp-feat-hdr">
+        <div class="lp-section-label">Import</div>
+        <h2>Start from what you already have</h2>
+        <p>Have legacy blueprints, journey maps, or process docs scattered across tools? Upload a PDF or image and Blueprint AI extracts the structure automatically. Or let the agent build from your research notes, meeting transcripts, and existing docs.</p>
+      </div>
+      <div class="lp-demo-row">
+        <div>
+          <div class="lp-demo-wrap">
+            <iframe src="/demos/06-import-existing.html" class="lp-demo-iframe" loading="lazy" sandbox="allow-scripts" scrolling="no" frameborder="0" title="Demo: import legacy blueprints" tabindex="-1" aria-hidden="true"></iframe>
+          </div>
+          <div class="lp-demo-cap">
+            <h3>Import legacy blueprints</h3>
+            <p>Upload a PDF, image, or paste from any platform. Blueprint AI extracts swimlanes, steps, and elements automatically — no re-entering data.</p>
+          </div>
         </div>
-        <div class="lp-why-item">
-          <div class="lp-why-num">02</div>
-          <div class="lp-why-text">Without a shared artefact, AI risks, governance decisions, and human-AI interfaces get scattered across Jira tickets, compliance docs, and Slack threads.</div>
-        </div>
-        <div class="lp-why-item">
-          <div class="lp-why-num">03</div>
-          <div class="lp-why-text">Blueprint AI puts every actor, every step, every AI capability, and every governance decision on one canvas — so cross-functional teams design intentionally, not retroactively.</div>
+        <div>
+          <div class="lp-demo-wrap">
+            <iframe src="/demos/05-agent-generates-from-sources.html" class="lp-demo-iframe" loading="lazy" sandbox="allow-scripts" scrolling="no" frameborder="0" title="Demo: generate from existing sources" tabindex="-1" aria-hidden="true"></iframe>
+          </div>
+          <div class="lp-demo-cap">
+            <h3>Generate from your sources</h3>
+            <p>Connect your research docs, meeting notes, and process maps. The agent drafts a full blueprint you can refine collaboratively with your team.</p>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- HOW IT WORKS (FR-3) -->
-  <div class="lp-how">
-    <div class="lp-how-inner">
-      <div class="lp-section-label">How it works</div>
-      <div class="lp-section-title">From blank canvas to reviewed blueprint</div>
-      <div class="lp-how-steps">
-        <div class="lp-how-step">
-          <div class="lp-how-step-num">Step 01</div>
-          <div class="lp-how-step-title">Map your service</div>
-          <div class="lp-how-step-desc">Add swimlanes for each actor — customer, staff, system — and define the steps across the top. The grid reveals where hand-offs, data flows, and touchpoints happen.</div>
+  <!-- SECTION: AI AUDITS YOUR SERVICE (demos 02 + 03) -->
+  <div class="lp-feat-section lp-feat-section--alt">
+    <div class="lp-feat-section-inner">
+      <div class="lp-feat-hdr">
+        <div class="lp-section-label">Audit</div>
+        <h2>AI audits your service — you act on what matters</h2>
+        <p>The agent reads your actual canvas, not a generic description of it. It returns severity-rated findings tied to the specific elements that need attention — governance gaps, risky automation, and missing oversight — so your team can act immediately.</p>
+      </div>
+      <div class="lp-demo-row">
+        <div>
+          <div class="lp-demo-wrap">
+            <iframe src="/demos/02-audit-blueprint.html" class="lp-demo-iframe" loading="lazy" sandbox="allow-scripts" scrolling="no" frameborder="0" title="Demo: AI blueprint audit" tabindex="-1" aria-hidden="true"></iframe>
+          </div>
+          <div class="lp-demo-cap">
+            <h3>AI blueprint audit</h3>
+            <p>Every governance gap, risky handoff, and missing oversight surfaced and scored by severity — tied to the exact element on your canvas.</p>
+          </div>
         </div>
-        <div class="lp-how-step">
-          <div class="lp-how-step-num">Step 02</div>
-          <div class="lp-how-step-title">Add AI capabilities and risks</div>
-          <div class="lp-how-step-desc">Tag each cell with element types — AI capabilities, governance checkpoints, human-AI handoffs, risks. Autonomy levels and explainability strategies attach directly to the step where they matter.</div>
-        </div>
-        <div class="lp-how-step">
-          <div class="lp-how-step-num">Step 03</div>
-          <div class="lp-how-step-title">Let the agent review it</div>
-          <div class="lp-how-step-desc">The Blueprint Agent reads your actual canvas and returns severity-rated insights — governance gaps, missing oversight, risky autonomy levels — tied to the specific elements that need attention.</div>
+        <div>
+          <div class="lp-demo-wrap">
+            <iframe src="/demos/03-risk-hotspots.html" class="lp-demo-iframe" loading="lazy" sandbox="allow-scripts" scrolling="no" frameborder="0" title="Demo: surface risk hotspots" tabindex="-1" aria-hidden="true"></iframe>
+          </div>
+          <div class="lp-demo-cap">
+            <h3>Risk hotspot map</h3>
+            <p>Spot risky automation and compliance exposure at a glance, across every step and swimlane — before they become incidents.</p>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- FEATURES (FR-4) -->
-  <div class="lp-features">
-    <div class="lp-features-inner">
-      <div class="lp-section-label">What it does</div>
-      <div class="lp-section-title">Built for the complexity of real services</div>
-      <div class="lp-feat-grid">
-        <div class="lp-feat-card">
-          <div class="lp-feat-icon" style="background:var(--blue-bg);">🧠</div>
-          <div class="lp-feat-title">AI that reads your blueprint</div>
-          <div class="lp-feat-desc">The Blueprint Agent analyses your actual service map — not a generic assistant. It references specific elements, flags real risks, and gives role-calibrated advice based on exactly what is on your canvas.</div>
+  <!-- SECTION: FIND WHERE AI FITS (demo 04) -->
+  <div class="lp-feat-section">
+    <div class="lp-feat-section-inner">
+      <div class="lp-feat-split">
+        <div class="lp-feat-split-text">
+          <div class="lp-section-label">Opportunities</div>
+          <h2>Find where AI fits in your service</h2>
+          <p>Before you start building, see which steps in your service are ready for AI augmentation, full automation, or a thoughtful human-AI handoff — with reasoning anchored to your actual canvas, not a generic framework.</p>
         </div>
-        <div class="lp-feat-card">
-          <div class="lp-feat-icon" style="background:var(--teal-bg);">👥</div>
-          <div class="lp-feat-title">One map, six stakeholder views</div>
-          <div class="lp-feat-desc">Switch between PM, Service Designer, Researcher, Developer, Delivery, and Governance lenses. Each role gets AI insights and guidance tailored to their specific responsibilities and questions.</div>
+        <div class="lp-demo-wrap">
+          <iframe src="/demos/04-ai-opportunities.html" class="lp-demo-iframe" loading="lazy" sandbox="allow-scripts" scrolling="no" frameborder="0" title="Demo: spot AI capability opportunities" tabindex="-1" aria-hidden="true"></iframe>
         </div>
-        <div class="lp-feat-card">
-          <div class="lp-feat-icon" style="background:var(--purple-bg);">⚖️</div>
-          <div class="lp-feat-title">HCAI framework built in</div>
-          <div class="lp-feat-desc">AI in services raises design questions — who explains a decision? What's the autonomy level? Where can humans override? Blueprint AI is the only tool that bakes these into every step of the canvas.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: AUDIT AGAINST STANDARDS (demo 07) -->
+  <div class="lp-feat-section lp-feat-section--alt">
+    <div class="lp-feat-section-inner">
+      <div class="lp-feat-split lp-feat-split--rev">
+        <div class="lp-demo-wrap">
+          <iframe src="/demos/07-audit-against-standards.html" class="lp-demo-iframe" loading="lazy" sandbox="allow-scripts" scrolling="no" frameborder="0" title="Demo: audit against legal and ethical standards" tabindex="-1" aria-hidden="true"></iframe>
         </div>
-        <div class="lp-feat-card">
-          <div class="lp-feat-icon" style="background:var(--amber-bg);">📥</div>
-          <div class="lp-feat-title">Import from existing blueprints</div>
-          <div class="lp-feat-desc">Upload a PDF or image of any existing journey map, service blueprint, or process diagram. Gemini's multimodal AI extracts the structure automatically — swimlanes, steps, and elements — so you can start working immediately.</div>
+        <div class="lp-feat-split-text">
+          <div class="lp-section-label">Governance</div>
+          <h2>Audit against standards, not just instincts</h2>
+          <p>Check every AI touchpoint against legal, ethical, and technical standards — including EU AI Act requirements — without leaving your canvas. The agent maps each element to the standard it needs to satisfy and flags what's missing.</p>
         </div>
-        <div class="lp-feat-card">
-          <div class="lp-feat-icon" style="background:var(--green-bg);">✦</div>
-          <div class="lp-feat-title">Severity-rated insights engine</div>
-          <div class="lp-feat-desc">Generate a board-level analysis at any time. Insights are rated by severity, tied to specific elements, and include concrete action suggestions — not generic recommendations.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION: CONNECT AND SHIP (demos 08 + 09) -->
+  <div class="lp-feat-section">
+    <div class="lp-feat-section-inner">
+      <div class="lp-feat-hdr">
+        <div class="lp-section-label">Integrations</div>
+        <h2>Connect your stack, ship your work</h2>
+        <p>Export blueprints to your team's tools, or connect a GitHub repository for an instant code-to-blueprint audit. Blueprint AI fits into the way your team already works — no new process required.</p>
+      </div>
+      <div class="lp-demo-row">
+        <div>
+          <div class="lp-demo-wrap">
+            <iframe src="/demos/08-integrations-export.html" class="lp-demo-iframe" loading="lazy" sandbox="allow-scripts" scrolling="no" frameborder="0" title="Demo: integrations and export" tabindex="-1" aria-hidden="true"></iframe>
+          </div>
+          <div class="lp-demo-cap">
+            <h3>Export to your tools</h3>
+            <p>Send blueprints to Figma, Jira, Confluence, and more in one click — keeping every stakeholder in the loop without copying and pasting.</p>
+          </div>
         </div>
-        <div class="lp-feat-card">
-          <div class="lp-feat-icon" style="background:var(--red-bg);">⚡</div>
-          <div class="lp-feat-title">Real-time collaboration</div>
-          <div class="lp-feat-desc">Boards update live across all connected team members via Supabase Realtime. Everyone sees the same canvas state — no version conflicts, no stale screenshots in Slack.</div>
+        <div>
+          <div class="lp-demo-wrap">
+            <iframe src="/demos/09-github-repo-audit.html" class="lp-demo-iframe" loading="lazy" sandbox="allow-scripts" scrolling="no" frameborder="0" title="Demo: GitHub repo audit" tabindex="-1" aria-hidden="true"></iframe>
+          </div>
+          <div class="lp-demo-cap">
+            <h3>GitHub repo audit</h3>
+            <p>Link a repository and get an instant map of how the code implements your service blueprint — no manual tracing, no stale documentation.</p>
+          </div>
         </div>
       </div>
     </div>
