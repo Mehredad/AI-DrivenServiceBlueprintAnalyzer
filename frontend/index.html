@@ -139,17 +139,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .btn-icon{width:28px;height:28px;padding:0;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:var(--r);cursor:pointer;font-family:'DM Sans',sans-serif;}
 .btn-icon:hover{background:var(--bg);}
 
-/* PHASE TABS */
-.phase-tabs{display:flex;padding:0 14px;background:var(--surface);border-bottom:1px solid var(--border);align-items:center;flex-shrink:0;}
-.ph-tab{padding:8px 13px;font-size:11px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--text3);display:flex;align-items:center;gap:5px;transition:all .13s;background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',sans-serif;}
-.ph-tab:hover{color:var(--text2);}
-.ph-tab.active.u{border-bottom-color:var(--blue);color:var(--blue);}
-.ph-tab.active.h{border-bottom-color:var(--teal);color:var(--teal);}
-.ph-tab.active.i{border-bottom-color:var(--amber);color:var(--amber);}
-.ph-dot{width:5px;height:5px;border-radius:50%;}
-.ph-tab.u .ph-dot{background:var(--blue);}
-.ph-tab.h .ph-dot{background:var(--teal);}
-.ph-tab.i .ph-dot{background:var(--amber);}
+/* BOARD TABS */
+.board-tabs-bar{display:flex;padding:0 6px;background:var(--surface);border-bottom:1px solid var(--border);align-items:stretch;flex-shrink:0;height:36px;overflow:hidden;}
+.board-tabs-strip{display:flex;flex:1;overflow-x:auto;align-items:stretch;gap:0;min-width:0;scrollbar-width:none;}
+.board-tabs-strip::-webkit-scrollbar{display:none;}
+.board-tab{display:flex;align-items:center;gap:4px;padding:0 10px;font-size:11px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--text3);background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:color .13s;min-width:0;max-width:180px;}
+.board-tab:hover{color:var(--text2);}
+.board-tab.active{border-bottom-color:var(--blue);color:var(--text);}
+.board-tab-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px;}
+.board-tab-close{width:14px;height:14px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1;color:var(--text3);border:none;background:none;cursor:pointer;flex-shrink:0;padding:0;opacity:0;transition:opacity .1s,background .1s;}
+.board-tab:hover .board-tab-close,.board-tab.active .board-tab-close{opacity:1;}
+.board-tab-close:hover{background:var(--bg2);color:var(--text);}
+.board-tab-dup{width:14px;height:14px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;line-height:1;color:var(--text3);border:none;background:none;cursor:pointer;flex-shrink:0;padding:0;opacity:0;transition:opacity .1s,background .1s;}
+.board-tab:hover .board-tab-dup,.board-tab.active .board-tab-dup{opacity:.7;}
+.board-tab-dup:hover{background:var(--bg2);color:var(--text);opacity:1!important;}
+.board-tab-add{display:flex;align-items:center;justify-content:center;padding:0 10px;font-size:18px;line-height:1;color:var(--text3);border:none;background:none;cursor:pointer;flex-shrink:0;border-bottom:2px solid transparent;transition:color .12s;align-self:stretch;}
+.board-tab-add:hover{color:var(--text);}
 .ai-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd);padding:2px 6px;border-radius:7px;font-family:'JetBrains Mono',monospace;}
 .apulse{width:4px;height:4px;border-radius:50%;background:var(--purple);animation:ap 2s ease-in-out infinite;}
 @keyframes ap{0%,100%{opacity:1;}50%{opacity:.3;}}
@@ -169,14 +174,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .ins-strip-dismiss{font-size:11px;color:var(--amber);cursor:pointer;border:none;background:none;padding:0 3px;font-family:'DM Sans',sans-serif;white-space:nowrap;font-weight:600;}
 .ins-strip-dismiss:hover{opacity:.7;}
 
-/* PHASE GUIDE */
-.phase-guide{border-bottom:1px solid var(--blue-bd);display:flex;align-items:center;padding:0 14px;gap:7px;font-size:13px;color:var(--blue);background:var(--blue-bg);flex-shrink:0;transition:all .2s;overflow:hidden;}
-.phase-guide.vis{height:40px;}
-.phase-guide.hid{height:0;border:none;padding:0;}
-.phase-guide.h{background:var(--teal-bg);border-color:var(--teal-bd);color:var(--teal);}
-.phase-guide.i{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber);}
-.pqs{display:flex;gap:5px;margin-left:5px;flex-wrap:nowrap;}
-.pq{background:transparent;border:1px solid currentColor;border-radius:8px;padding:2px 7px;font-size:10px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;opacity:.6;white-space:nowrap;}
 .pq:hover{opacity:.9;background:rgba(255,255,255,.15);}
 .pq:active{opacity:.4;transform:scale(0.96);}
 
@@ -1828,26 +1825,11 @@ select.fi{appearance:none;cursor:pointer;}
     </div>
   </div>
 
-  <!-- Phase tabs -->
-  <div class="phase-tabs">
-    <button class="ph-tab u active" id="pt-understand" onclick="setPhase('understand',this)"><span class="ph-dot"></span>Understand</button>
-    <button class="ph-tab h" id="pt-design" onclick="setPhase('design',this)"><span class="ph-dot"></span>Design</button>
-    <button class="ph-tab i" id="pt-operate" onclick="setPhase('operate',this)"><span class="ph-dot"></span>Operate</button>
-    <div style="width:1px;height:16px;background:var(--border);margin:0 5px;"></div>
-    <div class="ai-badge" id="ai-cap-badge" style="display:none;"><div class="apulse"></div><span id="ai-cap-count">0</span> <span id="ai-cap-label">capabilities</span></div>
-    <div style="flex:1;"></div>
-  </div>
-
-  <!-- Phase guidance -->
-  <div class="phase-guide vis" id="phase-guide">
-    <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4" stroke="currentColor" stroke-width="1.1"/><line x1="5.5" y1="5" x2="5.5" y2="7.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><circle cx="5.5" cy="3.8" r=".5" fill="currentColor"/></svg>
-    <strong id="pg-phase">Understand:</strong>&nbsp;<span id="pg-text">Map needs, stakeholders, and candidate AI capabilities.</span>
-    <div class="pqs" id="pg-qs">
-      <span class="pq" onclick="askAgent('At this step, are we predicting, ranking, classifying, or generating?')">What type of AI?</span>
-      <span class="pq" onclick="askAgent('Who are the affected stakeholders and what are their rights?')">Who is affected?</span>
-      <span class="pq" onclick="askAgent('What human needs or potential harms does the AI address here?')">Needs & harms?</span>
-    </div>
-    <button style="margin-left:auto;cursor:pointer;background:none;border:none;color:currentColor;font-size:15px;opacity:.5;line-height:1;" onclick="document.getElementById('phase-guide').className='phase-guide hid'">×</button>
+  <!-- Board tabs -->
+  <div class="board-tabs-bar" id="board-tabs-bar">
+    <div class="board-tabs-strip" id="board-tabs-strip"></div>
+    <div class="ai-badge" id="ai-cap-badge" style="display:none;align-self:center;margin-right:8px;"><div class="apulse"></div><span id="ai-cap-count">0</span> <span id="ai-cap-label">capabilities</span></div>
+    <button class="board-tab-add" title="New board" onclick="openModal('new-project')">+</button>
   </div>
 
   <!-- Insights strip -->
@@ -1870,7 +1852,6 @@ select.fi{appearance:none;cursor:pointer;}
           <div>
             <div class="bp-head-title" id="bp-board-title">New Blueprint</div>
             <div class="bp-meta" style="margin-top:2px;">
-              <span id="phase-badge" style="color:var(--blue);font-weight:700;">● Understand</span>
               <span id="canvas-meta-el-sep" style="display:none;">·</span><span id="canvas-meta-el-count" style="display:none;"></span>
               <span id="canvas-meta-lanes" style="display:none;">·</span><span id="canvas-meta-lanes-count" style="display:none;"></span>
               <span id="canvas-meta-steps" style="display:none;">·</span><span id="canvas-meta-steps-count" style="display:none;"></span>
@@ -2078,7 +2059,7 @@ select.fi{appearance:none;cursor:pointer;}
             </div>
           </div>
           <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px;">How this tool works</div>
-          <div class="how-block" onclick="askAgent('Explain the three phases — Understand, Design, and Operate — and what I should do in each one.')"><div class="how-block-label">3 Phases</div><div class="how-block-text"><strong>Understand</strong> → map needs, systems & stakeholders · <strong>Design</strong> → define touchpoints, flows & capabilities · <strong>Operate</strong> → monitor, govern & iterate</div></div>
+          <div class="how-block" onclick="askAgent('Explain the three phases of working with Blueprint AI — Understand, Design, and Operate — and what I should focus on in each one.')"><div class="how-block-label">3 Phases</div><div class="how-block-text"><strong>Understand</strong> — map who is involved, where the journey flows, and what problems exist. Identify stakeholders, data flows, and candidate AI capabilities. · <strong>Design</strong> — define the target state: touchpoints, systems, decisions, and new AI capabilities. Specify what should be visible vs backstage and what oversight mechanisms are needed. · <strong>Operate</strong> — plan for live operation: monitoring metrics, feedback loops, governance, and who owns capability changes. Click to ask me how to apply each phase to your board.</div></div>
           <div class="how-block" onclick="askAgent('How do swimlanes and steps work? How should I structure my blueprint?')"><div class="how-block-label">Swimlanes & Steps</div><div class="how-block-text">Swimlanes are the actors in your system (users, teams, systems). Steps are the stages in the journey. Add your own — no defaults imposed.</div></div>
           <div class="how-block" onclick="askAgent('How do I add elements to the blueprint? What types of elements are there?')"><div class="how-block-label">Adding elements</div><div class="how-block-text">Use + Add Element to place touchpoints, systems, data flows, risks, opportunities, or AI capabilities into any cell on the canvas.</div></div>
           <div class="how-block" onclick="askAgent('How do the proactive insights work, and how are they generated?')"><div class="how-block-label">Proactive insights</div><div class="how-block-text">I analyse the entire board and surface issues, gaps, and opportunities — click Generate Insights in the Insights tab to start.</div></div>
@@ -2923,11 +2904,7 @@ async function loadBoard(boardId) {
       boardState[k] = state[k];
     }
   });
-  const phaseKey = (board.phase && phaseData[board.phase]) ? board.phase : 'understand';
-  const phaseTabEl = document.getElementById('pt-' + phaseKey);
-  if (phaseTabEl) setPhase(phaseKey, phaseTabEl);
-  const phaseEl = document.getElementById('phase-badge');
-  if (phaseEl) phaseEl.textContent = '● ' + (phaseData[phaseKey]?.lbl || 'Understand');
+  openBoardTab(board.id, board.title);
   const titleEl = document.getElementById('bp-board-title');
   if (titleEl) titleEl.textContent = board.title;
   const crumb = document.getElementById('crumb-board');
@@ -3013,7 +2990,7 @@ function _timeAgo(iso) {
 
 // ── Board switch ───────────────────────────────────────
 async function switchBoard(boardId) {
-  if (boardId === currentBoardId) { closeBoardPicker(); return; }
+  if (boardId === currentBoardId) { closeBoardPicker(); renderBoardTabs(); return; }
   closeBoardPicker();
   leaveRealtime();
   currentBoardId = boardId;
@@ -3155,7 +3132,10 @@ async function deleteBoard() {
   const res = await apiFetch(`/api/boards/${currentBoardId}`, { method: 'DELETE' });
   if (!res || (res.status !== 204 && !res.ok)) { showToast('Could not delete board'); return; }
   closeModal('board-settings');
-  boardsList = boardsList.filter(b => b.id !== currentBoardId);
+  const deletedId = currentBoardId;
+  boardsList = boardsList.filter(b => b.id !== deletedId);
+  _openTabs = _openTabs.filter(t => t.id !== deletedId);
+  _saveTabState();
   currentBoardId = '';
   showToast('Board deleted');
   await showBoardListModal();
@@ -7369,26 +7349,85 @@ function showOutTab(name, btn) {
   if (btn) btn.classList.add('active');
 }
 
-const phaseData = {
-  understand:{lbl:'Understand',col:'var(--blue)',cls:'',tabCls:'u',text:'Map the current state: who is involved, where the journey flows, and what problems exist.',qs:['What type of AI?','Who is affected?','Needs & harms?'],prompts:['At this step, are we predicting, ranking, classifying, or generating?','Who are the affected stakeholders and what are their rights and expectations?','What human needs or potential harms does the AI address here?']},
-  design:    {lbl:'Design',col:'var(--teal)',cls:'h',tabCls:'h',text:'Define the target state: solutions, new capabilities, systems, and decisions.',qs:['Visible or backstage?','What explanation?','Override mechanism?'],prompts:['In what contexts should AI be visible to users, and when should it stay backstage?','What explanation is necessary to foster trust and safe use at this step?','What level of autonomy is appropriate here — recommend, review, or auto-act?']},
-  operate:   {lbl:'Operate',col:'var(--amber)',cls:'i',tabCls:'i',text:'Plan for live operation: monitoring, feedback loops, ownership, and governance.',qs:['What metrics?','Feedback loops?','Who decides changes?'],prompts:['What methods will track human-centred outcomes and digital wellbeing?','What feedback loops exist for gathering user experiences at this step?','Who is responsible for capability changes, and how are decisions documented?']}
-};
+// ═══════════════════════════════════════════════════════
+// BOARD TABS
+// ═══════════════════════════════════════════════════════
+let _openTabs = []; // [{id, title}]
 
-function setPhase(key, el) {
-  document.querySelectorAll('.ph-tab').forEach(t => t.classList.remove('active','u','h','i'));
-  const d = phaseData[key];
-  el.classList.add('active', d.tabCls);
-  boardState.currentPhase = d.lbl;
-  const pb = document.getElementById('phase-badge');
-  pb.textContent = '● ' + d.lbl;
-  pb.style.color = d.col;
-  const guide = document.getElementById('phase-guide');
-  guide.className = 'phase-guide vis ' + d.cls;
-  document.getElementById('pg-phase').textContent = d.lbl + ':';
-  document.getElementById('pg-text').textContent = ' ' + d.text;
-  const qs = document.querySelectorAll('.pq');
-  qs.forEach((q, i) => { q.textContent = d.qs[i] || ''; q.onclick = () => askAgent(d.prompts[i] || ''); });
+function _saveTabState() {
+  try { localStorage.setItem('bp_open_tabs', JSON.stringify(_openTabs)); } catch {}
+}
+
+function _loadTabState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('bp_open_tabs') || '[]');
+    if (Array.isArray(saved)) _openTabs = saved;
+  } catch {}
+}
+
+function openBoardTab(boardId, title) {
+  const existing = _openTabs.find(t => t.id === boardId);
+  if (existing) {
+    existing.title = title;
+  } else {
+    _openTabs.push({id: boardId, title});
+  }
+  _saveTabState();
+  renderBoardTabs();
+}
+
+function closeBoardTab(boardId, e) {
+  if (e) e.stopPropagation();
+  _openTabs = _openTabs.filter(t => t.id !== boardId);
+  _saveTabState();
+  if (boardId === currentBoardId) {
+    if (_openTabs.length > 0) {
+      const next = _openTabs[_openTabs.length - 1];
+      currentBoardId = next.id;
+      loadBoard(next.id).then(() => initRealtime(next.id));
+      renderBoardTabs();
+    } else {
+      renderBoardTabs();
+      showBoardListModal();
+    }
+  } else {
+    renderBoardTabs();
+  }
+}
+
+function renderBoardTabs() {
+  const strip = document.getElementById('board-tabs-strip');
+  if (!strip) return;
+  strip.innerHTML = _openTabs.map(t => {
+    const active = t.id === currentBoardId ? ' active' : '';
+    const name = escHtml(t.title || 'Untitled');
+    return `<button class="board-tab${active}" onclick="switchBoard('${t.id}')">` +
+      `<span class="board-tab-name" title="${name}">${name}</span>` +
+      `<button class="board-tab-dup" title="Duplicate board" onclick="duplicateBoard('${t.id}',event)">⧉</button>` +
+      `<button class="board-tab-close" title="Close tab" onclick="closeBoardTab('${t.id}',event)">×</button>` +
+      `</button>`;
+  }).join('');
+}
+
+async function duplicateBoard(boardId, e) {
+  if (e) e.stopPropagation();
+  showToast('Duplicating board…');
+  const res = await apiFetch(`/api/boards/${boardId}`);
+  if (!res || !res.ok) { showToast('Could not read board'); return; }
+  const src = await res.json();
+  const newTitle = (src.title || 'Untitled') + ' (copy)';
+  const newBoard = await createNewBoard(newTitle, src.domain || null);
+  if (!newBoard) { showToast('Could not create board'); return; }
+  const patchRes = await apiFetch(`/api/boards/${newBoard.id}`, {
+    method: 'PATCH',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ state: src.state || {} })
+  });
+  if (!patchRes || !patchRes.ok) { showToast('State copy failed — board created without content'); return; }
+  showToast(`"${newTitle}" created ✓`);
+  currentBoardId = newBoard.id;
+  await loadBoard(newBoard.id);
+  initRealtime(newBoard.id);
 }
 
 function setRole(role) {
@@ -7454,6 +7493,7 @@ async function createBoardFromModal() {
   }
 
   showToast(`"${title}" created ✓`);
+  currentBoardId = board.id;
   await loadBoard(board.id);
   initRealtime(board.id);
 }
@@ -7670,6 +7710,7 @@ function initRoleUI() {
 }
 
 async function initApp() {
+  _loadTabState();
   _initSidebarState();
   initRoleUI();
   initChatDragDrop();
