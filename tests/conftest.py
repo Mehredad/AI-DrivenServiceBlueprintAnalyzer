@@ -83,3 +83,30 @@ async def board(client, auth_headers):
         headers=auth_headers,
     )
     return resp.json()
+
+
+@pytest.fixture
+def admin_payload():
+    return {
+        "email": "admin@example.com",
+        "password": "Admin1234",
+        "full_name": "Admin User",
+        "role": "designer",
+    }
+
+
+@pytest_asyncio.fixture
+async def admin_headers(client, db, admin_payload):
+    from sqlalchemy import select
+    from app.models import User
+
+    resp = await client.post("/api/auth/register", json=admin_payload)
+    token = resp.json()["access_token"]
+
+    # Promote user to admin directly in the DB
+    result = await db.execute(select(User).where(User.email == admin_payload["email"]))
+    user = result.scalars().first()
+    user.is_admin = True
+    await db.commit()
+
+    return {"Authorization": f"Bearer {token}"}

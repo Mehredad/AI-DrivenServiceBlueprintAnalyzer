@@ -40,6 +40,8 @@ from app.routers.imports      import router as imports_router
 from app.routers.history      import router as history_router
 from app.routers.branches     import router as branches_router
 from app.routers.connectors   import router as connectors_router
+from app.routers.waitlist     import router as waitlist_router
+from app.routers.admin        import router as admin_router
 
 settings = get_settings()
 logging.basicConfig(level=getattr(logging, settings.log_level.upper(), logging.INFO))
@@ -117,6 +119,8 @@ app.include_router(imports_router)
 app.include_router(history_router)
 app.include_router(branches_router)
 app.include_router(connectors_router)
+app.include_router(waitlist_router)
+app.include_router(admin_router)
 
 
 class _AnalyzeRequest(pydantic.BaseModel):

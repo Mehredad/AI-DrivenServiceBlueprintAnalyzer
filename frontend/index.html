@@ -740,7 +740,7 @@ select.fi{appearance:none;cursor:pointer;}
 .lp-nav-btns{display:flex;align-items:center;gap:8px;}
 .lp-nav .btn{font-size:14px;padding:8px 16px;min-height:36px;}
 .lp-inner{max-width:1160px;margin:0 auto;width:100%;padding:0 48px;}
-.lp-hero{display:grid;grid-template-columns:1fr 390px;gap:72px;padding:72px 48px 64px;max-width:1160px;margin:0 auto;width:100%;align-items:start;}
+.lp-hero{padding:80px 48px 64px;max-width:760px;margin:0 auto;width:100%;}
 .lp-badge{display:inline-flex;align-items:center;gap:6px;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);border-radius:20px;padding:4px 12px;font-size:12px;font-family:'JetBrains Mono',monospace;font-weight:500;letter-spacing:.5px;margin-bottom:24px;}
 .lp-h1{font-family:'Fraunces',serif;font-size:50px;font-weight:300;line-height:1.06;letter-spacing:-1.5px;margin-bottom:20px;color:var(--text);}
 .lp-h1 em{font-style:italic;color:var(--blue);}
@@ -767,6 +767,12 @@ select.fi{appearance:none;cursor:pointer;}
 .lp-submit-btn:hover{opacity:.82;}
 .lp-submit-btn:disabled{opacity:.5;cursor:not-allowed;}
 .lp-legal{font-size:12px;color:var(--text2);text-align:center;margin-top:10px;line-height:1.5;}
+/* Auth + Capture overlays */
+.lp-auth-overlay,.lp-capture-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;display:none;align-items:center;justify-content:center;}
+.lp-auth-overlay.open,.lp-capture-overlay.open{display:flex;}
+.lp-auth-modal,.lp-capture-modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:28px 28px 22px;width:420px;max-width:90vw;box-shadow:0 12px 40px rgba(0,0,0,.2);position:relative;max-height:90vh;overflow-y:auto;}
+.lp-modal-close{position:absolute;top:12px;right:12px;width:30px;height:30px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);border-radius:var(--r);font-size:18px;line-height:1;transition:background .1s,color .1s;}
+.lp-modal-close:hover{background:var(--bg2);color:var(--text);}
 /* Features */
 .lp-features{padding:56px 0;border-top:1px solid var(--border);}
 .lp-features-inner{max-width:1160px;margin:0 auto;padding:0 48px;}
@@ -837,13 +843,12 @@ select.fi{appearance:none;cursor:pointer;}
 
 /* MOBILE RESPONSIVE */
 @media(max-width:1024px){
-  .lp-hero{grid-template-columns:1fr;gap:36px;padding:48px 32px;}
-  .lp-auth-card{max-width:520px;}
+  .lp-hero{padding:48px 32px;}
   .lp-why-grid,.lp-how-steps,.lp-feat-grid{grid-template-columns:1fr 1fr;}
 }
 @media(max-width:640px){
   .lp-h1{font-size:34px;letter-spacing:-.8px;}
-  .lp-hero{padding:32px 20px;gap:24px;}
+  .lp-hero{padding:32px 20px;}
   .lp-why-grid,.lp-how-steps,.lp-feat-grid{grid-template-columns:1fr;}
   .lp-why-inner,.lp-how-inner,.lp-features-inner,.lp-compare-inner,.lp-research-inner{padding:0 20px;}
   .lp-nav{padding:12px 20px;}
@@ -946,85 +951,32 @@ select.fi{appearance:none;cursor:pointer;}
       Blueprint AI
     </div>
     <div class="lp-nav-btns">
-      <button class="btn btn-ghost" onclick="lpScrollToAuth('login')">Sign in</button>
-      <button class="btn btn-primary" onclick="lpScrollToAuth('register')">Get started free</button>
+      <button class="btn btn-ghost" onclick="lpOpenAuth('login')">Sign in</button>
+      <button class="btn btn-primary" onclick="lpOpenCapture()">Start for free</button>
     </div>
   </nav>
 
   <!-- HERO -->
   <div class="lp-hero">
-    <!-- LEFT: pitch -->
-    <div>
-      <div class="lp-badge">Beta &middot; Free to use</div>
-      <h1 class="lp-h1">Service blueprinting<br>for the <em>AI era</em></h1>
-      <p class="lp-sub">Map every actor, step, and AI capability in your service — on one shared canvas built for cross-functional teams.</p>
-      <div class="lp-roles">
-        <span class="lp-role-chip">PM</span>
-        <span class="lp-role-chip">Service Designer</span>
-        <span class="lp-role-chip">UX Researcher</span>
-        <span class="lp-role-chip">Developer</span>
-        <span class="lp-role-chip">Delivery Lead</span>
-        <span class="lp-role-chip">Governance</span>
-      </div>
-      <!-- Hero CTAs (FR-8) -->
-      <div class="lp-hero-ctas">
-        <button class="lp-btn-primary" onclick="lpScrollToAuth('register')">Get started free</button>
-      </div>
-      <!-- Stat row -->
-      <div style="display:flex;gap:32px;margin-top:4px;">
-        <div><div style="font-family:'Fraunces',serif;font-size:28px;font-weight:400;letter-spacing:-1px;color:var(--text);">6</div><div style="font-size:13px;color:var(--text2);margin-top:2px;">stakeholder lenses</div></div>
-        <div><div style="font-family:'Fraunces',serif;font-size:28px;font-weight:400;letter-spacing:-1px;color:var(--text);">1</div><div style="font-size:13px;color:var(--text2);margin-top:2px;">shared live canvas</div></div>
-        <div><div style="font-family:'Fraunces',serif;font-size:28px;font-weight:400;letter-spacing:-1px;color:var(--blue);">AI</div><div style="font-size:13px;color:var(--text2);margin-top:2px;">reads your blueprint</div></div>
-      </div>
+    <div class="lp-badge">Beta &middot; By invite only</div>
+    <h1 class="lp-h1">Service blueprinting<br>for the <em>AI era</em></h1>
+    <p class="lp-sub">Map every actor, step, and AI capability in your service — on one shared canvas built for cross-functional teams.</p>
+    <div class="lp-roles">
+      <span class="lp-role-chip">PM</span>
+      <span class="lp-role-chip">Service Designer</span>
+      <span class="lp-role-chip">UX Researcher</span>
+      <span class="lp-role-chip">Developer</span>
+      <span class="lp-role-chip">Delivery Lead</span>
+      <span class="lp-role-chip">Governance</span>
     </div>
-
-    <!-- RIGHT: auth card -->
-    <div class="lp-auth-card" id="lp-auth-card">
-      <div class="lp-auth-title">Get started</div>
-      <div class="lp-auth-tabs">
-        <button class="lp-auth-tab active" id="lp-tab-login"    onclick="lpSwitchTab('login')">Sign in</button>
-        <button class="lp-auth-tab"        id="lp-tab-register" onclick="lpSwitchTab('register')">Create account</button>
-      </div>
-
-      <!-- Google Sign-In -->
-      <div id="lp-google-area" class="lp-google-wrap">
-        <div id="lp-google-btn" style="display:flex;justify-content:center;"></div>
-        <div class="lp-divider">or continue with email</div>
-      </div>
-
-      <!-- Name (register only) -->
-      <div class="lp-fg" id="lp-name-fg" style="display:none;">
-        <div class="lp-fl">Full name</div>
-        <input class="lp-fi" type="text" id="lp-name" placeholder="Your name" autocomplete="name">
-      </div>
-
-      <div class="lp-fg">
-        <div class="lp-fl">Email</div>
-        <input class="lp-fi" type="email" id="lp-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')lpAuthSubmit()">
-      </div>
-
-      <div class="lp-fg">
-        <div class="lp-fl">Password</div>
-        <input class="lp-fi" type="password" id="lp-password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password" onkeydown="if(event.key==='Enter')lpAuthSubmit()">
-        <div id="lp-pw-hint" style="display:none;font-size:10px;color:var(--text3);margin-top:2px;">Min 8 chars &middot; one uppercase &middot; one number</div>
-      </div>
-
-      <!-- Role (register only) -->
-      <div class="lp-fg" id="lp-role-fg" style="display:none;">
-        <div class="lp-fl">Your role</div>
-        <select class="lp-fi" id="lp-role">
-          <option value="pm">PM / Product Manager</option>
-          <option value="designer" selected>Service / UX Designer</option>
-          <option value="researcher">UX Researcher</option>
-          <option value="developer">Developer / Engineer</option>
-          <option value="delivery">Delivery Lead</option>
-          <option value="governance">Governance / Compliance</option>
-        </select>
-      </div>
-
-      <div class="lp-err" id="lp-error"></div>
-      <button class="lp-submit-btn" id="lp-submit-btn" onclick="lpAuthSubmit()">Sign in</button>
-      <div class="lp-legal">By continuing, you agree this is a research tool.<br>Your data is stored securely and never sold.</div>
+    <div class="lp-hero-ctas">
+      <button class="lp-btn-primary" onclick="lpOpenCapture()">Start for free</button>
+      <button class="btn btn-ghost" style="font-size:15px;padding:10px 20px;height:auto;" onclick="lpOpenAuth('login')">Sign in →</button>
+    </div>
+    <div style="display:flex;gap:32px;margin-top:4px;">
+      <div><div style="font-family:'Fraunces',serif;font-size:28px;font-weight:400;letter-spacing:-1px;color:var(--text);">6</div><div style="font-size:13px;color:var(--text2);margin-top:2px;">stakeholder lenses</div></div>
+      <div><div style="font-family:'Fraunces',serif;font-size:28px;font-weight:400;letter-spacing:-1px;color:var(--text);">1</div><div style="font-size:13px;color:var(--text2);margin-top:2px;">shared live canvas</div></div>
+      <div><div style="font-family:'Fraunces',serif;font-size:28px;font-weight:400;letter-spacing:-1px;color:var(--blue);">AI</div><div style="font-size:13px;color:var(--text2);margin-top:2px;">reads your blueprint</div></div>
     </div>
   </div>
 
@@ -1257,8 +1209,8 @@ select.fi{appearance:none;cursor:pointer;}
   <div class="lp-footer">
     <div class="lp-footer-copy">Blueprint AI &middot; Built on research presented at CHI 2026 &middot; &copy; 2025</div>
     <div class="lp-footer-links">
-      <a href="#" onclick="lpScrollToAuth('login');return false;">Sign in</a>
-      <a href="#" onclick="lpScrollToAuth('register');return false;">Get started free</a>
+      <a href="#" onclick="lpOpenAuth('login');return false;">Sign in</a>
+      <a href="#" onclick="lpOpenCapture();return false;">Join waitlist</a>
       <!-- TODO: replace with actual links when pages exist -->
       <a href="#" title="TODO: About page">About</a>
       <a href="#" title="TODO: Privacy page">Privacy</a>
@@ -1271,6 +1223,105 @@ select.fi{appearance:none;cursor:pointer;}
 
 </div>
 <!-- ═══ END LANDING ═══ -->
+
+<!-- ═══ AUTH OVERLAY — no backdrop dismiss (PRD-13) ═══ -->
+<div id="lp-auth-overlay" class="lp-auth-overlay">
+  <div class="lp-auth-modal" id="lp-auth-modal">
+    <button class="lp-modal-close" onclick="lpCloseAuth()" title="Close">&times;</button>
+    <div class="lp-auth-title">Get started</div>
+    <div class="lp-auth-tabs">
+      <button class="lp-auth-tab active" id="lp-tab-login"    onclick="lpSwitchTab('login')">Sign in</button>
+      <button class="lp-auth-tab"        id="lp-tab-register" onclick="lpSwitchTab('register')">Create account</button>
+    </div>
+    <div id="lp-google-area" class="lp-google-wrap">
+      <div id="lp-google-btn" style="display:flex;justify-content:center;"></div>
+      <div class="lp-divider">or continue with email</div>
+    </div>
+    <div class="lp-fg" id="lp-name-fg" style="display:none;">
+      <div class="lp-fl">Full name</div>
+      <input class="lp-fi" type="text" id="lp-name" placeholder="Your name" autocomplete="name">
+    </div>
+    <div class="lp-fg">
+      <div class="lp-fl">Email</div>
+      <input class="lp-fi" type="email" id="lp-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')lpAuthSubmit()">
+    </div>
+    <div class="lp-fg">
+      <div class="lp-fl">Password</div>
+      <input class="lp-fi" type="password" id="lp-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')lpAuthSubmit()">
+      <div id="lp-pw-hint" style="display:none;font-size:10px;color:var(--text3);margin-top:2px;">Min 8 chars &middot; one uppercase &middot; one number</div>
+    </div>
+    <div class="lp-fg" id="lp-role-fg" style="display:none;">
+      <div class="lp-fl">Your role</div>
+      <select class="lp-fi" id="lp-role">
+        <option value="pm">PM / Product Manager</option>
+        <option value="designer" selected>Service / UX Designer</option>
+        <option value="researcher">UX Researcher</option>
+        <option value="developer">Developer / Engineer</option>
+        <option value="delivery">Delivery Lead</option>
+        <option value="governance">Governance / Compliance</option>
+      </select>
+    </div>
+    <div class="lp-err" id="lp-error"></div>
+    <button class="lp-submit-btn" id="lp-submit-btn" onclick="lpAuthSubmit()">Sign in</button>
+    <div class="lp-legal">By continuing, you agree this is a research tool.<br>Your data is stored securely and never sold.</div>
+  </div>
+</div>
+
+<!-- ═══ CAPTURE OVERLAY — backdrop dismisses ═══ -->
+<div id="lp-capture-overlay" class="lp-capture-overlay" onclick="lpCaptureBgClick(event)">
+  <div class="lp-capture-modal">
+    <button class="lp-modal-close" onclick="lpCloseCapture()" title="Close">&times;</button>
+
+    <!-- Step 1: basics -->
+    <div id="lp-cap-step1">
+      <div class="lp-auth-title">Join the waitlist</div>
+      <p style="font-size:14px;color:var(--text2);margin-bottom:18px;line-height:1.6;">We're rolling out access carefully. Enter your email — we'll be in touch when your spot is ready.</p>
+      <div class="lp-fg">
+        <div class="lp-fl">Email *</div>
+        <input class="lp-fi" type="email" id="cap-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')lpCaptureNext()">
+      </div>
+      <div class="lp-fg">
+        <div class="lp-fl">Full name</div>
+        <input class="lp-fi" type="text" id="cap-name" placeholder="Your name" autocomplete="name">
+      </div>
+      <div class="lp-fg">
+        <div class="lp-fl">Job title</div>
+        <input class="lp-fi" type="text" id="cap-job" placeholder="e.g. Head of Design">
+      </div>
+      <div class="lp-fg">
+        <div class="lp-fl">Industry</div>
+        <input class="lp-fi" type="text" id="cap-industry" placeholder="e.g. Healthcare">
+      </div>
+      <div class="lp-err" id="cap-error"></div>
+      <button class="lp-submit-btn" id="cap-next-btn" onclick="lpCaptureNext()">Next &rarr;</button>
+    </div>
+
+    <!-- Step 2: jump the queue -->
+    <div id="lp-cap-step2" style="display:none;">
+      <div class="lp-auth-title">Jump the queue</div>
+      <p style="font-size:14px;color:var(--text2);margin-bottom:18px;line-height:1.6;">Tell us how you'd use Blueprint AI and we'll prioritise your access. Completely optional.</p>
+      <div class="lp-fg">
+        <div class="lp-fl">How would you use it?</div>
+        <textarea class="lp-fi" id="cap-usecase" rows="4" maxlength="2000" placeholder="e.g. We're redesigning our patient intake journey and need to map AI handoffs…" style="resize:vertical;"></textarea>
+      </div>
+      <label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:14px;cursor:pointer;">
+        <input type="checkbox" id="cap-consent" style="margin-top:3px;flex-shrink:0;">
+        <span style="font-size:13px;color:var(--text2);line-height:1.5;">I'm happy to receive product updates and news from Blueprint AI.</span>
+      </label>
+      <div class="lp-err" id="cap-error2"></div>
+      <button class="lp-submit-btn" id="cap-submit-btn" onclick="lpSubmitCapture(false)">Request access</button>
+      <button class="btn btn-ghost" style="width:100%;margin-top:8px;font-size:14px;" onclick="lpSubmitCapture(true)">Skip — just add me to the list</button>
+    </div>
+
+    <!-- Step 3: success -->
+    <div id="lp-cap-done" style="display:none;text-align:center;padding:16px 0 8px;">
+      <div style="font-size:36px;margin-bottom:14px;">🎉</div>
+      <div style="font-family:'Fraunces',serif;font-size:22px;font-weight:400;margin-bottom:10px;color:var(--text);">You're on the list!</div>
+      <p id="cap-done-msg" style="font-size:14px;color:var(--text2);margin-bottom:24px;line-height:1.6;">We'll be in touch when your access is ready.</p>
+      <button class="lp-submit-btn" onclick="lpCloseCapture()" style="max-width:200px;margin:0 auto;">Done</button>
+    </div>
+  </div>
+</div>
 
 <div class="app" id="app" style="display:none;">
 
@@ -2300,11 +2351,11 @@ function hideAuthLoading() {
 // ═══════════════════════════════════════════════════════
 function showAuthModal() {
   showLanding();
-  lpSwitchTab('login');
+  lpOpenAuth('login');
 }
 
 function hideAuthModal() {
-  // no-op — landing page handles its own visibility
+  lpCloseAuth();
 }
 
 async function doLogin() {
@@ -2405,7 +2456,7 @@ function logout() {
   if (authBtn) { authBtn.textContent = 'Sign in'; authBtn.onclick = showAuthModal; }
   renderCanvas();
   showLanding();
-  lpSwitchTab('login');
+  lpOpenAuth('login');
 }
 
 async function loadCurrentUser() {
@@ -7125,10 +7176,18 @@ async function initApp() {
 
   if (!currentUser) {
     hideAuthLoading();
-    showLanding();
+    if (window.location.pathname.startsWith('/blueprintai')) {
+      // On the app subpath — show the tool shell and auth overlay, not the landing page
+      document.getElementById('landing').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      lpOpenAuth('login');
+    } else {
+      showLanding();
+    }
     return;
   }
 
+  lpCloseAuth();
   hideLanding();
 
   if (!currentUser.has_seen_onboarding) {
@@ -7958,7 +8017,6 @@ let _googleInitDone = false;
 function showLanding() {
   document.getElementById('landing').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
-  if (!_googleInitDone) { _googleInitDone = true; initGoogleAuth(); }
 }
 
 function hideLanding() {
@@ -7966,9 +8024,85 @@ function hideLanding() {
   document.getElementById('app').style.display = 'flex';
 }
 
-function lpScrollToAuth(tab) {
-  lpSwitchTab(tab);
-  document.getElementById('lp-auth-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+function lpOpenAuth(tab) {
+  if (!_googleInitDone) { _googleInitDone = true; initGoogleAuth(); }
+  document.getElementById('lp-auth-overlay').classList.add('open');
+  lpSwitchTab(tab || 'login');
+  setTimeout(() => { const el = document.getElementById('lp-email'); if (el) el.focus(); }, 60);
+}
+
+function lpCloseAuth() {
+  document.getElementById('lp-auth-overlay').classList.remove('open');
+}
+
+function lpOpenCapture() {
+  document.getElementById('lp-cap-step1').style.display = '';
+  document.getElementById('lp-cap-step2').style.display = 'none';
+  document.getElementById('lp-cap-done').style.display = 'none';
+  document.getElementById('cap-error').textContent = '';
+  document.getElementById('cap-error2').textContent = '';
+  document.getElementById('lp-capture-overlay').classList.add('open');
+  setTimeout(() => { const el = document.getElementById('cap-email'); if (el) el.focus(); }, 60);
+}
+
+function lpCloseCapture() {
+  document.getElementById('lp-capture-overlay').classList.remove('open');
+}
+
+function lpCaptureBgClick(e) {
+  if (e.target === e.currentTarget) lpCloseCapture();
+}
+
+async function lpCaptureNext() {
+  const email = document.getElementById('cap-email').value.trim();
+  const errEl = document.getElementById('cap-error');
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errEl.textContent = 'Please enter a valid email address.';
+    return;
+  }
+  errEl.textContent = '';
+  document.getElementById('lp-cap-step1').style.display = 'none';
+  document.getElementById('lp-cap-step2').style.display = '';
+  setTimeout(() => { const el = document.getElementById('cap-usecase'); if (el) el.focus(); }, 60);
+}
+
+async function lpSubmitCapture(skipDetails) {
+  const btn = document.getElementById('cap-submit-btn');
+  const errEl = document.getElementById('cap-error2');
+  btn.disabled = true;
+  errEl.textContent = '';
+  try {
+    const payload = {
+      email: document.getElementById('cap-email').value.trim(),
+      source: 'landing_hero_cta',
+      marketing_consent: !skipDetails && document.getElementById('cap-consent').checked,
+    };
+    const name = document.getElementById('cap-name').value.trim();
+    const job  = document.getElementById('cap-job').value.trim();
+    const ind  = document.getElementById('cap-industry').value.trim();
+    if (name) payload.full_name = name;
+    if (job)  payload.job_title = job;
+    if (ind)  payload.industry  = ind;
+    if (!skipDetails) {
+      const uc = document.getElementById('cap-usecase').value.trim();
+      if (uc) payload.use_case = uc;
+    }
+    const res = await fetch(API_BASE + '/api/waitlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) { errEl.textContent = 'Something went wrong — please try again.'; btn.disabled = false; return; }
+    const data = await res.json();
+    document.getElementById('lp-cap-step2').style.display = 'none';
+    document.getElementById('lp-cap-done').style.display = '';
+    if (data.already_member) {
+      document.getElementById('cap-done-msg').textContent = "You're already on the list! We'll be in touch soon.";
+    }
+  } catch (e) {
+    errEl.textContent = 'Something went wrong — please try again.';
+    btn.disabled = false;
+  }
 }
 
 function lpSwitchTab(tab) {
@@ -8072,6 +8206,10 @@ async function _lpStoreAndEnter(tokens) {
   localStorage.setItem('bp_access_token',  authToken);
   localStorage.setItem('bp_refresh_token', refreshToken);
   await loadCurrentUser();
+  lpCloseAuth();
+  if (!window.location.pathname.startsWith('/blueprintai')) {
+    history.pushState({}, '', '/blueprintai');
+  }
   hideLanding();
   await initApp();
 }
