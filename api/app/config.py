@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     @field_validator(
         "database_url", "supabase_url", "supabase_service_key",
         "secret_key", "gemini_api_key", "nim_api_key", "google_client_id",
+        "groq_api_key", "cerebras_api_key",
         "allowed_origins",
         mode="before",
     )
@@ -48,6 +49,12 @@ class Settings(BaseSettings):
     # ── Google Gemini (server-side only — never exposed to frontend)
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.5-flash"
+
+    # ── Groq (free tier — Llama 3.3 70B, primary AI provider)
+    groq_api_key: str = ""
+
+    # ── Cerebras (free tier — Llama 3.3 70B, secondary AI provider)
+    cerebras_api_key: str = ""
 
     # ── NVIDIA NIM (OpenAI-compatible free tier — for lightweight AI tasks)
     nim_api_key: str = ""
