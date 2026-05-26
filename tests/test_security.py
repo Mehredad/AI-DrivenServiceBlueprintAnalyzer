@@ -1,5 +1,6 @@
 """Cross-account data isolation regression tests (PRD-13)."""
 import pytest
+import httpx
 from unittest.mock import AsyncMock, MagicMock, patch
 
 
@@ -19,10 +20,18 @@ def _make_client_mock(text: str = "Agent response."):
     response = MagicMock()
     response.text = text
     response.usage_metadata = usage
+    response.candidates = []
 
     client = MagicMock()
     client.aio.models.generate_content = AsyncMock(return_value=response)
     return client
+
+
+def _openai_compat_429():
+    """Makes Groq/Cerebras return 429 so Gemini is used."""
+    resp = httpx.Response(429, request=httpx.Request("POST", "http://x.test"))
+    exc  = httpx.HTTPStatusError("429", request=resp.request, response=resp)
+    return AsyncMock(side_effect=exc)
 
 
 # ── Fixtures for two separate users ──────────────────────────────────────────
@@ -59,7 +68,8 @@ async def test_user_cannot_read_another_users_chat_history(client, user_a_payloa
     board_id = board_resp.json()["id"]
 
     with patch("app.services.agent_service.types", _make_types_mock()), \
-         patch("app.services.agent_service._get_client", return_value=_make_client_mock("private")):
+         patch("app.services.agent_service._call_openai_compat", _openai_compat_429()), \
+         patch("app.services.agent_service._get_gemini_client", return_value=_make_client_mock("private")):
         await client.post(
             "/api/agent/chat",
             json={"board_id": board_id, "message": "secret message from Alice", "history": []},
@@ -148,7 +158,8 @@ async def test_chat_history_is_scoped_to_board(client, user_a_payload):
     board_y = (await client.post("/api/boards", json={"title": "Board Y", "domain": "healthcare"}, headers=headers_a)).json()
 
     with patch("app.services.agent_service.types", _make_types_mock()), \
-         patch("app.services.agent_service._get_client", return_value=_make_client_mock("reply")):
+         patch("app.services.agent_service._call_openai_compat", _openai_compat_429()), \
+         patch("app.services.agent_service._get_gemini_client", return_value=_make_client_mock("reply")):
         await client.post(
             "/api/agent/chat",
             json={"board_id": board_x["id"], "message": "message on board X", "history": []},

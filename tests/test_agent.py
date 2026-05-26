@@ -1,5 +1,6 @@
-﻿"""Agent endpoint tests."""
+"""Agent endpoint tests."""
 import pytest
+import httpx
 from unittest.mock import AsyncMock, MagicMock, patch
 
 
@@ -12,52 +13,81 @@ def _make_types_mock():
     return types
 
 
-def _make_client_mock(text: str = "Test agent response."):
+def _make_gemini_client_mock(text: str = "Test agent response."):
     usage = MagicMock()
     usage.total_token_count = 15
 
     response = MagicMock()
     response.text = text
     response.usage_metadata = usage
+    response.candidates = []
 
     client = MagicMock()
     client.aio.models.generate_content = AsyncMock(return_value=response)
     return client
 
 
-def _make_error_client(exc: Exception):
+def _make_error_gemini_client(exc: Exception):
     client = MagicMock()
     client.aio.models.generate_content = AsyncMock(side_effect=exc)
     return client
 
 
+def _openai_compat_429():
+    """Returns an AsyncMock that raises HTTP 429 — makes Groq/Cerebras skip."""
+    resp = httpx.Response(429, request=httpx.Request("POST", "http://x.test"))
+    exc  = httpx.HTTPStatusError("429 Too Many Requests", request=resp.request, response=resp)
+    return AsyncMock(side_effect=exc)
+
+
 def _make_client_error(code: int, status: str = ""):
     from google.genai import errors as genai_errors
     err = genai_errors.ClientError.__new__(genai_errors.ClientError)
-    err.code = code
-    err.status = status
+    err.code    = code
+    err.status  = status
     err.message = f"HTTP {code}"
-    err.args = (f"{code} {status}",)
+    err.args    = (f"{code} {status}",)
     return err
 
 
 def _make_server_error(code: int = 503):
     from google.genai import errors as genai_errors
     err = genai_errors.ServerError.__new__(genai_errors.ServerError)
-    err.code = code
-    err.status = "UNAVAILABLE"
+    err.code    = code
+    err.status  = "UNAVAILABLE"
     err.message = f"HTTP {code}"
-    err.args = (f"{code} UNAVAILABLE",)
+    err.args    = (f"{code} UNAVAILABLE",)
     return err
 
 
-# -- Existing happy-path tests -------------------------------------------------
+# ── helpers that patch the full provider stack ─────────────────────────────────
+
+def _compat_skip():
+    """Patch _call_openai_compat → 429 so Groq/Cerebras are skipped."""
+    return patch("app.services.agent_service._call_openai_compat", _openai_compat_429())
+
+
+def _gemini_ok(text: str = "Test agent response."):
+    return patch(
+        "app.services.agent_service._get_gemini_client",
+        return_value=_make_gemini_client_mock(text),
+    )
+
+
+def _gemini_err(exc: Exception):
+    return patch(
+        "app.services.agent_service._get_gemini_client",
+        return_value=_make_error_gemini_client(exc),
+    )
+
+
+# -- Happy-path tests ----------------------------------------------------------
 
 @pytest.mark.asyncio
 async def test_chat_accepts_role_field(client, auth_headers, board):
     with patch("app.services.agent_service.types", _make_types_mock()), \
-         patch("app.services.agent_service._get_client",
-               return_value=_make_client_mock("Here is your developer-focused review.")):
+         _compat_skip(), \
+         _gemini_ok("Here is your developer-focused review."):
         r = await client.post(
             "/api/agent/chat",
             json={
@@ -80,8 +110,8 @@ async def test_chat_accepts_role_field(client, auth_headers, board):
 @pytest.mark.asyncio
 async def test_chat_without_role_still_works(client, auth_headers, board):
     with patch("app.services.agent_service.types", _make_types_mock()), \
-         patch("app.services.agent_service._get_client",
-               return_value=_make_client_mock("Generic board review.")):
+         _compat_skip(), \
+         _gemini_ok("Generic board review."):
         r = await client.post(
             "/api/agent/chat",
             json={
@@ -100,10 +130,11 @@ async def test_chat_without_role_still_works(client, auth_headers, board):
 
 @pytest.mark.asyncio
 async def test_chat_quota_exhausted_returns_error_card(client, auth_headers, board):
+    """When ALL providers are rate-limited the user sees all_providers_exhausted."""
     exc = _make_client_error(429, "RESOURCE_EXHAUSTED")
     with patch("app.services.agent_service.types", _make_types_mock()), \
-         patch("app.services.agent_service._get_client",
-               return_value=_make_error_client(exc)):
+         _compat_skip(), \
+         _gemini_err(exc):
         r = await client.post(
             "/api/agent/chat",
             json={"board_id": board["id"], "message": "hello", "history": []},
@@ -112,19 +143,20 @@ async def test_chat_quota_exhausted_returns_error_card(client, auth_headers, boa
 
     assert r.status_code == 200
     data = r.json()
-    assert data["error"]["code"] == "quota_exhausted"
+    assert data["error"]["code"] == "all_providers_exhausted"
     assert data["error"]["retry_advice"] == "wait_24h"
-    assert "daily limit" in data["error"]["user_message"]
+    assert "24 hours" in data["error"]["user_message"]
     assert "request_id" in data["error"]
     assert data.get("response") is None
 
 
 @pytest.mark.asyncio
 async def test_chat_rate_limited_returns_error_card(client, auth_headers, board):
+    """429 from all providers → all_providers_exhausted, not rate_limited."""
     exc = _make_client_error(429, "RATE_LIMIT_EXCEEDED")
     with patch("app.services.agent_service.types", _make_types_mock()), \
-         patch("app.services.agent_service._get_client",
-               return_value=_make_error_client(exc)):
+         _compat_skip(), \
+         _gemini_err(exc):
         r = await client.post(
             "/api/agent/chat",
             json={"board_id": board["id"], "message": "hello", "history": []},
@@ -133,16 +165,16 @@ async def test_chat_rate_limited_returns_error_card(client, auth_headers, board)
 
     assert r.status_code == 200
     data = r.json()
-    assert data["error"]["code"] == "rate_limited"
-    assert data["error"]["retry_advice"] == "wait_1m"
+    assert data["error"]["code"] == "all_providers_exhausted"
+    assert data["error"]["retry_advice"] == "wait_24h"
 
 
 @pytest.mark.asyncio
 async def test_chat_service_unavailable_returns_error_card(client, auth_headers, board):
     exc = _make_server_error(503)
     with patch("app.services.agent_service.types", _make_types_mock()), \
-         patch("app.services.agent_service._get_client",
-               return_value=_make_error_client(exc)):
+         _compat_skip(), \
+         _gemini_err(exc):
         r = await client.post(
             "/api/agent/chat",
             json={"board_id": board["id"], "message": "hello", "history": []},
@@ -159,8 +191,8 @@ async def test_chat_service_unavailable_returns_error_card(client, auth_headers,
 async def test_chat_invalid_request_returns_error_card(client, auth_headers, board):
     exc = _make_client_error(400, "BAD_REQUEST")
     with patch("app.services.agent_service.types", _make_types_mock()), \
-         patch("app.services.agent_service._get_client",
-               return_value=_make_error_client(exc)):
+         _compat_skip(), \
+         _gemini_err(exc):
         r = await client.post(
             "/api/agent/chat",
             json={"board_id": board["id"], "message": "hello", "history": []},
@@ -177,8 +209,8 @@ async def test_chat_invalid_request_returns_error_card(client, auth_headers, boa
 async def test_chat_auth_failure_returns_error_card(client, auth_headers, board):
     exc = _make_client_error(401, "UNAUTHENTICATED")
     with patch("app.services.agent_service.types", _make_types_mock()), \
-         patch("app.services.agent_service._get_client",
-               return_value=_make_error_client(exc)):
+         _compat_skip(), \
+         _gemini_err(exc):
         r = await client.post(
             "/api/agent/chat",
             json={"board_id": board["id"], "message": "hello", "history": []},
@@ -195,8 +227,8 @@ async def test_chat_auth_failure_returns_error_card(client, auth_headers, board)
 async def test_chat_unknown_exception_falls_to_unknown_code(client, auth_headers, board):
     exc = RuntimeError("Unexpected failure without status code")
     with patch("app.services.agent_service.types", _make_types_mock()), \
-         patch("app.services.agent_service._get_client",
-               return_value=_make_error_client(exc)):
+         _compat_skip(), \
+         _gemini_err(exc):
         r = await client.post(
             "/api/agent/chat",
             json={"board_id": board["id"], "message": "hello", "history": []},
@@ -215,8 +247,8 @@ async def test_chat_unknown_exception_falls_to_unknown_code(client, auth_headers
 async def test_error_response_has_uuid_request_id(client, auth_headers, board):
     exc = _make_server_error(500)
     with patch("app.services.agent_service.types", _make_types_mock()), \
-         patch("app.services.agent_service._get_client",
-               return_value=_make_error_client(exc)):
+         _compat_skip(), \
+         _gemini_err(exc):
         r = await client.post(
             "/api/agent/chat",
             json={"board_id": board["id"], "message": "hello", "history": []},
@@ -239,8 +271,8 @@ async def test_user_message_persisted_on_error(client, auth_headers, board):
 
     exc = _make_server_error(503)
     with patch("app.services.agent_service.types", _make_types_mock()), \
-         patch("app.services.agent_service._get_client",
-               return_value=_make_error_client(exc)):
+         _compat_skip(), \
+         _gemini_err(exc):
         await client.post(
             "/api/agent/chat",
             json={"board_id": board["id"], "message": "persist me on error", "history": []},
@@ -311,8 +343,8 @@ async def test_health_agent_down_after_five_failures(client):
 async def test_history_returns_persisted_messages(client, auth_headers, board):
     """Messages sent via /chat must appear in /history with correct fields."""
     with patch("app.services.agent_service.types", _make_types_mock()), \
-         patch("app.services.agent_service._get_client",
-               return_value=_make_client_mock("Agent reply.")):
+         _compat_skip(), \
+         _gemini_ok("Agent reply."):
         await client.post(
             "/api/agent/chat",
             json={"board_id": board["id"], "message": "hello history", "history": []},
@@ -325,9 +357,9 @@ async def test_history_returns_persisted_messages(client, auth_headers, board):
     assert len(msgs) == 2
     roles = {m["role"] for m in msgs}
     assert roles == {"user", "assistant"}
-    user_msg = next(m for m in msgs if m["role"] == "user")
+    user_msg  = next(m for m in msgs if m["role"] == "user")
     agent_msg = next(m for m in msgs if m["role"] == "assistant")
-    assert user_msg["content"] == "hello history"
+    assert user_msg["content"]  == "hello history"
     assert agent_msg["content"] == "Agent reply."
     assert "created_at" in user_msg
     assert "id" in user_msg
@@ -337,8 +369,8 @@ async def test_history_returns_persisted_messages(client, auth_headers, board):
 async def test_history_includes_author_name_for_user_messages(client, auth_headers, board):
     """User messages must carry the sender's full_name in author_name."""
     with patch("app.services.agent_service.types", _make_types_mock()), \
-         patch("app.services.agent_service._get_client",
-               return_value=_make_client_mock("ok")):
+         _compat_skip(), \
+         _gemini_ok("ok"):
         await client.post(
             "/api/agent/chat",
             json={"board_id": board["id"], "message": "who am i", "history": []},
@@ -346,11 +378,11 @@ async def test_history_includes_author_name_for_user_messages(client, auth_heade
         )
 
     r = await client.get(f"/api/agent/boards/{board['id']}/history", headers=auth_headers)
-    msgs = r.json()
-    user_msg = next(m for m in msgs if m["role"] == "user")
+    msgs      = r.json()
+    user_msg  = next(m for m in msgs if m["role"] == "user")
+    agent_msg = next(m for m in msgs if m["role"] == "assistant")
     assert user_msg["author_name"] is not None
     assert len(user_msg["author_name"]) > 0
-    agent_msg = next(m for m in msgs if m["role"] == "assistant")
     assert agent_msg["author_name"] is None
 
 
@@ -358,8 +390,8 @@ async def test_history_includes_author_name_for_user_messages(client, auth_heade
 async def test_history_offset_pagination(client, auth_headers, board):
     """offset parameter shifts the window — offset=2 skips the 2 oldest messages."""
     with patch("app.services.agent_service.types", _make_types_mock()), \
-         patch("app.services.agent_service._get_client",
-               return_value=_make_client_mock("reply")):
+         _compat_skip(), \
+         _gemini_ok("reply"):
         for i in range(3):
             await client.post(
                 "/api/agent/chat",
@@ -367,7 +399,7 @@ async def test_history_offset_pagination(client, auth_headers, board):
                 headers=auth_headers,
             )
 
-    full = await client.get(
+    full        = await client.get(
         f"/api/agent/boards/{board['id']}/history?limit=6", headers=auth_headers
     )
     with_offset = await client.get(
@@ -375,8 +407,8 @@ async def test_history_offset_pagination(client, auth_headers, board):
     )
     assert full.status_code == 200
     assert with_offset.status_code == 200
-    assert len(full.json()) == 6          # 3 user + 3 assistant messages
-    assert len(with_offset.json()) == 4   # 6 total - 2 skipped
+    assert len(full.json()) == 6          # 3 user + 3 assistant
+    assert len(with_offset.json()) == 4   # 6 total − 2 skipped
 
 
 @pytest.mark.asyncio
