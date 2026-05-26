@@ -869,10 +869,13 @@ async def chat(
     tokens = 0
 
     for provider in providers_to_try:
-        api_key = _provider_key(provider["name"])
-        if not api_key:
-            log.debug("Skipping provider %s — API key not configured.", provider["name"])
-            continue
+        # Gemini manages its own key inside _get_gemini_client() / _call_gemini().
+        # Only gate non-Gemini providers on their API key here.
+        if provider["name"] != "gemini":
+            api_key = _provider_key(provider["name"])
+            if not api_key:
+                log.debug("Skipping provider %s — API key not configured.", provider["name"])
+                continue
 
         try:
             if provider["name"] == "gemini":
