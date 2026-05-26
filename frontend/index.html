@@ -193,7 +193,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .bp-meta{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);display:flex;align-items:center;gap:7px;}
 
 /* CANVAS GRID — PRD-02 */
-.bp-grid{display:grid;grid-template-columns:160px repeat(var(--step-count,1),minmax(180px,1fr)) 56px;width:max-content;min-width:100%;}
+.bp-grid{display:grid;grid-template-columns:160px repeat(var(--step-count,1),240px) 56px;width:max-content;}
 .bp-corner{position:sticky;top:0;left:0;z-index:10;background:var(--bg2);border-right:1px solid var(--border);border-bottom:1px solid var(--border);height:42px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);}
 .bp-step-header{position:sticky;top:0;z-index:9;background:var(--bg);border-right:1px solid var(--border2);border-bottom:1px solid var(--border);height:42px;display:flex;align-items:center;padding:0 10px;gap:4px;font-size:11px;font-weight:600;}
 .bp-step-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -1006,10 +1006,10 @@ select.fi{appearance:none;cursor:pointer;}
 .monitor-pane.active{display:flex;}
 
 /* ── Floating chat button (right edge) ── */
-.chat-float-btn{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:300;width:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;cursor:pointer;border:none;background:var(--text);color:white;border-radius:8px 0 0 8px;padding:14px 6px;box-shadow:-2px 0 12px rgba(0,0,0,.12);transition:all .15s;writing-mode:vertical-rl;}
-.chat-float-btn:hover{background:var(--blue);padding-right:10px;}
-.chat-float-btn-dot{width:7px;height:7px;border-radius:50%;background:white;animation:adp 2.5s ease-in-out infinite;display:block;margin:0 auto 6px;writing-mode:horizontal-tb;}
-.chat-float-lbl{font-size:11px;font-weight:600;letter-spacing:.5px;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.chat-float-btn{position:fixed;right:0;top:28%;transform:translateY(-50%);z-index:300;display:flex;flex-direction:row;align-items:center;gap:6px;cursor:pointer;border:none;background:var(--text);color:white;border-radius:8px 0 0 8px;padding:9px 14px 9px 10px;box-shadow:-2px 0 12px rgba(0,0,0,.14);transition:all .15s;}
+.chat-float-btn:hover{background:var(--blue);}
+.chat-float-btn-dot{width:7px;height:7px;border-radius:50%;background:white;animation:adp 2.5s ease-in-out infinite;display:block;flex-shrink:0;}
+.chat-float-lbl{font-size:12px;font-weight:600;letter-spacing:.2px;font-family:'DM Sans',sans-serif;white-space:nowrap;}
 .chat-float-btn.hidden{display:none!important;}
 
 /* ── Persona badge on element cards ── */
@@ -2412,7 +2412,7 @@ const _stepColWidths = {};
 function _buildGridTemplate() {
   const steps = [...(boardState.steps || [])].sort((a, b) => a.order - b.order);
   if (!steps.length) return '160px 56px';
-  return '160px ' + steps.map(s => _stepColWidths[s.id] ? `${_stepColWidths[s.id]}px` : 'minmax(180px,1fr)').join(' ') + ' 56px';
+  return '160px ' + steps.map(s => `${_stepColWidths[s.id] || 240}px`).join(' ') + ' 56px';
 }
 
 function _applyGridTemplate() {
@@ -7573,7 +7573,7 @@ function _showCanvasSkeleton() {
   if (!gridEl) return;
   const STEPS = 4, LANES = 3;
   gridEl.style.display = 'grid';
-  gridEl.style.gridTemplateColumns = `160px repeat(${STEPS},minmax(180px,1fr)) 56px`;
+  gridEl.style.gridTemplateColumns = `160px repeat(${STEPS},240px) 56px`;
   // cards per cell [lane][step]
   const cards = [[2,1,0,1],[1,0,2,0],[0,1,1,2]];
   let h = '';
