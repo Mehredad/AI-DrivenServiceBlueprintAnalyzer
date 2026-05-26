@@ -159,6 +159,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .apulse{width:4px;height:4px;border-radius:50%;background:var(--purple);animation:ap 2s ease-in-out infinite;}
 @keyframes ap{0%,100%{opacity:1;}50%{opacity:.3;}}
 
+/* STAGE ROW */
+.bp-stage-row-corner{background:var(--bg2);border-right:1px solid var(--border);border-bottom:1px solid var(--border);height:26px;}
+.bp-stage-cell{border-right:1px solid var(--border);border-bottom:2px solid var(--blue);height:26px;display:flex;align-items:center;padding:0 8px;gap:4px;font-size:10px;font-weight:700;color:var(--blue);background:var(--blue-bg);font-family:'DM Sans',sans-serif;overflow:hidden;}
+.bp-stage-cell.bp-stage-empty{background:var(--bg2);border-bottom:1px solid var(--border);border-right:1px solid var(--border2);}
+.bp-stage-cell.bp-stage-selectable:hover{background:var(--blue-bd);cursor:pointer;}
+.bp-stage-cell.bp-stage-sel{background:var(--blue-bd);outline:2px solid var(--blue);outline-offset:-2px;cursor:pointer;}
+.bp-stage-row-spacer{background:var(--bg);border-bottom:1px solid var(--border);height:26px;}
+.bp-stage-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;}
+.stage-create-bar{display:none;background:var(--blue);color:#fff;align-items:center;gap:8px;padding:5px 14px;font-size:11px;font-weight:600;flex-shrink:0;}
+.stage-create-bar.show{display:flex;}
+#stage-mode-btn.active{background:var(--blue-bg);border-color:var(--blue);color:var(--blue);border:1px solid var(--blue);}
+
 /* INSIGHTS STRIP */
 .ins-strip{background:var(--amber-bg);border-bottom:1px solid var(--amber-bd);display:flex;align-items:center;padding:0 14px;gap:8px;flex-shrink:0;overflow:hidden;transition:max-height .3s,opacity .3s;max-height:50px;opacity:1;}
 .ins-strip.hidden{max-height:0;opacity:0;pointer-events:none;}
@@ -1003,7 +1015,7 @@ select.fi{appearance:none;cursor:pointer;}
 .monitor-pane.active{display:flex;}
 
 /* ── Floating chat button (right edge) ── */
-.chat-float-btn{position:fixed;right:0;top:28%;transform:translateY(-50%);z-index:300;display:flex;flex-direction:row;align-items:center;gap:6px;cursor:pointer;border:none;background:var(--text);color:white;border-radius:8px 0 0 8px;padding:9px 14px 9px 10px;box-shadow:-2px 0 12px rgba(0,0,0,.14);transition:all .15s;}
+.chat-float-btn{position:fixed;right:0;top:100px;z-index:300;display:flex;flex-direction:row;align-items:center;gap:6px;cursor:pointer;border:none;background:var(--text);color:white;border-radius:8px 0 0 8px;padding:9px 14px 9px 10px;box-shadow:-2px 0 12px rgba(0,0,0,.14);transition:all .15s;}
 .chat-float-btn:hover{background:var(--blue);}
 .chat-float-btn-dot{width:7px;height:7px;border-radius:50%;background:white;animation:adp 2.5s ease-in-out infinite;display:block;flex-shrink:0;}
 .chat-float-lbl{font-size:12px;font-weight:600;letter-spacing:.2px;font-family:'DM Sans',sans-serif;white-space:nowrap;}
@@ -1829,7 +1841,6 @@ select.fi{appearance:none;cursor:pointer;}
   <div class="board-tabs-bar" id="board-tabs-bar">
     <div class="board-tabs-strip" id="board-tabs-strip"></div>
     <div class="ai-badge" id="ai-cap-badge" style="display:none;align-self:center;margin-right:8px;"><div class="apulse"></div><span id="ai-cap-count">0</span> <span id="ai-cap-label">capabilities</span></div>
-    <button class="board-tab-add" title="New board" onclick="openModal('new-project')">+</button>
   </div>
 
   <!-- Insights strip -->
@@ -1859,6 +1870,7 @@ select.fi{appearance:none;cursor:pointer;}
             </div>
           </div>
           <div style="margin-left:auto;display:flex;gap:5px;">
+            <button id="stage-mode-btn" class="btn btn-ghost" style="font-size:10px;height:26px;" onclick="toggleStagingMode()" title="Group steps into a phase/stage">Group Steps</button>
             <button class="btn btn-ghost" style="font-size:10px;height:26px;" onclick="askAgent('Do a full review of the current blueprint. Identify all gaps, risks, and opportunities, and give me a structured summary.')">AI Review</button>
             <button class="btn btn-ghost" style="font-size:10px;height:26px;" onclick="openAddElement(null,null)">+ Element</button>
           </div>
@@ -1878,6 +1890,13 @@ select.fi{appearance:none;cursor:pointer;}
           <h2>Add steps to your journey</h2>
           <p>You have swimlanes — now add steps to describe the stages of this journey. Each column represents one stage, like <em>"Discover"</em>, <em>"Onboard"</em>, or <em>"Resolve"</em>.</p>
           <button class="btn btn-primary" onclick="addStep()">+ Add step</button>
+        </div>
+
+        <!-- Stage grouping action bar (shown when staging mode is active) -->
+        <div id="stage-create-bar" class="stage-create-bar">
+          <span id="stage-create-label">Select steps to group into a stage</span>
+          <button id="stage-group-btn" class="btn" style="background:white;color:var(--blue);height:22px;font-size:10px;padding:0 8px;display:none;" onclick="createStageFromSelected()">Group into Stage</button>
+          <button class="btn" style="background:rgba(255,255,255,.2);color:white;height:22px;font-size:10px;padding:0 8px;margin-left:auto;" onclick="exitStagingMode()">Cancel</button>
         </div>
 
         <!-- Dynamic canvas grid — populated by renderCanvas() in PRD-02 -->
@@ -2196,7 +2215,7 @@ select.fi{appearance:none;cursor:pointer;}
   </div>
 </div>
 
-<div class="overlay" id="overlay-new-project"><div class="modal lg"><div class="modal-head"><div class="modal-icon" style="background:var(--bg2);">+</div><div><div class="modal-title">New Project</div><div class="modal-sub">Choose domain · name project · set your role</div></div><button class="btn-icon btn" onclick="closeModal('new-project')" style="border:none;font-size:15px;margin-left:auto;">×</button></div><div class="wiz-steps"><div class="wiz-step act"><div class="wiz-n">1</div>Domain</div><div class="wiz-div"></div><div class="wiz-step"><div class="wiz-n">2</div>Team</div><div class="wiz-div"></div><div class="wiz-step"><div class="wiz-n">3</div>Blueprint</div></div><div class="modal-body"><div class="fg"><div class="fl">Domain</div><div class="domain-grid"><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🏥</div><div class="domain-card-name">Healthcare</div><div class="domain-card-desc">Triage, radiology, clinical decision support</div></div><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🏛</div><div class="domain-card-name">Public Services</div><div class="domain-card-desc">Benefits, welfare, licensing, citizen services</div></div><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🏦</div><div class="domain-card-name">Finance</div><div class="domain-card-desc">Fraud detection, credit scoring, recommendations</div></div><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🎓</div><div class="domain-card-name">Education</div><div class="domain-card-desc">AI tutoring, outcome prediction, LMS</div></div><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🏭</div><div class="domain-card-name">Operations</div><div class="domain-card-desc">Supply chain, logistics, process automation</div></div><div class="domain-card sel" onclick="selDom(this)"><div class="domain-card-icon">🌐</div><div class="domain-card-name">Other</div><div class="domain-card-desc">Any context — build your own swimlanes</div></div></div></div><div class="fg"><div class="fl">Project name</div><input class="fi" type="text" placeholder="e.g. My AI Service Blueprint"></div><div class="fg"><div class="fl">Start from</div><select class="fi" id="np-template"><option value="blank">Blank canvas</option><option value="saas-onboarding">SaaS Onboarding journey</option><option value="internal-tool">Internal IT Tool delivery</option><option value="support-flow">Customer Support Flow</option><option value="ai-rollout">AI Feature Rollout</option></select><div class="fh">Templates are fully editable — change or delete anything.</div></div><div class="fg"><div class="fl">Your role</div><select class="fi"><option>PM</option><option>Service / UX Designer</option><option>UX Researcher</option><option>Developer / Engineer</option><option>Delivery Lead</option><option>Governance / Compliance</option></select></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('new-project')">Cancel</button><button class="btn btn-ghost" onclick="createBoardAndImport()" style="margin-left:auto;margin-right:8px;">📥 Import file</button><button class="btn btn-primary" onclick="createBoardFromModal()">Create →</button></div></div></div>
+<div class="overlay" id="overlay-new-project"><div class="modal lg"><div class="modal-head"><div class="modal-icon" style="background:var(--bg2);">+</div><div><div class="modal-title">New Board</div><div class="modal-sub">Choose domain · name board · set your role</div></div><button class="btn-icon btn" onclick="closeModal('new-project')" style="border:none;font-size:15px;margin-left:auto;">×</button></div><div class="wiz-steps"><div class="wiz-step act"><div class="wiz-n">1</div>Domain</div><div class="wiz-div"></div><div class="wiz-step"><div class="wiz-n">2</div>Team</div><div class="wiz-div"></div><div class="wiz-step"><div class="wiz-n">3</div>Blueprint</div></div><div class="modal-body"><div class="fg"><div class="fl">Domain</div><div class="domain-grid"><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🏥</div><div class="domain-card-name">Healthcare</div><div class="domain-card-desc">Triage, radiology, clinical decision support</div></div><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🏛</div><div class="domain-card-name">Public Services</div><div class="domain-card-desc">Benefits, welfare, licensing, citizen services</div></div><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🏦</div><div class="domain-card-name">Finance</div><div class="domain-card-desc">Fraud detection, credit scoring, recommendations</div></div><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🎓</div><div class="domain-card-name">Education</div><div class="domain-card-desc">AI tutoring, outcome prediction, LMS</div></div><div class="domain-card" onclick="selDom(this)"><div class="domain-card-icon">🏭</div><div class="domain-card-name">Operations</div><div class="domain-card-desc">Supply chain, logistics, process automation</div></div><div class="domain-card sel" onclick="selDom(this)"><div class="domain-card-icon">🌐</div><div class="domain-card-name">Other</div><div class="domain-card-desc">Any context — build your own swimlanes</div></div></div></div><div class="fg"><div class="fl">Project name</div><input class="fi" type="text" placeholder="e.g. My AI Service Blueprint"></div><div class="fg"><div class="fl">Start from</div><select class="fi" id="np-template"><option value="blank">Blank canvas</option><option value="saas-onboarding">SaaS Onboarding journey</option><option value="internal-tool">Internal IT Tool delivery</option><option value="support-flow">Customer Support Flow</option><option value="ai-rollout">AI Feature Rollout</option></select><div class="fh">Templates are fully editable — change or delete anything.</div></div><div class="fg"><div class="fl">Your role</div><select class="fi"><option>PM</option><option>Service / UX Designer</option><option>UX Researcher</option><option>Developer / Engineer</option><option>Delivery Lead</option><option>Governance / Compliance</option></select></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('new-project')">Cancel</button><button class="btn btn-ghost" onclick="createBoardAndImport()" style="margin-left:auto;margin-right:8px;">📥 Import file</button><button class="btn btn-primary" onclick="createBoardFromModal()">Create →</button></div></div></div>
 
 <div class="overlay" id="overlay-add-actor">
   <div class="modal" style="max-width:540px;">
@@ -2318,6 +2337,7 @@ const boardState = {
   phase: 'understand',
   swimlanes: [],   // array of { id, name, order } — populated by loadBoard
   steps: [],       // array of { id, name, order } — populated by loadBoard
+  stages: [],      // array of { id, name, stepIds: [] } — step groupings
   elements: [],    // unified elements (PRD-03)
   insights: [],    // persisted insights from AI analysis
   capabilities: [],
@@ -2700,7 +2720,7 @@ function logout() {
   const chatArea = document.getElementById('chat-area');
   if (chatArea) chatArea.innerHTML = '';
   boardState.id = null; boardState.title = ''; boardState.domain = '';
-  boardState.swimlanes = []; boardState.steps = []; boardState.elements = [];
+  boardState.swimlanes = []; boardState.steps = []; boardState.stages = []; boardState.elements = [];
   boardState.capabilities = []; boardState.insights = []; boardState.openRisks = [];
   boardState.positives = []; boardState.incidents = []; boardState.version = 1;
   const nameEl = document.getElementById('sidebar-user-name');
@@ -2894,6 +2914,7 @@ async function loadBoard(boardId) {
   boardState.domain      = board.domain || '';
   boardState.swimlanes   = Array.isArray(state.swimlanes)  ? state.swimlanes  : [];
   boardState.steps       = Array.isArray(state.steps)      ? state.steps      : [];
+  boardState.stages      = Array.isArray(state.stages)     ? state.stages     : [];
   boardState.elements    = [];
   boardState.capabilities= Array.isArray(state.capabilities) ? state.capabilities : (boardState.capabilities || []);
   boardState.version     = board.version;
@@ -3281,6 +3302,36 @@ function renderGrid() {
 
   let html = '';
 
+  // Stage row (above headers — shows when stages exist or staging mode is active)
+  const _stages = boardState.stages || [];
+  const _hasStages = _stages.length > 0;
+  if (_hasStages || _stagingMode) {
+    html += '<div class="bp-stage-row-corner"></div>';
+    const _stepStageMap = {};
+    _stages.forEach(stg => stg.stepIds.forEach(sid => { _stepStageMap[sid] = stg; }));
+    let si = 0;
+    while (si < steps.length) {
+      const step = steps[si];
+      const stg = _stepStageMap[step.id];
+      if (stg) {
+        let span = 1;
+        while (si + span < steps.length && _stepStageMap[steps[si + span].id]?.id === stg.id) span++;
+        const stgId = escHtml(stg.id);
+        html += `<div class="bp-stage-cell" style="grid-column:span ${span}" data-stage-id="${stgId}">` +
+          `<span class="bp-stage-name" ondblclick="renameStage('${stgId}')">${escHtml(stg.name)}</span>` +
+          `<button class="bp-act-btn del" onclick="deleteStage('${stgId}')" title="Ungroup stage" style="font-size:10px;opacity:.7;">×</button>` +
+          `</div>`;
+        si += span;
+      } else {
+        const _stepId = escHtml(step.id);
+        const _isSel = _stagingMode && _selectedStepIds.has(step.id);
+        html += `<div class="bp-stage-cell bp-stage-empty${_stagingMode ? ' bp-stage-selectable' : ''}${_isSel ? ' bp-stage-sel' : ''}" ${_stagingMode ? `onclick="toggleStageStep('${_stepId}')" title="Click to select for staging"` : ''} ></div>`;
+        si++;
+      }
+    }
+    html += '<div class="bp-stage-row-spacer"></div>';
+  }
+
   // Corner cell
   html += '<div class="bp-corner">Lane / Step</div>';
 
@@ -3350,7 +3401,7 @@ function renderGrid() {
 }
 
 function persistStructure() {
-  scheduleSave({ swimlanes: boardState.swimlanes, steps: boardState.steps });
+  scheduleSave({ swimlanes: boardState.swimlanes, steps: boardState.steps, stages: boardState.stages || [] });
 }
 
 function startInlineEdit(nameEl, currentName, onCommit) {
@@ -3580,6 +3631,8 @@ async function deleteStep(id) {
   boardState.elements.forEach(el => { if (el.step_id === id) el.step_id = null; });
   boardState.steps = boardState.steps.filter(s => s.id !== id);
   [...boardState.steps].sort((a, b) => a.order - b.order).forEach((s, i) => { s.order = i; });
+  // Remove deleted step from any stages; remove stages that become empty
+  boardState.stages = (boardState.stages || []).map(stg => ({ ...stg, stepIds: stg.stepIds.filter(sid => sid !== id) })).filter(stg => stg.stepIds.length > 0);
   renderCanvas();
   persistStructure();
 }
@@ -5708,7 +5761,7 @@ function openAgentPanel(tab) {
       addAgentMsg("Please sign in to use the AI agent. Click **Sign in** in the sidebar.", []);
     } else if (!currentBoardId) {
       addAgentMsg("Create or open a board first — then I can read it end-to-end and start helping.", [
-        { label: 'New project', fn: () => openModal('new-project') }
+        { label: 'New board', fn: () => openModal('new-project') }
       ]);
     } else {
       const _ec = boardState.elements ? boardState.elements.length : 0;
@@ -6242,6 +6295,7 @@ async function switchBranch(id) {
       const state = board.state || {};
       boardState.swimlanes = Array.isArray(state.swimlanes) ? state.swimlanes : [];
       boardState.steps     = Array.isArray(state.steps)     ? state.steps     : [];
+      boardState.stages    = Array.isArray(state.stages)    ? state.stages    : [];
       boardState.version   = board.version;
     }
     const elRes = await apiFetch(`/api/boards/${currentBoardId}/elements`);
@@ -7406,11 +7460,12 @@ function renderBoardTabs() {
       `<button class="board-tab-dup" title="Duplicate board" onclick="duplicateBoard('${t.id}',event)">⧉</button>` +
       `<button class="board-tab-close" title="Close tab" onclick="closeBoardTab('${t.id}',event)">×</button>` +
       `</button>`;
-  }).join('');
+  }).join('') + `<button class="board-tab-add" title="New board" onclick="openModal('new-project')">+</button>`;
 }
 
 async function duplicateBoard(boardId, e) {
   if (e) e.stopPropagation();
+  if ((boardsList || []).length >= 3) { showToast('Board limit reached (3 max). Delete a board to create another.'); return; }
   showToast('Duplicating board…');
   const res = await apiFetch(`/api/boards/${boardId}`);
   if (!res || !res.ok) { showToast('Could not read board'); return; }
@@ -7428,6 +7483,77 @@ async function duplicateBoard(boardId, e) {
   currentBoardId = newBoard.id;
   await loadBoard(newBoard.id);
   initRealtime(newBoard.id);
+}
+
+// ═══════════════════════════════════════════════════════
+// STAGE / PHASE GROUPING
+// ═══════════════════════════════════════════════════════
+let _stagingMode = false;
+let _selectedStepIds = new Set();
+
+function toggleStagingMode() {
+  _stagingMode = !_stagingMode;
+  _selectedStepIds = new Set();
+  const btn = document.getElementById('stage-mode-btn');
+  if (btn) btn.classList.toggle('active', _stagingMode);
+  const bar = document.getElementById('stage-create-bar');
+  if (bar) bar.classList.toggle('show', _stagingMode);
+  if (!_stagingMode) {
+    const label = document.getElementById('stage-create-label');
+    if (label) label.textContent = 'Select steps to group into a stage';
+    const groupBtn = document.getElementById('stage-group-btn');
+    if (groupBtn) groupBtn.style.display = 'none';
+  }
+  renderGrid();
+}
+
+function exitStagingMode() {
+  _stagingMode = false;
+  _selectedStepIds = new Set();
+  const btn = document.getElementById('stage-mode-btn');
+  if (btn) btn.classList.remove('active');
+  const bar = document.getElementById('stage-create-bar');
+  if (bar) bar.classList.remove('show');
+  renderGrid();
+}
+
+function toggleStageStep(stepId) {
+  if (!_stagingMode) return;
+  if (_selectedStepIds.has(stepId)) _selectedStepIds.delete(stepId);
+  else _selectedStepIds.add(stepId);
+  const cnt = _selectedStepIds.size;
+  const label = document.getElementById('stage-create-label');
+  if (label) label.textContent = cnt >= 2 ? `${cnt} steps selected` : cnt === 1 ? '1 step selected — select more to group' : 'Select steps to group into a stage';
+  const groupBtn = document.getElementById('stage-group-btn');
+  if (groupBtn) groupBtn.style.display = cnt >= 2 ? '' : 'none';
+  renderGrid();
+}
+
+async function createStageFromSelected() {
+  if (_selectedStepIds.size < 2) { showToast('Select at least 2 steps to create a stage'); return; }
+  const name = prompt('Stage name (e.g. "Discovery", "Activation"):', 'Stage 1');
+  if (!name || !name.trim()) return;
+  const steps = [...boardState.steps].sort((a, b) => a.order - b.order);
+  const orderedIds = steps.filter(s => _selectedStepIds.has(s.id)).map(s => s.id);
+  if (!boardState.stages) boardState.stages = [];
+  boardState.stages.push({ id: crypto.randomUUID(), name: name.trim(), stepIds: orderedIds });
+  exitStagingMode();
+  persistStructure();
+  showToast(`Stage "${name.trim()}" created`);
+}
+
+function renameStage(stageId) {
+  const stg = (boardState.stages || []).find(s => s.id === stageId);
+  if (!stg) return;
+  const nameEl = document.querySelector(`.bp-stage-cell[data-stage-id="${stageId}"] .bp-stage-name`);
+  if (!nameEl) return;
+  startInlineEdit(nameEl, stg.name, val => { stg.name = val; persistStructure(); });
+}
+
+function deleteStage(stageId) {
+  boardState.stages = (boardState.stages || []).filter(s => s.id !== stageId);
+  persistStructure();
+  renderGrid();
 }
 
 function setRole(role) {
@@ -7476,11 +7602,17 @@ async function createBoardFromModal() {
   const domain        = domainEl ? (domainMap[domainEl.textContent] ?? null) : null;
   const templateKey   = templateEl?.value || 'blank';
 
+  if ((boardsList || []).length >= 3) {
+    showToast('Board limit reached (3 max). Delete a board to create another.');
+    closeModal('new-project');
+    return;
+  }
+
   closeModal('new-project');
-  showToast(templateKey !== 'blank' ? 'Building template…' : 'Creating project…');
+  showToast(templateKey !== 'blank' ? 'Building template…' : 'Creating board…');
 
   const board = await createNewBoard(title, domain);
-  if (!board) { showToast('Could not create project — please sign in and try again'); return; }
+  if (!board) { showToast('Could not create board — please sign in and try again'); return; }
 
   if (templateKey !== 'blank') {
     const ok = await applyTemplate(board.id, templateKey);
@@ -8167,9 +8299,9 @@ async function createBoardAndImport() {
   const domainMap = { 'Healthcare':'healthcare','Public Services':'public','Finance':null,'Education':'education','Operations':null,'Other':null };
   const domain   = domainEl ? (domainMap[domainEl.textContent] ?? null) : null;
   closeModal('new-project');
-  showToast('Creating project…');
+  showToast('Creating board…');
   const board = await createNewBoard(title, domain);
-  if (!board) { showToast('Could not create project — please sign in and try again'); return; }
+  if (!board) { showToast('Could not create board — please sign in and try again'); return; }
   _importNewBoard = true;
   await loadBoard(board.id);
   triggerImportFlow();
