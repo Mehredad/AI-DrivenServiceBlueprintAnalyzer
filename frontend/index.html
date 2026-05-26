@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Blueprint AI — System Journey Design</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root{
@@ -190,9 +192,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .pq:active{opacity:.4;transform:scale(0.96);}
 
 /* CANVAS */
-.canvas-area{flex:1;overflow:auto;padding:16px;min-width:0;}
+.canvas-area{flex:1;overflow:auto;padding:16px;min-width:0;overscroll-behavior:none;}
 .bp-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);overflow:hidden;box-shadow:var(--sh);min-width:840px;}
-.bp-grid-scroll{overflow-x:auto;}.bp-grid-scroll::-webkit-scrollbar{height:6px;}.bp-grid-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.bp-grid-scroll{overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;will-change:scroll-position;}.bp-grid-scroll::-webkit-scrollbar{height:6px;}.bp-grid-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 .bp-head{padding:11px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:var(--bg);}
 .bp-head-title{font-family:'Fraunces',serif;font-size:13px;font-weight:400;flex:1;}
 .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:52vh;text-align:center;gap:10px;color:var(--text2);padding:40px 20px;}
@@ -214,7 +216,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .bp-lane-type-icon{font-size:13px;flex-shrink:0;opacity:.45;line-height:1;}
 .bp-lane-actions{display:none;flex-direction:column;position:absolute;left:100%;top:8px;gap:3px;background:var(--bg2);border:1px solid var(--border);border-left:none;border-radius:0 6px 6px 0;padding:4px 4px 4px 3px;box-shadow:4px 0 10px rgba(0,0,0,.1);z-index:20;}
 .bp-lane-label:hover .bp-lane-actions{display:flex;}
-.bp-cell{min-height:100px;border-right:1px solid var(--border2);border-bottom:1px solid var(--border2);position:relative;background:var(--surface);display:flex;flex-wrap:wrap;align-content:flex-start;padding:4px;overflow:hidden;min-width:0;}
+.bp-cell{min-height:100px;border-right:1px solid var(--border2);border-bottom:1px solid var(--border2);position:relative;background:var(--surface);display:flex;flex-wrap:wrap;align-content:flex-start;padding:4px;overflow:hidden;min-width:0;contain:style paint;}
 .bp-cell-spacer{min-height:100px;background:var(--bg);border-bottom:1px solid var(--border2);}
 .bp-cell-add-hint{display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:10px;color:var(--text3);cursor:pointer;gap:3px;}
 .bp-cell:hover .bp-cell-add-hint{display:flex;}
@@ -3192,7 +3194,15 @@ async function createNewBoard(title, domain) {
 // CANVAS RENDERING — PRD-02 dynamic grid
 // ═══════════════════════════════════════════════════════
 
+// RAF-deduped renderCanvas: multiple calls in the same tick collapse to one render.
+let _renderPending = false;
 function renderCanvas() {
+  if (_renderPending) return;
+  _renderPending = true;
+  requestAnimationFrame(_doRenderCanvas);
+}
+function _doRenderCanvas() {
+  _renderPending = false;
   const noLanes = boardState.swimlanes.length === 0;
   const noSteps = boardState.steps.length === 0;
   const isEmpty = noLanes || noSteps;
@@ -3216,6 +3226,20 @@ function renderCanvas() {
   updateRegistryNavVisibility();
   updateAddElementSelects();
   updateProgressIndicator();
+}
+
+// Targeted single-cell refresh — avoids full grid rebuild for element CRUD.
+// Falls back to full renderCanvas when cell is not yet in the DOM.
+function _refreshCell(laneId, stepId) {
+  if (!laneId || !stepId) { renderCanvas(); return; }
+  const lid = escHtml(laneId), sid = escHtml(stepId);
+  const cell = document.querySelector(`.bp-cell[data-lane="${lid}"][data-step="${sid}"]`);
+  if (!cell) { renderCanvas(); return; }
+  const cellEls = boardState.elements.filter(e => e.swimlane_id === laneId && e.step_id === stepId);
+  cell.innerHTML = cellEls.map(renderElementCard).join('') +
+    `<button class="bp-cell-add-btn" onclick="openAddElement('${lid}','${sid}')">+ add element</button>`;
+  updateCanvasMeta();
+  renderConnectors();
 }
 
 function _getOrphanedElements() {
@@ -3953,7 +3977,7 @@ async function submitNewElement() {
 
   boardState.elements.push(el);
   closeModal('add-element');
-  renderCanvas();
+  _refreshCell(el.swimlane_id, el.step_id);
   updateAiBadge();
   updateRegistryNavVisibility();
   const info = ELEMENT_TYPES.find(t => t.type === el.type);
@@ -4051,7 +4075,11 @@ async function saveElementDrawer() {
 
   const savedId = _drawerElementId;
   closeElementDrawer();
-  renderCanvas();
+  // Optimistic refresh: if element moved cells, clear old cell too
+  if (prev && (prev.swimlane_id !== body.swimlane_id || prev.step_id !== body.step_id)) {
+    _refreshCell(prev.swimlane_id, prev.step_id);
+  }
+  _refreshCell(body.swimlane_id, body.step_id);
   updateAiBadge();
   updateRegistryNavVisibility();
   showToast('Element saved');
@@ -4062,7 +4090,7 @@ async function saveElementDrawer() {
       body: JSON.stringify(body),
     });
     if (!res || !res.ok) {
-      // Revert optimistic update
+      // Revert optimistic update — full render for correctness
       if (prev !== null) {
         const i = boardState.elements.findIndex(e => e.id === savedId);
         if (i !== -1) boardState.elements[i] = prev;
@@ -4074,7 +4102,7 @@ async function saveElementDrawer() {
     // Sync server-authoritative fields (updated_at, updated_by_actor, etc.)
     const updated = await res.json();
     const i = boardState.elements.findIndex(e => e.id === updated.id);
-    if (i !== -1) { boardState.elements[i] = updated; renderCanvas(); }
+    if (i !== -1) { boardState.elements[i] = updated; _refreshCell(updated.swimlane_id, updated.step_id); }
   }
 }
 
@@ -4095,9 +4123,11 @@ async function deleteElementDrawer() {
     const res = await apiFetch(`/api/boards/${currentBoardId}/elements/${_drawerElementId}`, { method: 'DELETE' });
     if (!res || !res.ok) { restoreBtn(); showToast('Delete failed'); return; }
   }
+  const deleted = boardState.elements.find(e => e.id === _drawerElementId);
   boardState.elements = boardState.elements.filter(e => e.id !== _drawerElementId);
   closeElementDrawer();
-  renderCanvas();
+  if (deleted) _refreshCell(deleted.swimlane_id, deleted.step_id);
+  else renderCanvas();
   updateAiBadge();
   updateRegistryNavVisibility();
   showToast('Element deleted');
