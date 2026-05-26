@@ -34,6 +34,7 @@ class User(Base):
     is_active     = Column(Boolean, default=True)
 
     has_seen_onboarding  = Column(Boolean, server_default='false', default=False)
+    is_admin             = Column(Boolean, server_default='false', default=False)
 
     refresh_tokens       = relationship("RefreshToken",       back_populates="user", cascade="all, delete-orphan")
     owned_boards         = relationship("Board",              back_populates="owner", foreign_keys="Board.owner_id")
@@ -390,3 +391,28 @@ class Connector(Base):
     updated_at         = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     board = relationship("Board", back_populates="connectors")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# WAITLIST
+# ─────────────────────────────────────────────────────────────────────────────
+
+class WaitlistSignup(Base):
+    __tablename__ = "waitlist_signups"
+
+    id                = Column(Text, primary_key=True, default=_uuid)
+    email             = Column(String(320), nullable=False)
+    full_name         = Column(String(200))
+    job_title         = Column(String(200))
+    industry          = Column(String(200))
+    company           = Column(String(200))
+    use_case          = Column(String(2000))
+    source            = Column(String(100), default="landing_hero_cta")
+    referrer          = Column(String(500))
+    utm_source        = Column(String(200))
+    utm_medium        = Column(String(200))
+    utm_campaign      = Column(String(200))
+    marketing_consent = Column(Boolean, nullable=False, default=False)
+    status            = Column(String(20), nullable=False, default="new")  # new | invited | active | declined
+    created_at        = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at        = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

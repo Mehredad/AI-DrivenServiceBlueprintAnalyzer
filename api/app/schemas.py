@@ -605,3 +605,58 @@ class ElementOut(BaseModel):
     updated_by_actor: Optional[str] = None
 
     model_config = {"from_attributes": True}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# WAITLIST (PRD-24)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class WaitlistSubmit(BaseModel):
+    email:              EmailStr
+    full_name:          Optional[str] = Field(None, max_length=200)
+    job_title:          Optional[str] = Field(None, max_length=200)
+    industry:           Optional[str] = Field(None, max_length=200)
+    company:            Optional[str] = Field(None, max_length=200)
+    use_case:           Optional[str] = Field(None, max_length=2000)
+    marketing_consent:  bool = False
+    source:             Optional[str] = Field(None, max_length=100)
+    referrer:           Optional[str] = Field(None, max_length=500)
+    utm_source:         Optional[str] = Field(None, max_length=200)
+    utm_medium:         Optional[str] = Field(None, max_length=200)
+    utm_campaign:       Optional[str] = Field(None, max_length=200)
+
+
+class WaitlistOut(BaseModel):
+    already_member: bool = False
+
+
+class AdminWaitlistOut(BaseModel):
+    id:                 str
+    email:              str
+    full_name:          Optional[str] = None
+    job_title:          Optional[str] = None
+    industry:           Optional[str] = None
+    company:            Optional[str] = None
+    use_case:           Optional[str] = None
+    source:             Optional[str] = None
+    referrer:           Optional[str] = None
+    utm_source:         Optional[str] = None
+    utm_medium:         Optional[str] = None
+    utm_campaign:       Optional[str] = None
+    marketing_consent:  bool
+    status:             str
+    created_at:         datetime
+    updated_at:         datetime
+
+    model_config = {"from_attributes": True}
+
+
+class WaitlistStatusPatch(BaseModel):
+    status: str
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        if v not in {"new", "invited", "active", "declined"}:
+            raise ValueError("status must be new|invited|active|declined")
+        return v
