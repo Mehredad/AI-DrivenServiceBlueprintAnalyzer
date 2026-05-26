@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blueprint AI — Audit against legal, ethical and technical standards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F3EF;--bg2:#EDEBE5;--bg3:#E3E0D8;--surface:#FFFFFF;
+  --border:#D9D6CE;--border2:#C3BFB5;
+  --text:#1D1C18;--text2:#5A5850;--text3:#9A9790;
+  --blue:#1A4FD8;--blue-bg:#EEF2FD;--blue-bd:#C0CFFA;
+  --teal:#0A7065;--teal-bg:#E6F5F2;--teal-bd:#9DD6CC;
+  --amber:#A35800;--amber-bg:#FEF3E6;--amber-bd:#F5C07A;
+  --red:#B91C1C;--red-bg:#FEF2F2;--red-bd:#FECACA;
+  --purple:#6D28D9;--purple-bg:#F5F0FE;--purple-bd:#DDD6FE;
+  --green:#166534;--green-bg:#F0FDF4;--green-bd:#BBF7D0;
+  --r:8px;--rl:12px;--rxl:16px;
+  --sh:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --sh2:0 10px 30px rgba(0,0,0,.12),0 3px 10px rgba(0,0,0,.06);
+  --loop:17000ms;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:#1d1c18;color:var(--text);font-size:13px;line-height:1.5;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.stage-wrap{position:relative;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;}
+.stage{width:1200px;height:675px;position:relative;background:var(--bg);overflow:hidden;transform-origin:center center;box-shadow:0 30px 80px rgba(0,0,0,.4);}
+
+/* Top bar */
+.app-chrome{position:absolute;inset:0;display:flex;flex-direction:column;}
+.topbar{height:44px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px 0 6px;gap:8px;flex-shrink:0;}
+.tb-back{width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;border-radius:5px;flex-shrink:0;}
+.logo-mark{width:24px;height:24px;background:var(--text);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-mark::after{content:'';width:9px;height:9px;border:1.5px solid #fff;border-radius:2px;}
+.tb-crumb{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:6px;flex:1;min-width:0;overflow:hidden;}
+.tb-crumb .crumb-main{color:var(--text2);font-weight:600;}
+.tb-crumb .crumb-sep{color:var(--text3);}
+.tb-crumb .crumb-title{color:var(--text);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tb-branch{display:flex;align-items:center;gap:5px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-weight:600;}
+.tb-branch::before{content:'';width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--text2);margin-right:3px;}
+.tb-connectors{display:flex;align-items:center;gap:5px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-weight:600;}
+.tb-connectors::before{content:'→';color:var(--text3);}
+.tb-role{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-weight:600;}
+.tb-role::after{content:'';width:0;height:0;border-left:3.5px solid transparent;border-right:3.5px solid transparent;border-top:4.5px solid var(--text2);margin-left:2px;}
+.tb-help{width:26px;height:26px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text2);}
+.tb-export{font-size:10px;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-weight:600;}
+
+.subbar{height:34px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:18px;flex-shrink:0;}
+.ph-tab{font-size:11px;font-weight:600;color:var(--text3);display:flex;align-items:center;gap:5px;padding:8px 0;border-bottom:2px solid transparent;}
+.ph-tab .ph-dot{width:6px;height:6px;border-radius:50%;}
+.ph-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+.ph-tab.active .ph-dot{background:var(--blue);}
+.ph-tab.u .ph-dot{background:var(--blue);}
+.ph-tab.h .ph-dot{background:var(--teal);}
+.ph-tab.i.active{color:var(--amber);border-bottom-color:var(--amber);}
+.ph-tab.i.active .ph-dot{background:var(--amber);}
+.audit-pill{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:9px;background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd);padding:3px 8px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-weight:600;}
+.audit-pill::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--purple);animation:purple-pulse 2s ease-in-out infinite;}
+@keyframes purple-pulse{50%{opacity:.4;}}
+
+/* Workspace */
+.workspace{flex:1;display:flex;overflow:hidden;}
+.canvas-area{flex:1;position:relative;padding:14px;overflow:hidden;min-width:0;}
+.bp-wrap{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);box-shadow:var(--sh);height:100%;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.bp-head{padding:9px 14px;border-bottom:1px solid var(--border);background:var(--bg);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.bp-head-title{font-family:'Fraunces',serif;font-size:13px;font-weight:400;flex:1;display:flex;align-items:center;gap:8px;}
+.bp-head-title .title-text{font-family:'Fraunces',serif;font-size:13px;font-weight:400;color:var(--text);white-space:nowrap;}
+.bp-head-meta{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);display:flex;align-items:center;gap:8px;}
+.bp-head-meta span{display:inline-flex;align-items:center;gap:4px;}
+.bp-head-meta .mdot{width:5px;height:5px;border-radius:50%;background:var(--text3);}
+.bp-head-meta .audit-active{color:var(--purple);font-weight:600;}
+.bp-head-meta .audit-active .mdot{background:var(--purple);}
+
+.bp-grid-wrap{flex:1;position:relative;overflow:hidden;}
+.bp-grid{position:absolute;inset:0;display:grid;grid-template-columns:140px repeat(5, 1fr);grid-template-rows:36px 1fr 1fr 22px 1fr 22px 1fr;background:var(--bg2);gap:1px;}
+.bp-corner{background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:9px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);text-align:center;line-height:1.1;}
+.bp-step-header{background:var(--bg);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:0 10px;}
+.bp-step-header .stepnum{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);font-weight:500;}
+.bp-step-header .stepname{font-size:11px;font-weight:600;line-height:1.2;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+
+.bp-lane-label{background:var(--bg);display:flex;align-items:center;gap:7px;padding:0 10px;}
+.lane-icon{width:20px;height:20px;border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;}
+.lane-icon.l-customer{background:var(--blue-bg);color:var(--blue);}
+.lane-icon.l-frontstage{background:var(--teal-bg);color:var(--teal);}
+.lane-icon.l-ai{background:var(--purple-bg);color:var(--purple);}
+.lane-icon.l-backstage{background:var(--bg2);color:var(--text2);}
+.lane-name-wrap{display:flex;flex-direction:column;line-height:1.2;min-width:0;}
+.lane-name{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lane-meta{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);font-weight:500;margin-top:2px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+.bp-lane-divider{grid-column:1 / -1;height:22px;display:flex;align-items:center;justify-content:center;position:relative;background:var(--bg);}
+.bp-lane-divider::before{content:'';position:absolute;left:0;right:0;top:50%;height:1.5px;z-index:0;}
+.bp-lane-divider span{position:relative;z-index:1;font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:.7px;text-transform:uppercase;font-weight:600;padding:0 10px;background:var(--bg);}
+.bp-lane-divider.interaction{color:var(--teal);}
+.bp-lane-divider.interaction::before{background:var(--teal);opacity:.55;}
+.bp-lane-divider.visibility{color:var(--blue);}
+.bp-lane-divider.visibility::before{background:var(--blue);opacity:.55;}
+
+/* AI lane gets a subtle purple tint when being audited */
+.bp-lane-divider.interaction{position:relative;}
+.bp-grid .ai-lane-strip{
+  grid-column:1 / -1;
+  background:rgba(109,40,217,.02);
+  pointer-events:none;
+  opacity:0;
+  animation:ai-strip var(--loop) infinite ease;
+}
+@keyframes ai-strip{
+  0%,20%  {opacity:0;}
+  24%     {opacity:1;}
+  90%     {opacity:1;}
+  94%     {opacity:0;}
+  100%    {opacity:0;}
+}
+
+.bp-cell{background:var(--surface);padding:6px 5px;display:flex;flex-direction:column;gap:4px;min-width:0;position:relative;overflow:hidden;}
+
+.bp-card{display:flex;align-items:flex-start;gap:5px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 7px 5px 10px;font-size:9.5px;font-weight:500;color:var(--text);line-height:1.3;position:relative;box-shadow:0 1px 2px rgba(0,0,0,.03);min-height:30px;z-index:2;}
+.bp-card::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:2.5px;border-radius:0 2px 2px 0;}
+.bp-card.t-touchpoint::before{background:var(--blue);}
+.bp-card.t-data::before{background:var(--teal);}
+.bp-card.t-ai::before{background:var(--purple);}
+.bp-card.t-system::before{background:var(--text2);}
+.bp-card.t-gov::before{background:var(--green);}
+.bp-card.t-handoff::before{background:var(--amber);}
+.bp-card-icon{width:13px;height:13px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:8px;flex-shrink:0;line-height:1;}
+.bp-card.t-touchpoint .bp-card-icon{background:var(--blue-bg);color:var(--blue);}
+.bp-card.t-data .bp-card-icon{background:var(--teal-bg);color:var(--teal);}
+.bp-card.t-ai .bp-card-icon{background:var(--purple-bg);color:var(--purple);}
+.bp-card.t-system .bp-card-icon{background:var(--bg2);color:var(--text2);}
+.bp-card.t-gov .bp-card-icon{background:var(--green-bg);color:var(--green);}
+.bp-card.t-handoff .bp-card-icon{background:var(--amber-bg);color:var(--amber);}
+.bp-card-text{flex:1;font-size:9.5px;font-weight:500;color:var(--text);line-height:1.3;}
+.bp-card-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:3px;background:var(--text3);}
+.bp-card.live .bp-card-dot{background:var(--green);}
+
+/* Audit highlight rings on AI cards (subtle purple) */
+.bp-card.audited::after{
+  content:'';
+  position:absolute;inset:-4px;
+  border-radius:8px;pointer-events:none;
+  border:1.5px dashed var(--purple);
+  opacity:0;
+}
+.bp-card.audited.a1::after{animation:aud-pulse-1 var(--loop) infinite ease;}
+.bp-card.audited.a2::after{animation:aud-pulse-2 var(--loop) infinite ease;}
+.bp-card.audited.a3::after{animation:aud-pulse-3 var(--loop) infinite ease;}
+@keyframes aud-pulse-1{
+  0%,21%  {opacity:0;}
+  24%     {opacity:.85;}
+  90%     {opacity:.85;}
+  94%     {opacity:0;}
+  100%    {opacity:0;}
+}
+@keyframes aud-pulse-2{
+  0%,22%  {opacity:0;}
+  25%     {opacity:.85;}
+  90%     {opacity:.85;}
+  94%     {opacity:0;}
+  100%    {opacity:0;}
+}
+@keyframes aud-pulse-3{
+  0%,23%  {opacity:0;}
+  26%     {opacity:.85;}
+  90%     {opacity:.85;}
+  94%     {opacity:0;}
+  100%    {opacity:0;}
+}
+
+/* Severity flag pinned to specific cards (#1 red, #2 amber) */
+.bp-card .audit-flag{
+  position:absolute;
+  top:-7px;right:-7px;
+  width:18px;height:18px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;color:#fff;
+  box-shadow:0 2px 6px rgba(0,0,0,.15);
+  z-index:5;
+  opacity:0;transform:scale(.4);
+}
+.audit-flag.sev-high{background:var(--red);}
+.audit-flag.sev-med{background:var(--amber);}
+.bp-card.flag1 .audit-flag{animation:flag-pop-1 var(--loop) infinite cubic-bezier(.34,1.56,.64,1);}
+.bp-card.flag2 .audit-flag{animation:flag-pop-2 var(--loop) infinite cubic-bezier(.34,1.56,.64,1);}
+@keyframes flag-pop-1{
+  0%,46%  {opacity:0;transform:scale(.4);}
+  50%     {opacity:1;transform:scale(1.15);}
+  53%     {opacity:1;transform:scale(1);}
+  90%     {opacity:1;}
+  94%     {opacity:0;transform:scale(.7);}
+  100%    {opacity:0;}
+}
+@keyframes flag-pop-2{
+  0%,52%  {opacity:0;transform:scale(.4);}
+  56%     {opacity:1;transform:scale(1.15);}
+  59%     {opacity:1;transform:scale(1);}
+  90%     {opacity:1;}
+  94%     {opacity:0;transform:scale(.7);}
+  100%    {opacity:0;}
+}
+
+/* Flow connectors (faded grey + dashed amber hand-offs) */
+.flow-svg{position:absolute;top:36px;left:140px;width:calc(100% - 140px);height:calc(100% - 36px);pointer-events:none;z-index:1;}
+.flow-svg path,.flow-svg line{fill:none;stroke:var(--text3);stroke-width:1.2;vector-effect:non-scaling-stroke;opacity:.4;}
+.flow-svg .flow-handoff{stroke:var(--amber);stroke-dasharray:3 3;opacity:.5;}
+.flow-svg polygon.flow-arrow{fill:var(--text3);stroke:none;opacity:.5;}
+.flow-svg polygon.flow-handoff-arrow{fill:var(--amber);stroke:none;opacity:.6;}
+
+/* ── Agent panel (chat-style) ── */
+.agent-panel{width:360px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.agent-head{padding:9px 12px;border-bottom:1px solid var(--border);background:var(--text);display:flex;align-items:center;gap:9px;flex-shrink:0;color:#fff;}
+.agent-avatar{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;font-family:'Fraunces',serif;font-weight:500;}
+.agent-name{font-size:12px;font-weight:600;line-height:1.2;}
+.agent-status{font-size:9px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,.65);display:flex;align-items:center;gap:5px;margin-top:2px;}
+.agent-status::before{content:'';width:5px;height:5px;border-radius:50%;background:#9DD6CC;animation:status-pulse 1.8s ease-in-out infinite;}
+@keyframes status-pulse{50%{opacity:.4;}}
+.agent-close{margin-left:auto;width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.55);font-size:14px;}
+
+.agent-thread-bar{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;}
+.thread-back{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--blue);font-weight:600;display:flex;align-items:center;gap:3px;}
+.thread-back::before{content:'←';}
+.thread-title{flex:1;font-size:10px;color:var(--text2);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.thread-icons{display:flex;gap:6px;color:var(--text3);font-size:11px;}
+
+.agent-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface);padding:0 12px;gap:16px;flex-shrink:0;}
+.agent-tab{font-size:10px;font-weight:600;color:var(--text3);padding:7px 0;border-bottom:2px solid transparent;}
+.agent-tab.active{color:var(--text);border-bottom-color:var(--text);}
+
+.agent-body{flex:1;overflow:hidden;padding:10px 12px;display:flex;flex-direction:column;gap:9px;background:var(--bg);}
+
+/* Standards / sources strip at top */
+.standards-strip{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:8px 10px;flex-shrink:0;
+  display:flex;flex-direction:column;gap:6px;
+}
+.standards-head{
+  display:flex;align-items:center;gap:6px;
+  font-size:9px;font-family:'JetBrains Mono',monospace;
+  color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;
+}
+.standards-head::before{
+  content:'';width:5px;height:5px;border-radius:50%;
+  background:var(--purple);box-shadow:0 0 0 3px var(--purple-bg);
+}
+.standards-head .std-count{margin-left:auto;color:var(--text2);background:var(--bg);border:1px solid var(--border);padding:1px 5px;border-radius:8px;}
+.standards-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.std-pill{
+  display:flex;align-items:center;gap:6px;
+  background:var(--bg);border:1px solid var(--border);border-radius:5px;
+  padding:5px 7px;min-width:0;
+}
+.std-icon{
+  width:18px;height:18px;border-radius:4px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:8px;font-weight:700;color:#fff;
+  font-family:'JetBrains Mono',monospace;letter-spacing:.4px;
+}
+.std-icon.gdpr{background:#1A4FD8;}
+.std-icon.aiact{background:#6D28D9;}
+.std-icon.iso{background:#0A7065;}
+.std-icon.soc{background:#A35800;}
+.std-info{flex:1;min-width:0;line-height:1.15;}
+.std-name{font-size:10px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.std-meta{font-size:8.5px;font-family:'JetBrains Mono',monospace;color:var(--text3);}
+
+/* Chat */
+.msg-row{display:flex;flex-direction:column;gap:4px;}
+.msg-row.user{align-items:flex-end;}
+.msg-row.agent{align-items:flex-start;}
+.msg-meta{font-size:8.5px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;}
+.msg-bubble{max-width:92%;padding:9px 11px;border-radius:10px;font-size:11px;line-height:1.45;}
+.msg-row.user .msg-bubble{background:var(--text);color:#F5F3EF;border-bottom-right-radius:3px;}
+.msg-row.agent .msg-bubble{background:var(--surface);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:3px;max-width:96%;}
+
+/* Agent response — structured */
+.agent-resp-head{
+  font-size:11px;color:var(--text);
+  display:flex;align-items:center;gap:6px;
+  margin-bottom:6px;
+}
+.agent-resp-head .gaps-num{
+  font-weight:700;color:var(--red);
+  background:var(--red-bg);border-radius:3px;padding:1px 5px;
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+}
+.finding{
+  display:flex;flex-direction:column;gap:3px;
+  padding:7px 8px;border-radius:6px;
+  background:var(--bg);
+  margin-top:6px;border-left:3px solid;
+  position:relative;
+}
+.finding.sev-high{border-color:var(--red);}
+.finding.sev-med{border-color:var(--amber);}
+.finding-head{
+  display:flex;align-items:center;gap:5px;
+  font-size:10px;font-weight:600;
+}
+.finding-sev{
+  font-size:7.5px;font-family:'JetBrains Mono',monospace;
+  text-transform:uppercase;letter-spacing:.4px;
+  border-radius:3px;padding:1px 4px;font-weight:700;
+}
+.finding.sev-high .finding-sev{background:var(--red-bg);color:var(--red);}
+.finding.sev-med  .finding-sev{background:var(--amber-bg);color:var(--amber);}
+.finding-target{
+  flex:1;font-size:10px;font-weight:600;color:var(--text);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.finding-cite{
+  font-size:8.5px;font-family:'JetBrains Mono',monospace;
+  color:var(--blue);background:var(--blue-bg);border:1px solid var(--blue-bd);
+  border-radius:3px;padding:0 4px;font-weight:600;
+  white-space:nowrap;
+}
+.finding-body{font-size:10px;color:var(--text2);line-height:1.4;}
+.finding-action{
+  display:flex;align-items:center;gap:4px;
+  font-size:10px;color:var(--text);font-weight:600;
+  margin-top:4px;
+}
+.finding-action::before{
+  content:'';width:5px;height:5px;border-radius:50%;
+  background:var(--green);box-shadow:0 0 0 2.5px var(--green-bg);
+}
+.finding-action .action-cta{color:var(--green);}
+
+/* Action chips below msg */
+.action-chips{
+  display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;
+  padding-top:7px;border-top:1px solid var(--bg2);
+}
+.action-chip{
+  font-size:9.5px;font-weight:600;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:99px;padding:4px 9px;color:var(--text);
+  display:inline-flex;align-items:center;gap:4px;
+}
+.action-chip.primary{background:var(--text);color:#fff;border-color:var(--text);}
+
+/* Thinking dots */
+.thinking-dots{display:flex;align-items:center;gap:4px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;border-bottom-left-radius:3px;align-self:flex-start;}
+.thinking-dots span{width:5px;height:5px;border-radius:50%;background:var(--text3);animation:tdot 1.4s ease-in-out infinite;}
+.thinking-dots span:nth-child(2){animation-delay:.18s;}
+.thinking-dots span:nth-child(3){animation-delay:.36s;}
+@keyframes tdot{0%,80%,100%{opacity:.25;transform:scale(.85);}40%{opacity:1;transform:scale(1);}}
+
+/* Status pill */
+.status-pill{display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:99px;font-size:10px;font-weight:600;align-self:flex-start;}
+.status-pill.analysing{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd);}
+.status-pill .pill-spinner{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--purple-bd);border-top-color:var(--purple);animation:spin 1s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.status-pill .pill-count{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;}
+
+/* ── Animation timings ── */
+/* Standards strip: always visible from start, fades out at end */
+.standards-strip{opacity:0;animation:std-life var(--loop) infinite ease;}
+@keyframes std-life{0%,2%{opacity:0;transform:translateY(-4px);}6%{opacity:1;transform:translateY(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+
+/* User msg */
+.msg-user-1{opacity:0;transform:translateY(8px);animation:um1 var(--loop) infinite cubic-bezier(.34,1.45,.64,1);}
+@keyframes um1{0%,10%{opacity:0;transform:translateY(8px);}14%{opacity:1;transform:translateY(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+
+/* Thinking */
+.thinking{opacity:0;animation:tlife var(--loop) infinite ease;}
+@keyframes tlife{
+  0%,16%  {opacity:0;max-height:0;margin:0;padding:0;border-color:transparent;overflow:hidden;}
+  19%     {opacity:1;max-height:40px;padding:8px 12px;border-color:var(--border);}
+  22%     {opacity:1;max-height:40px;padding:8px 12px;border-color:var(--border);}
+  25%     {opacity:0;max-height:0;padding:0;border-color:transparent;}
+  100%    {opacity:0;}
+}
+
+/* Analysing pill */
+.status-analysing{opacity:0;animation:sa1 var(--loop) infinite ease;}
+@keyframes sa1{
+  0%,21%  {opacity:0;max-height:0;overflow:hidden;padding:0;border-color:transparent;}
+  25%     {opacity:1;max-height:30px;padding:6px 10px;border-color:var(--purple-bd);}
+  37%     {opacity:1;max-height:30px;padding:6px 10px;border-color:var(--purple-bd);}
+  40%     {opacity:0;max-height:0;padding:0;border-color:transparent;margin:0;}
+  100%    {opacity:0;}
+}
+
+/* Agent message (with findings) */
+.msg-agent-1{opacity:0;animation:am1 var(--loop) infinite ease;}
+@keyframes am1{
+  0%,38%  {opacity:0;transform:translateY(6px);max-height:0;overflow:hidden;margin:0;}
+  43%     {opacity:1;transform:translateY(0);max-height:420px;}
+  93%     {opacity:1;}
+  97%     {opacity:0;}
+  100%    {opacity:0;}
+}
+
+/* Findings stagger inside the agent msg */
+.finding{opacity:0;transform:translateY(3px);}
+.finding.f1{animation:fnd1 var(--loop) infinite ease-out;}
+.finding.f2{animation:fnd2 var(--loop) infinite ease-out;}
+@keyframes fnd1{0%,46%{opacity:0;transform:translateY(3px);}50%{opacity:1;transform:translateY(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes fnd2{0%,52%{opacity:0;transform:translateY(3px);}56%{opacity:1;transform:translateY(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+
+/* Action chips */
+.action-chips{opacity:0;animation:ach var(--loop) infinite ease-out;}
+@keyframes ach{0%,62%{opacity:0;transform:translateY(4px);}66%{opacity:1;transform:translateY(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+
+/* Foot */
+.agent-foot{background:var(--surface);border-top:1px solid var(--border);padding:8px 12px;flex-shrink:0;display:flex;flex-direction:column;gap:7px;}
+.suggest-chips{display:flex;gap:5px;flex-wrap:nowrap;overflow:hidden;}
+.suggest-chip{font-size:9.5px;font-weight:500;background:var(--bg);border:1px solid var(--border);color:var(--text2);border-radius:99px;padding:3px 8px;white-space:nowrap;flex-shrink:0;}
+.input-row{display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:5px 8px;}
+.input-paperclip{color:var(--text3);font-size:13px;flex-shrink:0;}
+.input-placeholder{flex:1;font-size:10.5px;color:var(--text3);}
+.input-send{width:22px;height:22px;border-radius:5px;background:var(--text);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0;}
+.input-hint{font-size:8.5px;font-family:'JetBrains Mono',monospace;color:var(--text3);}
+
+/* Caption */
+.caption{position:absolute;left:0;right:0;bottom:18px;display:flex;justify-content:center;z-index:40;pointer-events:none;}
+.caption-inner{display:flex;align-items:center;gap:8px;background:rgba(29,28,24,.92);color:#F5F3EF;border-radius:99px;padding:8px 16px;font-size:12px;font-weight:500;letter-spacing:.1px;box-shadow:0 6px 20px rgba(0,0,0,.25);backdrop-filter:blur(6px);opacity:0;transform:translateY(8px);animation:cap-life var(--loop) infinite ease-out;}
+.caption-inner .cap-dot{width:5px;height:5px;border-radius:50%;background:#DDD6FE;box-shadow:0 0 0 3px rgba(221,214,254,.18);}
+.caption-inner .cap-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:#9A9790;}
+@keyframes cap-life{0%,3%{opacity:0;transform:translateY(8px);}8%{opacity:1;transform:translateY(0);}92%{opacity:1;transform:translateY(0);}96%{opacity:0;transform:translateY(4px);}100%{opacity:0;}}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important;}
+  .standards-strip,.msg-user-1,.msg-agent-1,.status-pill,.finding,.action-chips,.bp-card.audited::after,.bp-card .audit-flag,.caption-inner{opacity:1 !important;transform:none !important;max-height:none !important;}
+  .thinking{display:none !important;}
+}
+</style>
+</head>
+<body>
+<div class="stage-wrap">
+  <div class="stage">
+
+    <div class="app-chrome">
+      <div class="topbar">
+        <div class="tb-back">‹</div>
+        <div class="logo-mark"></div>
+        <div class="tb-crumb">
+          <span class="crumb-main">Blueprint AI</span>
+          <span class="crumb-sep">/</span>
+          <span class="crumb-title">AI-enhanced SaaS onboarding — B2B team collaboration</span>
+        </div>
+        <div class="tb-branch">main</div>
+        <div class="tb-connectors">Connectors</div>
+        <div class="tb-role">Delivery</div>
+        <div class="tb-help">?</div>
+        <div class="tb-export">Export</div>
+      </div>
+
+      <div class="subbar">
+        <div class="ph-tab u"><span class="ph-dot"></span>Understand</div>
+        <div class="ph-tab h"><span class="ph-dot"></span>Design</div>
+        <div class="ph-tab i active"><span class="ph-dot"></span>Operate</div>
+        <div class="audit-pill">Audit · 4 standards loaded</div>
+      </div>
+
+      <div class="workspace">
+        <div class="canvas-area">
+          <div class="bp-wrap">
+            <div class="bp-head">
+              <div class="bp-head-title">
+                <span class="title-text">AI-enhanced SaaS onboarding — B2B team collaboration</span>
+              </div>
+              <div class="bp-head-meta">
+                <span><span class="mdot"></span>13 elements</span>
+                <span class="audit-active"><span class="mdot"></span>Auditing AI lane · 3</span>
+              </div>
+            </div>
+
+            <div class="bp-grid-wrap">
+              <div class="bp-grid">
+                <div class="bp-corner">LANE / STEP</div>
+                <div class="bp-step-header"><span class="stepnum">01</span><span class="stepname">Initial contact</span></div>
+                <div class="bp-step-header"><span class="stepnum">02</span><span class="stepname">Sign up</span></div>
+                <div class="bp-step-header"><span class="stepnum">03</span><span class="stepname">Activation</span></div>
+                <div class="bp-step-header"><span class="stepnum">04</span><span class="stepname">Adoption</span></div>
+                <div class="bp-step-header"><span class="stepnum">05</span><span class="stepname">Health check</span></div>
+
+                <!-- Customer -->
+                <div class="bp-lane-label"><div class="lane-icon l-customer">◐</div><div class="lane-name-wrap"><span class="lane-name">Customer</span><span class="lane-meta">Actions</span></div></div>
+                <div class="bp-cell"><div class="bp-card t-touchpoint live"><div class="bp-card-icon">◆</div><div class="bp-card-text">Admin receives trial invite</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"><div class="bp-card t-touchpoint live"><div class="bp-card-icon">◆</div><div class="bp-card-text">Signs up with work email</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell"><div class="bp-card t-touchpoint live"><div class="bp-card-icon">◆</div><div class="bp-card-text">Invites first 3 teammates</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"></div>
+
+                <!-- Frontstage -->
+                <div class="bp-lane-label"><div class="lane-icon l-frontstage">◑</div><div class="lane-name-wrap"><span class="lane-name">Web / App UI</span><span class="lane-meta">Touchpoints</span></div></div>
+                <div class="bp-cell"><div class="bp-card t-data live"><div class="bp-card-icon">◇</div><div class="bp-card-text">Landing with 'Free trial' CTA</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"><div class="bp-card t-data live"><div class="bp-card-icon">◇</div><div class="bp-card-text">Sign-up form, role detection</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"><div class="bp-card t-data live"><div class="bp-card-icon">◇</div><div class="bp-card-text">Role-based product tour</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell"><div class="bp-card t-data live"><div class="bp-card-icon">◇</div><div class="bp-card-text">CS alert: high-value account</div><div class="bp-card-dot"></div></div></div>
+
+                <div class="bp-lane-divider interaction"><span>Line of interaction</span></div>
+
+                <!-- AI Services -->
+                <div class="bp-lane-label"><div class="lane-icon l-ai">✦</div><div class="lane-name-wrap"><span class="lane-name">AI Services</span><span class="lane-meta">AI Capability</span></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell">
+                  <div class="bp-card t-ai live audited a1 flag1">
+                    <div class="bp-card-icon">✦</div>
+                    <div class="bp-card-text">Tags account by industry &amp; size</div>
+                    <div class="bp-card-dot"></div>
+                    <span class="audit-flag sev-high">!</span>
+                  </div>
+                </div>
+                <div class="bp-cell"><div class="bp-card t-ai live audited a2"><div class="bp-card-icon">✦</div><div class="bp-card-text">Personalizes tour from signals</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell">
+                  <div class="bp-card t-ai live audited a3 flag2">
+                    <div class="bp-card-icon">✦</div>
+                    <div class="bp-card-text">AI lead scoring &amp; routing</div>
+                    <div class="bp-card-dot"></div>
+                    <span class="audit-flag sev-med">!</span>
+                  </div>
+                </div>
+
+                <div class="bp-lane-divider visibility"><span>Line of visibility</span></div>
+
+                <!-- Backstage -->
+                <div class="bp-lane-label"><div class="lane-icon l-backstage">▣</div><div class="lane-name-wrap"><span class="lane-name">Backstage</span><span class="lane-meta">Data &amp; gov</span></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell"><div class="bp-card t-system live"><div class="bp-card-icon">▣</div><div class="bp-card-text">User DB — account created</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"><div class="bp-card t-handoff live"><div class="bp-card-icon">▦</div><div class="bp-card-text">Marketing sends welcome email</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell"><div class="bp-card t-gov live"><div class="bp-card-icon">✓</div><div class="bp-card-text">Reviews AI scoring quarterly</div><div class="bp-card-dot"></div></div></div>
+              </div>
+
+              <!-- Flow connectors -->
+              <svg class="flow-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <line x1="18" y1="10" x2="22" y2="10" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="21,8.5 22,10 21,11.5"/>
+                <line x1="38" y1="10" x2="62" y2="10" stroke-linecap="round" stroke-dasharray="2 3"/>
+                <polygon class="flow-arrow" points="61,8.5 62,10 61,11.5"/>
+
+                <line x1="18" y1="32" x2="22" y2="32" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="21,30.5 22,32 21,33.5"/>
+                <line x1="38" y1="32" x2="42" y2="32" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="41,30.5 42,32 41,33.5"/>
+                <line x1="58" y1="32" x2="82" y2="32" stroke-linecap="round" stroke-dasharray="2 3"/>
+                <polygon class="flow-arrow" points="81,30.5 82,32 81,33.5"/>
+
+                <line x1="38" y1="58" x2="42" y2="58" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="41,56.5 42,58 41,59.5"/>
+                <line x1="58" y1="58" x2="82" y2="58" stroke-linecap="round" stroke-dasharray="2 3"/>
+                <polygon class="flow-arrow" points="81,56.5 82,58 81,59.5"/>
+
+                <line x1="38" y1="86" x2="42" y2="86" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="41,84.5 42,86 41,87.5"/>
+                <line x1="58" y1="86" x2="62" y2="86" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="61,84.5 62,86 61,87.5"/>
+                <line x1="78" y1="86" x2="82" y2="86" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="81,84.5 82,86 81,87.5"/>
+
+                <path class="flow-handoff" d="M 30 14 L 30 28"/>
+                <polygon class="flow-handoff-arrow" points="28.5,27 31.5,27 30,29"/>
+                <path class="flow-handoff" d="M 30 36 L 30 54"/>
+                <polygon class="flow-handoff-arrow" points="28.5,53 31.5,53 30,55"/>
+                <path class="flow-handoff" d="M 30 62 L 30 82"/>
+                <polygon class="flow-handoff-arrow" points="28.5,81 31.5,81 30,83"/>
+                <path class="flow-handoff" d="M 50 62 L 50 82"/>
+                <polygon class="flow-handoff-arrow" points="48.5,81 51.5,81 50,83"/>
+                <path class="flow-handoff" d="M 90 36 L 90 54"/>
+                <polygon class="flow-handoff-arrow" points="88.5,53 91.5,53 90,55"/>
+                <path class="flow-handoff" d="M 90 62 L 90 82"/>
+                <polygon class="flow-handoff-arrow" points="88.5,81 91.5,81 90,83"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Agent panel -->
+        <div class="agent-panel">
+          <div class="agent-head">
+            <div class="agent-avatar">B</div>
+            <div>
+              <div class="agent-name">Blueprint Agent</div>
+              <div class="agent-status">connected · audit mode</div>
+            </div>
+            <div class="agent-close">×</div>
+          </div>
+
+          <div class="agent-thread-bar">
+            <span class="thread-back">All chats</span>
+            <span class="thread-title">Audit AI services vs standards…</span>
+            <span class="thread-icons">☆ ⋯</span>
+          </div>
+
+          <div class="agent-tabs">
+            <div class="agent-tab active">Chat</div>
+            <div class="agent-tab">Insights</div>
+            <div class="agent-tab">Sources</div>
+          </div>
+
+          <div class="agent-body">
+
+            <!-- Standards strip -->
+            <div class="standards-strip">
+              <div class="standards-head">
+                Standards loaded
+                <span class="std-count">4 docs</span>
+              </div>
+              <div class="standards-grid">
+                <div class="std-pill">
+                  <div class="std-icon aiact">AI</div>
+                  <div class="std-info">
+                    <div class="std-name">EU AI Act</div>
+                    <div class="std-meta">Annex III · 84 p</div>
+                  </div>
+                </div>
+                <div class="std-pill">
+                  <div class="std-icon gdpr">GD</div>
+                  <div class="std-info">
+                    <div class="std-name">GDPR</div>
+                    <div class="std-meta">Art. 5–35 · 99 p</div>
+                  </div>
+                </div>
+                <div class="std-pill">
+                  <div class="std-icon iso">IS</div>
+                  <div class="std-info">
+                    <div class="std-name">ISO 27001:2022</div>
+                    <div class="std-meta">Annex A · 23 p</div>
+                  </div>
+                </div>
+                <div class="std-pill">
+                  <div class="std-icon soc">SO</div>
+                  <div class="std-info">
+                    <div class="std-name">SOC 2 Type II</div>
+                    <div class="std-meta">CC6 · 47 p</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- User message -->
+            <div class="msg-row user msg-user-1">
+              <div class="msg-meta">YOU · 14:08</div>
+              <div class="msg-bubble">
+                Audit the AI Services lane against EU AI Act high-risk requirements and GDPR Art. 22.
+              </div>
+            </div>
+
+            <!-- Thinking -->
+            <div class="thinking-dots thinking"><span></span><span></span><span></span></div>
+
+            <!-- Analysing pill -->
+            <div class="status-pill analysing status-analysing">
+              <div class="pill-spinner"></div>
+              <span>Cross-checking 3 elements vs 4 standards…</span>
+              <span class="pill-count">3 / 3</span>
+            </div>
+
+            <!-- Agent response with findings -->
+            <div class="msg-row agent msg-agent-1">
+              <div class="msg-meta">BLUEPRINT AGENT · 14:09</div>
+              <div class="msg-bubble">
+                <div class="agent-resp-head">
+                  Found <span class="gaps-num">2 gaps</span> in the AI Services lane.
+                </div>
+
+                <div class="finding sev-high f1">
+                  <div class="finding-head">
+                    <span class="finding-sev">High</span>
+                    <span class="finding-target">Tags account by industry &amp; size</span>
+                    <span class="finding-cite">AI Act §14</span>
+                  </div>
+                  <div class="finding-body">Automated profiling without disclosed criteria. EU AI Act §14 requires meaningful human oversight for high-risk classification.</div>
+                  <div class="finding-action">Next: <span class="action-cta">Add human override checkpoint</span></div>
+                </div>
+
+                <div class="finding sev-med f2">
+                  <div class="finding-head">
+                    <span class="finding-sev">Med</span>
+                    <span class="finding-target">AI lead scoring &amp; routing</span>
+                    <span class="finding-cite">GDPR Art. 22</span>
+                  </div>
+                  <div class="finding-body">Users not informed that an algorithm influences account routing. Article 22 requires explicit disclosure &amp; opt-out.</div>
+                  <div class="finding-action">Next: <span class="action-cta">Add user-facing transparency notice</span></div>
+                </div>
+
+                <div class="action-chips">
+                  <div class="action-chip primary">+ Override checkpoint</div>
+                  <div class="action-chip primary">+ Disclosure notice</div>
+                  <div class="action-chip">Re-run audit</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Foot -->
+          <div class="agent-foot">
+            <div class="suggest-chips">
+              <div class="suggest-chip">Ethics audit</div>
+              <div class="suggest-chip">ISO 27001 check</div>
+              <div class="suggest-chip">Accessibility</div>
+              <div class="suggest-chip">Performance</div>
+            </div>
+            <div class="input-row">
+              <div class="input-paperclip">📎</div>
+              <div class="input-placeholder">Ask about this blueprint or add a standard…</div>
+              <div class="input-send">▸</div>
+            </div>
+            <div class="input-hint">Enter to send · Shift+Enter for new line · ⏎ attach standard</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="caption">
+      <div class="caption-inner">
+        <span class="cap-dot"></span>
+        <span class="cap-num">07 / USP</span>
+        Audit your system against any standard.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const stage = document.querySelector('.stage');
+  function fit(){
+    const scale = Math.min(window.innerWidth/1200, window.innerHeight/675);
+    stage.style.transform = 'scale(' + scale + ')';
+  }
+  fit();
+  window.addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>

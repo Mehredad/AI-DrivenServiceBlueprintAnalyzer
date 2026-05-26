@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blueprint AI — Generate from your existing docs and tools</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F3EF;--bg2:#EDEBE5;--bg3:#E3E0D8;--surface:#FFFFFF;
+  --border:#D9D6CE;--border2:#C3BFB5;
+  --text:#1D1C18;--text2:#5A5850;--text3:#9A9790;
+  --blue:#1A4FD8;--blue-bg:#EEF2FD;--blue-bd:#C0CFFA;
+  --teal:#0A7065;--teal-bg:#E6F5F2;--teal-bd:#9DD6CC;
+  --amber:#A35800;--amber-bg:#FEF3E6;--amber-bd:#F5C07A;
+  --red:#B91C1C;--red-bg:#FEF2F2;--red-bd:#FECACA;
+  --purple:#6D28D9;--purple-bg:#F5F0FE;--purple-bd:#DDD6FE;
+  --green:#166534;--green-bg:#F0FDF4;--green-bd:#BBF7D0;
+  --r:8px;--rl:12px;--rxl:16px;
+  --sh:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --sh2:0 10px 30px rgba(0,0,0,.12),0 3px 10px rgba(0,0,0,.06);
+  --loop:16000ms;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:#1d1c18;color:var(--text);font-size:13px;line-height:1.5;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.stage-wrap{position:relative;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;}
+.stage{width:1200px;height:675px;position:relative;background:var(--bg);overflow:hidden;transform-origin:center center;box-shadow:0 30px 80px rgba(0,0,0,.4);}
+
+/* ── Top bar ── */
+.app-chrome{position:absolute;inset:0;display:flex;flex-direction:column;}
+.topbar{height:44px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px 0 6px;gap:8px;flex-shrink:0;}
+.tb-back{width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;border-radius:5px;flex-shrink:0;}
+.logo-mark{width:24px;height:24px;background:var(--text);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-mark::after{content:'';width:9px;height:9px;border:1.5px solid #fff;border-radius:2px;}
+.tb-crumb{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:6px;flex:1;min-width:0;overflow:hidden;}
+.tb-crumb .crumb-main{color:var(--text2);font-weight:600;}
+.tb-crumb .crumb-sep{color:var(--text3);}
+.tb-crumb .crumb-title{color:var(--text);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tb-branch{display:flex;align-items:center;gap:5px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-weight:600;}
+.tb-branch::before{content:'';width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--text2);margin-right:3px;}
+.tb-connectors{display:flex;align-items:center;gap:5px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-weight:600;}
+.tb-connectors::before{content:'→';color:var(--text3);}
+.tb-role{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-weight:600;}
+.tb-role::after{content:'';width:0;height:0;border-left:3.5px solid transparent;border-right:3.5px solid transparent;border-top:4.5px solid var(--text2);margin-left:2px;}
+.tb-help{width:26px;height:26px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text2);}
+.tb-export{font-size:10px;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-weight:600;}
+
+.subbar{height:34px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:18px;flex-shrink:0;}
+.ph-tab{font-size:11px;font-weight:600;color:var(--text3);display:flex;align-items:center;gap:5px;padding:8px 0;border-bottom:2px solid transparent;}
+.ph-tab .ph-dot{width:6px;height:6px;border-radius:50%;}
+.ph-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+.ph-tab.active .ph-dot{background:var(--blue);}
+.ph-tab.h .ph-dot{background:var(--teal);}
+.ph-tab.i .ph-dot{background:var(--amber);}
+.gen-pill{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:9px;background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd);padding:3px 8px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-weight:600;}
+.gen-pill::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--purple);animation:purple-pulse 2s ease-in-out infinite;}
+@keyframes purple-pulse{50%{opacity:.4;}}
+
+/* Workspace = canvas + agent panel side-by-side */
+.workspace{flex:1;display:flex;overflow:hidden;}
+.canvas-area{flex:1;position:relative;padding:14px;overflow:hidden;min-width:0;}
+.bp-wrap{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);box-shadow:var(--sh);height:100%;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.bp-head{padding:9px 14px;border-bottom:1px solid var(--border);background:var(--bg);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.bp-head-title{font-family:'Fraunces',serif;font-size:13px;font-weight:400;flex:1;display:flex;align-items:center;gap:8px;}
+.bp-head-title .title-text{
+  font-family:'Fraunces',serif;font-size:13px;font-weight:400;color:var(--text);
+  white-space:nowrap;
+  clip-path:inset(0 100% 0 0);
+  animation:title-fill var(--loop) infinite cubic-bezier(.4,0,.2,1);
+}
+@keyframes title-fill{
+  0%,28%  {clip-path:inset(0 100% 0 0);}
+  34%     {clip-path:inset(0 0% 0 0);}
+  93%     {clip-path:inset(0 0% 0 0);}
+  97%     {clip-path:inset(0 100% 0 0);}
+  100%    {clip-path:inset(0 100% 0 0);}
+}
+.bp-head-meta{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);display:flex;align-items:center;gap:8px;}
+.bp-head-meta span{display:inline-flex;align-items:center;gap:4px;}
+.bp-head-meta .mdot{width:5px;height:5px;border-radius:50%;background:var(--text3);}
+
+/* Grid (same template as demo 4) */
+.bp-grid-wrap{flex:1;position:relative;overflow:hidden;}
+.bp-grid{
+  position:absolute;inset:0;
+  display:grid;
+  grid-template-columns:140px repeat(5, 1fr);
+  grid-template-rows:36px 1fr 1fr 22px 1fr 22px 1fr;
+  background:var(--bg2);gap:1px;
+}
+.bp-corner{background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:9px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);text-align:center;line-height:1.1;}
+.bp-step-header{
+  background:var(--bg);
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+  padding:0 10px;
+  opacity:0;transform:translateY(-4px);
+}
+.bp-step-header .stepnum{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);font-weight:500;}
+.bp-step-header .stepname{font-size:11px;font-weight:600;line-height:1.2;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+
+.bp-lane-label{
+  background:var(--bg);
+  display:flex;align-items:center;gap:7px;
+  padding:0 10px;
+  opacity:0;transform:translateX(-16px);
+}
+.lane-icon{width:20px;height:20px;border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;}
+.lane-icon.l-customer{background:var(--blue-bg);color:var(--blue);}
+.lane-icon.l-frontstage{background:var(--teal-bg);color:var(--teal);}
+.lane-icon.l-ai{background:var(--purple-bg);color:var(--purple);}
+.lane-icon.l-backstage{background:var(--bg2);color:var(--text2);}
+.lane-name-wrap{display:flex;flex-direction:column;line-height:1.2;min-width:0;}
+.lane-name{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lane-meta{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);font-weight:500;margin-top:2px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+.bp-lane-divider{
+  grid-column:1 / -1;
+  height:22px;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;background:var(--bg);
+  opacity:0;
+}
+.bp-lane-divider::before{content:'';position:absolute;left:0;right:0;top:50%;height:1.5px;z-index:0;}
+.bp-lane-divider span{position:relative;z-index:1;font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:.7px;text-transform:uppercase;font-weight:600;padding:0 10px;background:var(--bg);}
+.bp-lane-divider.interaction{color:var(--teal);}
+.bp-lane-divider.interaction::before{background:var(--teal);opacity:.55;}
+.bp-lane-divider.visibility{color:var(--blue);}
+.bp-lane-divider.visibility::before{background:var(--blue);opacity:.55;}
+
+.bp-cell{
+  background:var(--surface);
+  padding:6px 5px;
+  display:flex;flex-direction:column;gap:4px;
+  min-width:0;position:relative;overflow:hidden;
+}
+
+.bp-card{
+  display:flex;align-items:flex-start;gap:5px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:5px 7px 5px 10px;
+  font-size:9.5px;font-weight:500;color:var(--text);line-height:1.3;
+  position:relative;
+  box-shadow:0 1px 2px rgba(0,0,0,.03);
+  min-height:30px;z-index:2;
+  opacity:0;transform:scale(.78) translateY(3px);
+}
+.bp-card::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:2.5px;border-radius:0 2px 2px 0;}
+.bp-card.t-touchpoint::before{background:var(--blue);}
+.bp-card.t-data::before{background:var(--teal);}
+.bp-card.t-ai::before{background:var(--purple);}
+.bp-card.t-system::before{background:var(--text2);}
+.bp-card.t-gov::before{background:var(--green);}
+.bp-card.t-handoff::before{background:var(--amber);}
+.bp-card-icon{
+  width:13px;height:13px;border-radius:3px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:8px;flex-shrink:0;line-height:1;
+}
+.bp-card.t-touchpoint .bp-card-icon{background:var(--blue-bg);color:var(--blue);}
+.bp-card.t-data .bp-card-icon{background:var(--teal-bg);color:var(--teal);}
+.bp-card.t-ai .bp-card-icon{background:var(--purple-bg);color:var(--purple);}
+.bp-card.t-system .bp-card-icon{background:var(--bg2);color:var(--text2);}
+.bp-card.t-gov .bp-card-icon{background:var(--green-bg);color:var(--green);}
+.bp-card.t-handoff .bp-card-icon{background:var(--amber-bg);color:var(--amber);}
+.bp-card-text{flex:1;font-size:9.5px;font-weight:500;color:var(--text);line-height:1.3;}
+.bp-card-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:3px;background:var(--text3);}
+.bp-card.live .bp-card-dot{background:var(--green);}
+
+/* Flow connectors */
+.flow-svg{
+  position:absolute;
+  top:36px;left:140px;
+  width:calc(100% - 140px);height:calc(100% - 36px);
+  pointer-events:none;z-index:1;
+  opacity:0;
+}
+.flow-svg path,.flow-svg line{fill:none;stroke:var(--text3);stroke-width:1.2;vector-effect:non-scaling-stroke;opacity:.45;}
+.flow-svg .flow-handoff{stroke:var(--amber);stroke-dasharray:3 3;opacity:.55;}
+.flow-svg polygon.flow-arrow{fill:var(--text3);stroke:none;opacity:.55;}
+.flow-svg polygon.flow-handoff-arrow{fill:var(--amber);stroke:none;opacity:.7;}
+
+/* ─── Element + lane animation timings ─── */
+.bp-step-header.h1{animation:hstep1 var(--loop) infinite cubic-bezier(.4,0,.2,1);}
+.bp-step-header.h2{animation:hstep2 var(--loop) infinite cubic-bezier(.4,0,.2,1);}
+.bp-step-header.h3{animation:hstep3 var(--loop) infinite cubic-bezier(.4,0,.2,1);}
+.bp-step-header.h4{animation:hstep4 var(--loop) infinite cubic-bezier(.4,0,.2,1);}
+.bp-step-header.h5{animation:hstep5 var(--loop) infinite cubic-bezier(.4,0,.2,1);}
+@keyframes hstep1{0%,34%{opacity:0;transform:translateY(-4px);}37%{opacity:1;transform:translateY(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes hstep2{0%,35.5%{opacity:0;transform:translateY(-4px);}38.5%{opacity:1;transform:translateY(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes hstep3{0%,37%{opacity:0;transform:translateY(-4px);}40%{opacity:1;transform:translateY(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes hstep4{0%,38.5%{opacity:0;transform:translateY(-4px);}41.5%{opacity:1;transform:translateY(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes hstep5{0%,40%{opacity:0;transform:translateY(-4px);}43%{opacity:1;transform:translateY(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+
+.bp-lane-label.l1{animation:ln1 var(--loop) infinite cubic-bezier(.4,0,.2,1);}
+.bp-lane-label.l2{animation:ln2 var(--loop) infinite cubic-bezier(.4,0,.2,1);}
+.bp-lane-label.l3{animation:ln3 var(--loop) infinite cubic-bezier(.4,0,.2,1);}
+.bp-lane-label.l4{animation:ln4 var(--loop) infinite cubic-bezier(.4,0,.2,1);}
+@keyframes ln1{0%,28%{opacity:0;transform:translateX(-16px);}32%{opacity:1;transform:translateX(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes ln2{0%,29.5%{opacity:0;transform:translateX(-16px);}33.5%{opacity:1;transform:translateX(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes ln3{0%,31%{opacity:0;transform:translateX(-16px);}35%{opacity:1;transform:translateX(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes ln4{0%,32.5%{opacity:0;transform:translateX(-16px);}36.5%{opacity:1;transform:translateX(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+
+.bp-lane-divider.d1{animation:div1 var(--loop) infinite ease-out;}
+.bp-lane-divider.d2{animation:div2 var(--loop) infinite ease-out;}
+@keyframes div1{0%,34%{opacity:0;}38%{opacity:1;}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes div2{0%,36%{opacity:0;}40%{opacity:1;}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+
+.bp-card.dyn{animation-duration:var(--loop);animation-iteration-count:infinite;animation-timing-function:cubic-bezier(.34,1.5,.64,1);}
+.bp-card.e1 {animation-name:pp1;}
+.bp-card.e2 {animation-name:pp2;}
+.bp-card.e3 {animation-name:pp3;}
+.bp-card.e4 {animation-name:pp4;}
+.bp-card.e5 {animation-name:pp5;}
+.bp-card.e6 {animation-name:pp6;}
+.bp-card.e7 {animation-name:pp7;}
+.bp-card.e8 {animation-name:pp8;}
+.bp-card.e9 {animation-name:pp9;}
+.bp-card.e10{animation-name:pp10;}
+.bp-card.e11{animation-name:pp11;}
+.bp-card.e12{animation-name:pp12;}
+.bp-card.e13{animation-name:pp13;}
+@keyframes pp1 {0%,44%{opacity:0;transform:scale(.78) translateY(3px);}47%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes pp2 {0%,46%{opacity:0;transform:scale(.78) translateY(3px);}49%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes pp3 {0%,48%{opacity:0;transform:scale(.78) translateY(3px);}51%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes pp4 {0%,50%{opacity:0;transform:scale(.78) translateY(3px);}53%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes pp5 {0%,52%{opacity:0;transform:scale(.78) translateY(3px);}55%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes pp6 {0%,54%{opacity:0;transform:scale(.78) translateY(3px);}57%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes pp7 {0%,56%{opacity:0;transform:scale(.78) translateY(3px);}59%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes pp8 {0%,58%{opacity:0;transform:scale(.78) translateY(3px);}61%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes pp9 {0%,60%{opacity:0;transform:scale(.78) translateY(3px);}63%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes pp10{0%,62%{opacity:0;transform:scale(.78) translateY(3px);}65%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes pp11{0%,64%{opacity:0;transform:scale(.78) translateY(3px);}67%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes pp12{0%,66%{opacity:0;transform:scale(.78) translateY(3px);}69%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes pp13{0%,68%{opacity:0;transform:scale(.78) translateY(3px);}71%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+
+.flow-svg{animation:flow-in var(--loop) infinite ease-out;}
+@keyframes flow-in{0%,72%{opacity:0;}78%{opacity:1;}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+
+/* ── Agent panel (chat-style, matches real product) ── */
+.agent-panel{
+  width:360px;flex-shrink:0;
+  background:var(--surface);
+  border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.agent-head{
+  padding:9px 12px;border-bottom:1px solid var(--border);
+  background:var(--text);display:flex;align-items:center;gap:9px;flex-shrink:0;color:#fff;
+}
+.agent-avatar{
+  width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.14);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  font-size:13px;font-family:'Fraunces',serif;font-weight:500;
+}
+.agent-name{font-size:12px;font-weight:600;line-height:1.2;}
+.agent-status{
+  font-size:9px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,.65);
+  display:flex;align-items:center;gap:5px;margin-top:2px;
+}
+.agent-status::before{content:'';width:5px;height:5px;border-radius:50%;background:#9DD6CC;animation:status-pulse 1.8s ease-in-out infinite;}
+@keyframes status-pulse{50%{opacity:.4;}}
+.agent-close{margin-left:auto;width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.55);font-size:14px;}
+
+.agent-thread-bar{
+  display:flex;align-items:center;gap:8px;padding:7px 12px;
+  border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;
+}
+.thread-back{
+  font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--blue);
+  font-weight:600;display:flex;align-items:center;gap:3px;
+}
+.thread-back::before{content:'←';}
+.thread-title{
+  flex:1;font-size:10px;color:var(--text2);font-weight:500;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.thread-icons{display:flex;gap:6px;color:var(--text3);font-size:11px;}
+
+.agent-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface);padding:0 12px;gap:16px;flex-shrink:0;}
+.agent-tab{font-size:10px;font-weight:600;color:var(--text3);padding:7px 0;border-bottom:2px solid transparent;}
+.agent-tab.active{color:var(--text);border-bottom-color:var(--text);}
+
+.agent-body{
+  flex:1;overflow:hidden;padding:10px 12px;
+  display:flex;flex-direction:column;gap:10px;
+  background:var(--bg);
+}
+
+/* Chat message styles */
+.msg-row{display:flex;flex-direction:column;gap:4px;}
+.msg-row.user{align-items:flex-end;}
+.msg-row.agent{align-items:flex-start;}
+
+.msg-meta{
+  font-size:8.5px;font-family:'JetBrains Mono',monospace;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.5px;font-weight:600;
+  display:flex;align-items:center;gap:5px;
+}
+.msg-row.user .msg-meta{color:var(--text3);}
+.msg-row.agent .msg-meta{color:var(--text3);}
+.msg-bubble{
+  max-width:90%;padding:9px 11px;border-radius:10px;
+  font-size:11px;line-height:1.4;
+}
+.msg-row.user .msg-bubble{
+  background:var(--text);color:#F5F3EF;border-bottom-right-radius:3px;
+}
+.msg-row.agent .msg-bubble{
+  background:var(--surface);border:1px solid var(--border);color:var(--text);
+  border-bottom-left-radius:3px;
+}
+
+/* File attachment chips inside user message */
+.attach-row{
+  display:flex;flex-direction:column;gap:4px;margin-top:6px;
+  padding-top:7px;border-top:1px solid rgba(255,255,255,.12);
+}
+.attach-pill{
+  display:flex;align-items:center;gap:7px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:6px;padding:5px 8px;
+  font-size:10px;color:rgba(245,243,239,.95);
+  font-family:'DM Sans',sans-serif;font-weight:500;
+}
+.attach-icon{
+  width:18px;height:18px;border-radius:4px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Fraunces',serif;font-size:10px;color:#fff;font-weight:500;
+}
+.attach-icon.conf{background:#0A7065;}
+.attach-icon.jira{background:#2A6FDB;}
+.attach-icon.pdf{background:#B91C1C;}
+.attach-info{flex:1;min-width:0;line-height:1.2;}
+.attach-name{
+  font-size:10px;font-weight:600;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.attach-meta{
+  font-size:9px;font-family:'JetBrains Mono',monospace;
+  color:rgba(245,243,239,.6);font-weight:500;
+}
+
+/* Status pill below user msg */
+.status-pill{
+  display:flex;align-items:center;gap:7px;
+  padding:6px 10px;border-radius:99px;
+  font-size:10px;font-weight:600;
+  font-family:'DM Sans',sans-serif;
+  align-self:flex-start;
+}
+.status-pill.reading{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd);}
+.status-pill.done{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);}
+.status-pill .pill-spinner{
+  width:10px;height:10px;border-radius:50%;
+  border:1.5px solid var(--purple-bd);border-top-color:var(--purple);
+  animation:spin 1s linear infinite;flex-shrink:0;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.status-pill .pill-tick{
+  width:11px;height:11px;border-radius:50%;background:var(--green);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0;
+}
+.status-pill .pill-count{
+  margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;
+}
+
+/* Agent thinking dots */
+.thinking-dots{
+  display:flex;align-items:center;gap:4px;
+  padding:8px 12px;background:var(--surface);
+  border:1px solid var(--border);border-radius:10px;border-bottom-left-radius:3px;
+  align-self:flex-start;
+}
+.thinking-dots span{
+  width:5px;height:5px;border-radius:50%;background:var(--text3);
+  animation:tdot 1.4s ease-in-out infinite;
+}
+.thinking-dots span:nth-child(2){animation-delay:.18s;}
+.thinking-dots span:nth-child(3){animation-delay:.36s;}
+@keyframes tdot{0%,80%,100%{opacity:.25;transform:scale(.85);}40%{opacity:1;transform:scale(1);}}
+
+/* Inline stats block in agent message */
+.agent-stats{
+  display:flex;gap:10px;
+  margin-top:7px;padding-top:7px;border-top:1px solid var(--bg2);
+}
+.stat-cell{display:flex;flex-direction:column;line-height:1.2;}
+.stat-cell .num{font-family:'Fraunces',serif;font-size:14px;font-weight:400;color:var(--text);}
+.stat-cell .lbl{font-size:8.5px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;}
+
+/* ── Animation states for chat content ── */
+
+/* User msg appears first */
+.msg-user-1{opacity:0;transform:translateY(8px);}
+.msg-user-1{animation:um1 var(--loop) infinite cubic-bezier(.34,1.45,.64,1);}
+@keyframes um1{
+  0%,3%   {opacity:0;transform:translateY(8px);}
+  7%      {opacity:1;transform:translateY(0);}
+  93%     {opacity:1;}
+  97%     {opacity:0;}
+  100%    {opacity:0;}
+}
+
+/* Thinking dots */
+.thinking{opacity:0;animation:tlife var(--loop) infinite ease;}
+@keyframes tlife{
+  0%,9%   {opacity:0;max-height:0;margin:0;padding:0;border-color:transparent;overflow:hidden;}
+  13%     {opacity:1;max-height:40px;padding:8px 12px;border-color:var(--border);}
+  21%     {opacity:1;max-height:40px;padding:8px 12px;border-color:var(--border);}
+  24%     {opacity:0;max-height:0;padding:0;border-color:transparent;}
+  100%    {opacity:0;}
+}
+
+/* Agent message 1 (reading sources) */
+.msg-agent-1{opacity:0;}
+.msg-agent-1{animation:am1 var(--loop) infinite ease;}
+@keyframes am1{
+  0%,21%  {opacity:0;transform:translateY(6px);max-height:0;overflow:hidden;margin:0;}
+  25%     {opacity:1;transform:translateY(0);max-height:140px;}
+  46%     {opacity:1;max-height:140px;}
+  50%     {opacity:0;max-height:0;margin:0;overflow:hidden;}
+  100%    {opacity:0;}
+}
+
+/* Reading status pill */
+.status-reading{opacity:0;animation:sr1 var(--loop) infinite ease;}
+@keyframes sr1{
+  0%,25%  {opacity:0;max-height:0;overflow:hidden;padding:0;border-color:transparent;}
+  29%     {opacity:1;max-height:30px;padding:6px 10px;border-color:var(--purple-bd);}
+  44%     {opacity:1;max-height:30px;padding:6px 10px;border-color:var(--purple-bd);}
+  47%     {opacity:0;max-height:0;padding:0;border-color:transparent;margin:0;}
+  100%    {opacity:0;}
+}
+
+/* Agent message 2 with stats */
+.msg-agent-2{opacity:0;}
+.msg-agent-2{animation:am2 var(--loop) infinite ease;}
+@keyframes am2{
+  0%,47%  {opacity:0;transform:translateY(6px);max-height:0;overflow:hidden;margin:0;}
+  51%     {opacity:1;transform:translateY(0);max-height:240px;margin-top:0;}
+  93%     {opacity:1;}
+  97%     {opacity:0;}
+  100%    {opacity:0;}
+}
+
+/* Final status pill */
+.status-done{opacity:0;animation:sd1 var(--loop) infinite ease;}
+@keyframes sd1{
+  0%,72%  {opacity:0;max-height:0;overflow:hidden;padding:0;border-color:transparent;}
+  76%     {opacity:1;max-height:30px;padding:6px 10px;border-color:var(--green-bd);}
+  93%     {opacity:1;}
+  97%     {opacity:0;}
+  100%    {opacity:0;}
+}
+
+/* Agent message 3 (done) */
+.msg-agent-3{opacity:0;}
+.msg-agent-3{animation:am3 var(--loop) infinite ease;}
+@keyframes am3{
+  0%,76%  {opacity:0;transform:translateY(6px);max-height:0;overflow:hidden;margin:0;}
+  80%     {opacity:1;transform:translateY(0);max-height:80px;}
+  93%     {opacity:1;}
+  97%     {opacity:0;}
+  100%    {opacity:0;}
+}
+
+/* Bottom input area */
+.agent-foot{
+  background:var(--surface);border-top:1px solid var(--border);
+  padding:8px 12px;flex-shrink:0;
+  display:flex;flex-direction:column;gap:7px;
+}
+.suggest-chips{
+  display:flex;gap:5px;flex-wrap:nowrap;overflow:hidden;
+}
+.suggest-chip{
+  font-size:9.5px;font-weight:500;
+  background:var(--bg);border:1px solid var(--border);color:var(--text2);
+  border-radius:99px;padding:3px 8px;white-space:nowrap;flex-shrink:0;
+}
+.input-row{display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:5px 8px;}
+.input-paperclip{color:var(--text3);font-size:13px;flex-shrink:0;}
+.input-placeholder{flex:1;font-size:10.5px;color:var(--text3);}
+.input-send{
+  width:22px;height:22px;border-radius:5px;background:var(--text);
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  font-size:11px;font-weight:700;flex-shrink:0;
+}
+.input-hint{font-size:8.5px;font-family:'JetBrains Mono',monospace;color:var(--text3);}
+
+/* Caption */
+.caption{position:absolute;left:0;right:0;bottom:18px;display:flex;justify-content:center;z-index:40;pointer-events:none;}
+.caption-inner{display:flex;align-items:center;gap:8px;background:rgba(29,28,24,.92);color:#F5F3EF;border-radius:99px;padding:8px 16px;font-size:12px;font-weight:500;letter-spacing:.1px;box-shadow:0 6px 20px rgba(0,0,0,.25);backdrop-filter:blur(6px);opacity:0;transform:translateY(8px);animation:cap-life var(--loop) infinite ease-out;}
+.caption-inner .cap-dot{width:5px;height:5px;border-radius:50%;background:#DDD6FE;box-shadow:0 0 0 3px rgba(221,214,254,.18);}
+.caption-inner .cap-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:#9A9790;}
+@keyframes cap-life{0%,3%{opacity:0;transform:translateY(8px);}8%{opacity:1;transform:translateY(0);}92%{opacity:1;transform:translateY(0);}96%{opacity:0;transform:translateY(4px);}100%{opacity:0;}}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important;}
+  .bp-head-title .title-text{clip-path:none !important;animation:none !important;}
+  .bp-lane-label,.bp-step-header,.bp-card,.bp-lane-divider,.flow-svg,.caption-inner,.msg-user-1,.msg-agent-1,.msg-agent-2,.msg-agent-3,.status-reading,.status-done{opacity:1 !important;transform:none !important;max-height:none !important;}
+  .thinking{display:none !important;}
+}
+</style>
+</head>
+<body>
+<div class="stage-wrap">
+  <div class="stage">
+
+    <div class="app-chrome">
+      <div class="topbar">
+        <div class="tb-back">‹</div>
+        <div class="logo-mark"></div>
+        <div class="tb-crumb">
+          <span class="crumb-main">Blueprint AI</span>
+          <span class="crumb-sep">/</span>
+          <span class="crumb-title">AI-enhanced SaaS onboarding — B2B team collaboration</span>
+        </div>
+        <div class="tb-branch">main</div>
+        <div class="tb-connectors">Connectors</div>
+        <div class="tb-role">Delivery</div>
+        <div class="tb-help">?</div>
+        <div class="tb-export">Export</div>
+      </div>
+
+      <div class="subbar">
+        <div class="ph-tab active"><span class="ph-dot"></span>Understand</div>
+        <div class="ph-tab h"><span class="ph-dot"></span>Design</div>
+        <div class="ph-tab i"><span class="ph-dot"></span>Operate</div>
+        <div class="gen-pill">Generating · 3 sources</div>
+      </div>
+
+      <div class="workspace">
+        <div class="canvas-area">
+          <div class="bp-wrap">
+            <div class="bp-head">
+              <div class="bp-head-title">
+                <span class="title-text">AI-enhanced SaaS onboarding — B2B team collaboration</span>
+              </div>
+              <div class="bp-head-meta">
+                <span><span class="mdot"></span>4 lanes</span>
+                <span><span class="mdot"></span>5 steps</span>
+                <span><span class="mdot"></span>13 elements</span>
+              </div>
+            </div>
+
+            <div class="bp-grid-wrap">
+              <div class="bp-grid">
+                <div class="bp-corner">LANE / STEP</div>
+                <div class="bp-step-header h1"><span class="stepnum">01</span><span class="stepname">Initial contact</span></div>
+                <div class="bp-step-header h2"><span class="stepnum">02</span><span class="stepname">Sign up</span></div>
+                <div class="bp-step-header h3"><span class="stepnum">03</span><span class="stepname">Activation</span></div>
+                <div class="bp-step-header h4"><span class="stepnum">04</span><span class="stepname">Adoption</span></div>
+                <div class="bp-step-header h5"><span class="stepnum">05</span><span class="stepname">Health check</span></div>
+
+                <!-- Lane 1: Customer -->
+                <div class="bp-lane-label l1"><div class="lane-icon l-customer">◐</div><div class="lane-name-wrap"><span class="lane-name">Customer</span><span class="lane-meta">Actions</span></div></div>
+                <div class="bp-cell"><div class="bp-card dyn t-touchpoint live e1"><div class="bp-card-icon">◆</div><div class="bp-card-text">Admin receives trial invite</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"><div class="bp-card dyn t-touchpoint live e2"><div class="bp-card-icon">◆</div><div class="bp-card-text">Signs up with work email</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell"><div class="bp-card dyn t-touchpoint live e3"><div class="bp-card-icon">◆</div><div class="bp-card-text">Invites first 3 teammates</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"></div>
+
+                <!-- Lane 2: Frontstage UI -->
+                <div class="bp-lane-label l2"><div class="lane-icon l-frontstage">◑</div><div class="lane-name-wrap"><span class="lane-name">Web / App UI</span><span class="lane-meta">Touchpoints</span></div></div>
+                <div class="bp-cell"><div class="bp-card dyn t-data live e4"><div class="bp-card-icon">◇</div><div class="bp-card-text">Landing with 'Free trial' CTA</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"><div class="bp-card dyn t-data live e5"><div class="bp-card-icon">◇</div><div class="bp-card-text">Sign-up form, role detection</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"><div class="bp-card dyn t-data live e6"><div class="bp-card-icon">◇</div><div class="bp-card-text">Role-based product tour</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell"><div class="bp-card dyn t-data live e7"><div class="bp-card-icon">◇</div><div class="bp-card-text">CS alert: high-value account</div><div class="bp-card-dot"></div></div></div>
+
+                <div class="bp-lane-divider interaction d1"><span>Line of interaction</span></div>
+
+                <!-- Lane 3: AI Services -->
+                <div class="bp-lane-label l3"><div class="lane-icon l-ai">✦</div><div class="lane-name-wrap"><span class="lane-name">AI Services</span><span class="lane-meta">AI Capability</span></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell"><div class="bp-card dyn t-ai live e8"><div class="bp-card-icon">✦</div><div class="bp-card-text">Tag account by industry &amp; size</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"><div class="bp-card dyn t-ai live e9"><div class="bp-card-icon">✦</div><div class="bp-card-text">Personalize tour from signals</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell"><div class="bp-card dyn t-ai live e10"><div class="bp-card-icon">✦</div><div class="bp-card-text">AI lead scoring &amp; routing</div><div class="bp-card-dot"></div></div></div>
+
+                <div class="bp-lane-divider visibility d2"><span>Line of visibility</span></div>
+
+                <!-- Lane 4: Backstage Systems -->
+                <div class="bp-lane-label l4"><div class="lane-icon l-backstage">▣</div><div class="lane-name-wrap"><span class="lane-name">Backstage</span><span class="lane-meta">Data &amp; gov</span></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell"><div class="bp-card dyn t-system live e11"><div class="bp-card-icon">▣</div><div class="bp-card-text">User DB — account created</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"><div class="bp-card dyn t-handoff live e12"><div class="bp-card-icon">▦</div><div class="bp-card-text">Marketing sends welcome email</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell"><div class="bp-card dyn t-gov live e13"><div class="bp-card-icon">✓</div><div class="bp-card-text">Reviews AI scoring quarterly</div><div class="bp-card-dot"></div></div></div>
+              </div>
+
+              <!-- Flow connectors -->
+              <svg class="flow-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <!-- Customer journey arrows (y~10) -->
+                <line x1="18" y1="10" x2="22" y2="10" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="21,8.5 22,10 21,11.5"/>
+                <line x1="38" y1="10" x2="62" y2="10" stroke-linecap="round" stroke-dasharray="2 3"/>
+                <polygon class="flow-arrow" points="61,8.5 62,10 61,11.5"/>
+
+                <!-- Frontstage journey (y~32) -->
+                <line x1="18" y1="32" x2="22" y2="32" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="21,30.5 22,32 21,33.5"/>
+                <line x1="38" y1="32" x2="42" y2="32" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="41,30.5 42,32 41,33.5"/>
+                <line x1="58" y1="32" x2="82" y2="32" stroke-linecap="round" stroke-dasharray="2 3"/>
+                <polygon class="flow-arrow" points="81,30.5 82,32 81,33.5"/>
+
+                <!-- AI journey (y~58) -->
+                <line x1="38" y1="58" x2="42" y2="58" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="41,56.5 42,58 41,59.5"/>
+                <line x1="58" y1="58" x2="82" y2="58" stroke-linecap="round" stroke-dasharray="2 3"/>
+                <polygon class="flow-arrow" points="81,56.5 82,58 81,59.5"/>
+
+                <!-- Backstage journey (y~86) -->
+                <line x1="38" y1="86" x2="42" y2="86" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="41,84.5 42,86 41,87.5"/>
+                <line x1="58" y1="86" x2="62" y2="86" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="61,84.5 62,86 61,87.5"/>
+                <line x1="78" y1="86" x2="82" y2="86" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="81,84.5 82,86 81,87.5"/>
+
+                <!-- Vertical hand-offs -->
+                <path class="flow-handoff" d="M 30 14 L 30 28"/>
+                <polygon class="flow-handoff-arrow" points="28.5,27 31.5,27 30,29"/>
+                <path class="flow-handoff" d="M 30 36 L 30 54"/>
+                <polygon class="flow-handoff-arrow" points="28.5,53 31.5,53 30,55"/>
+                <path class="flow-handoff" d="M 30 62 L 30 82"/>
+                <polygon class="flow-handoff-arrow" points="28.5,81 31.5,81 30,83"/>
+                <path class="flow-handoff" d="M 50 62 L 50 82"/>
+                <polygon class="flow-handoff-arrow" points="48.5,81 51.5,81 50,83"/>
+                <path class="flow-handoff" d="M 90 36 L 90 54"/>
+                <polygon class="flow-handoff-arrow" points="88.5,53 91.5,53 90,55"/>
+                <path class="flow-handoff" d="M 90 62 L 90 82"/>
+                <polygon class="flow-handoff-arrow" points="88.5,81 91.5,81 90,83"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── Agent panel (chat-style) ─── -->
+        <div class="agent-panel">
+          <div class="agent-head">
+            <div class="agent-avatar">B</div>
+            <div>
+              <div class="agent-name">Blueprint Agent</div>
+              <div class="agent-status">connected · reading sources</div>
+            </div>
+            <div class="agent-close">×</div>
+          </div>
+
+          <div class="agent-thread-bar">
+            <span class="thread-back">All chats</span>
+            <span class="thread-title">Generate from existing docs…</span>
+            <span class="thread-icons">☆ ⋯</span>
+          </div>
+
+          <div class="agent-tabs">
+            <div class="agent-tab active">Chat</div>
+            <div class="agent-tab">Insights</div>
+            <div class="agent-tab">Onboarding</div>
+          </div>
+
+          <div class="agent-body">
+
+            <!-- User message with attachments -->
+            <div class="msg-row user msg-user-1">
+              <div class="msg-meta">YOU · 11:24</div>
+              <div class="msg-bubble">
+                Build a service blueprint for our SaaS onboarding from these sources.
+                <div class="attach-row">
+                  <div class="attach-pill">
+                    <div class="attach-icon conf">C</div>
+                    <div class="attach-info">
+                      <div class="attach-name">Customer Onboarding wiki</div>
+                      <div class="attach-meta">Confluence · 8 pages</div>
+                    </div>
+                  </div>
+                  <div class="attach-pill">
+                    <div class="attach-icon jira">J</div>
+                    <div class="attach-info">
+                      <div class="attach-name">Epic ONBD-142 Onboarding revamp</div>
+                      <div class="attach-meta">Jira · 12 stories</div>
+                    </div>
+                  </div>
+                  <div class="attach-pill">
+                    <div class="attach-icon pdf">P</div>
+                    <div class="attach-info">
+                      <div class="attach-name">legacy-onboarding-spec-v2.pdf</div>
+                      <div class="attach-meta">PDF · 14 pages · 2.4 MB</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Agent thinking -->
+            <div class="thinking-dots thinking"><span></span><span></span><span></span></div>
+
+            <!-- Agent message 1: reading -->
+            <div class="msg-row agent msg-agent-1">
+              <div class="msg-meta">BLUEPRINT AGENT · 11:24</div>
+              <div class="msg-bubble">
+                Reading the three sources now. I'll extract actors, stages, and key handoffs first.
+              </div>
+            </div>
+
+            <!-- Reading status pill -->
+            <div class="status-pill reading status-reading">
+              <div class="pill-spinner"></div>
+              <span>Parsing 3 sources…</span>
+              <span class="pill-count">3 / 3</span>
+            </div>
+
+            <!-- Agent message 2: stats + drafting -->
+            <div class="msg-row agent msg-agent-2">
+              <div class="msg-meta">BLUEPRINT AGENT · 11:25</div>
+              <div class="msg-bubble">
+                Synthesis complete — drafting the blueprint on the canvas.
+                <div class="agent-stats">
+                  <div class="stat-cell"><span class="num">4</span><span class="lbl">actors</span></div>
+                  <div class="stat-cell"><span class="num">5</span><span class="lbl">stages</span></div>
+                  <div class="stat-cell"><span class="num">13</span><span class="lbl">elements</span></div>
+                  <div class="stat-cell"><span class="num">7</span><span class="lbl">handoffs</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Done status pill -->
+            <div class="status-pill done status-done">
+              <div class="pill-tick">✓</div>
+              <span>Blueprint generated</span>
+              <span class="pill-count">13 elements</span>
+            </div>
+
+            <!-- Agent message 3: done summary -->
+            <div class="msg-row agent msg-agent-3">
+              <div class="msg-meta">BLUEPRINT AGENT · 11:25</div>
+              <div class="msg-bubble">
+                Done. I traced the customer journey across 4 lanes and surfaced 7 hand-offs. Want me to audit for gaps next?
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Foot -->
+          <div class="agent-foot">
+            <div class="suggest-chips">
+              <div class="suggest-chip">Audit gaps</div>
+              <div class="suggest-chip">Find risks</div>
+              <div class="suggest-chip">AI opportunities</div>
+              <div class="suggest-chip">Gov summary</div>
+            </div>
+            <div class="input-row">
+              <div class="input-paperclip">📎</div>
+              <div class="input-placeholder">Ask anything about this blueprint…</div>
+              <div class="input-send">▸</div>
+            </div>
+            <div class="input-hint">Enter to send · Shift+Enter for new line · ⏎ attach</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="caption">
+      <div class="caption-inner">
+        <span class="cap-dot"></span>
+        <span class="cap-num">05 / USP</span>
+        Generate from your existing docs and tools.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const stage = document.querySelector('.stage');
+  function fit(){
+    const scale = Math.min(window.innerWidth/1200, window.innerHeight/675);
+    stage.style.transform = 'scale(' + scale + ')';
+  }
+  fit();
+  window.addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>

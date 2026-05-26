@@ -17,6 +17,10 @@
     {
       "src": "frontend/templates/(.*)",
       "use": "@vercel/static"
+    },
+    {
+      "src": "frontend/demos/(.*)",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -31,6 +35,10 @@
     {
       "src": "/templates/(.*)",
       "dest": "/frontend/templates/$1"
+    },
+    {
+      "src": "/demos/(.*)",
+      "dest": "/frontend/demos/$1"
     },
     {
       "src": "/(.*)",

@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blueprint AI — Connect and export to your team's tools</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F3EF;--bg2:#EDEBE5;--bg3:#E3E0D8;--surface:#FFFFFF;
+  --border:#D9D6CE;--border2:#C3BFB5;
+  --text:#1D1C18;--text2:#5A5850;--text3:#9A9790;
+  --blue:#1A4FD8;--blue-bg:#EEF2FD;--blue-bd:#C0CFFA;
+  --teal:#0A7065;--teal-bg:#E6F5F2;--teal-bd:#9DD6CC;
+  --amber:#A35800;--amber-bg:#FEF3E6;--amber-bd:#F5C07A;
+  --red:#B91C1C;--red-bg:#FEF2F2;--red-bd:#FECACA;
+  --purple:#6D28D9;--purple-bg:#F5F0FE;--purple-bd:#DDD6FE;
+  --green:#166534;--green-bg:#F0FDF4;--green-bd:#BBF7D0;
+  --r:8px;--rl:12px;--rxl:16px;
+  --sh:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --sh2:0 10px 30px rgba(0,0,0,.12),0 3px 10px rgba(0,0,0,.06);
+  --loop:15000ms;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:#1d1c18;color:var(--text);font-size:13px;line-height:1.5;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.stage-wrap{position:relative;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;}
+.stage{width:1200px;height:675px;position:relative;background:var(--bg);overflow:hidden;transform-origin:center center;box-shadow:0 30px 80px rgba(0,0,0,.4);}
+
+/* ── Topbar ── */
+.app-chrome{position:absolute;inset:0;display:flex;flex-direction:column;}
+.topbar{height:44px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px 0 6px;gap:8px;flex-shrink:0;}
+.tb-back{width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;flex-shrink:0;}
+.logo-mark{width:24px;height:24px;background:var(--text);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-mark::after{content:'';width:9px;height:9px;border:1.5px solid #fff;border-radius:2px;}
+.tb-crumb{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:6px;flex:1;min-width:0;overflow:hidden;}
+.tb-crumb .crumb-main{color:var(--text2);font-weight:600;}
+.tb-crumb .crumb-sep{color:var(--text3);}
+.tb-crumb .crumb-title{color:var(--text);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tb-branch{display:flex;align-items:center;gap:5px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-weight:600;white-space:nowrap;flex-shrink:0;}
+.tb-branch::before{content:'';width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--text2);margin-right:3px;}
+.tb-connectors{display:flex;align-items:center;gap:5px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--purple);background:var(--purple-bg);border:1px solid var(--purple-bd);border-radius:6px;padding:4px 9px;font-weight:600;white-space:nowrap;flex-shrink:0;}
+.tb-connectors::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--purple);animation:purple-pulse 2s ease-in-out infinite;}
+@keyframes purple-pulse{50%{opacity:.4;}}
+.tb-role{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-weight:600;white-space:nowrap;flex-shrink:0;}
+.tb-role::after{content:'';width:0;height:0;border-left:3.5px solid transparent;border-right:3.5px solid transparent;border-top:4.5px solid var(--text2);margin-left:2px;}
+.tb-help{width:26px;height:26px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text2);flex-shrink:0;}
+.tb-export{
+  display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;
+  background:var(--text);color:#fff;padding:5px 11px;border-radius:6px;
+  white-space:nowrap;flex-shrink:0;position:relative;
+  animation:export-pulse var(--loop) infinite ease-out;
+}
+.tb-export::before{content:'↗';color:var(--purple-bd);}
+@keyframes export-pulse{
+  0%      {box-shadow:0 0 0 0 rgba(109,40,217,.5);}
+  4%      {box-shadow:0 0 0 0 rgba(109,40,217,.5);}
+  9%      {box-shadow:0 0 0 14px rgba(109,40,217,0);}
+  100%    {box-shadow:0 0 0 0 rgba(109,40,217,0);}
+}
+
+/* Phase tabs */
+.subbar{height:34px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:18px;flex-shrink:0;}
+.ph-tab{font-size:11px;font-weight:600;color:var(--text3);display:flex;align-items:center;gap:5px;padding:8px 0;border-bottom:2px solid transparent;}
+.ph-tab .ph-dot{width:6px;height:6px;border-radius:50%;}
+.ph-tab.u .ph-dot{background:var(--blue);}
+.ph-tab.h .ph-dot{background:var(--teal);}
+.ph-tab.active{color:var(--amber);border-bottom-color:var(--amber);}
+.ph-tab.active .ph-dot{background:var(--amber);}
+.export-pill{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:9px;background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd);padding:3px 8px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-weight:600;}
+.export-pill::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--purple);animation:purple-pulse 2s ease-in-out infinite;}
+
+/* Workspace */
+.workspace{flex:1;display:flex;overflow:hidden;position:relative;}
+
+/* Canvas */
+.canvas-area{flex:1;position:relative;padding:14px;overflow:hidden;min-width:0;}
+.bp-wrap{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);box-shadow:var(--sh);height:100%;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.bp-head{padding:9px 14px;border-bottom:1px solid var(--border);background:var(--bg);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.bp-head-title{font-family:'Fraunces',serif;font-size:13px;font-weight:400;flex:1;}
+.bp-head-meta{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);display:flex;align-items:center;gap:8px;}
+.bp-head-meta span{display:inline-flex;align-items:center;gap:4px;}
+.bp-head-meta .mdot{width:5px;height:5px;border-radius:50%;background:var(--text3);}
+
+.bp-grid-wrap{flex:1;position:relative;overflow:hidden;}
+.bp-grid{position:absolute;inset:0;display:grid;grid-template-columns:140px repeat(5, 1fr);grid-template-rows:36px 1fr 1fr 22px 1fr 22px 1fr;background:var(--bg2);gap:1px;}
+.bp-corner{background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:9px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);text-align:center;line-height:1.1;}
+.bp-step-header{background:var(--bg);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:0 10px;}
+.bp-step-header .stepnum{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);font-weight:500;}
+.bp-step-header .stepname{font-size:11px;font-weight:600;line-height:1.2;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+
+.bp-lane-label{background:var(--bg);display:flex;align-items:center;gap:7px;padding:0 10px;}
+.lane-icon{width:20px;height:20px;border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;}
+.lane-icon.l-customer{background:var(--blue-bg);color:var(--blue);}
+.lane-icon.l-frontstage{background:var(--teal-bg);color:var(--teal);}
+.lane-icon.l-ai{background:var(--purple-bg);color:var(--purple);}
+.lane-icon.l-backstage{background:var(--bg2);color:var(--text2);}
+.lane-name-wrap{display:flex;flex-direction:column;line-height:1.2;min-width:0;}
+.lane-name{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lane-meta{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);font-weight:500;margin-top:2px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+.bp-lane-divider{grid-column:1 / -1;height:22px;display:flex;align-items:center;justify-content:center;position:relative;background:var(--bg);}
+.bp-lane-divider::before{content:'';position:absolute;left:0;right:0;top:50%;height:1.5px;z-index:0;}
+.bp-lane-divider span{position:relative;z-index:1;font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:.7px;text-transform:uppercase;font-weight:600;padding:0 10px;background:var(--bg);}
+.bp-lane-divider.interaction{color:var(--teal);}
+.bp-lane-divider.interaction::before{background:var(--teal);opacity:.55;}
+.bp-lane-divider.visibility{color:var(--blue);}
+.bp-lane-divider.visibility::before{background:var(--blue);opacity:.55;}
+
+.bp-cell{background:var(--surface);padding:6px 5px;display:flex;flex-direction:column;gap:4px;min-width:0;position:relative;overflow:visible;}
+.bp-card{display:flex;align-items:flex-start;gap:5px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 7px 5px 10px;font-size:9.5px;font-weight:500;color:var(--text);line-height:1.3;position:relative;box-shadow:0 1px 2px rgba(0,0,0,.03);min-height:30px;z-index:2;}
+.bp-card::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:2.5px;border-radius:0 2px 2px 0;}
+.bp-card.t-touchpoint::before{background:var(--blue);}
+.bp-card.t-data::before{background:var(--teal);}
+.bp-card.t-ai::before{background:var(--purple);}
+.bp-card.t-system::before{background:var(--text2);}
+.bp-card.t-gov::before{background:var(--green);}
+.bp-card.t-handoff::before{background:var(--amber);}
+.bp-card.t-risk::before{background:var(--red);}
+.bp-card-icon{width:13px;height:13px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:8px;flex-shrink:0;line-height:1;}
+.bp-card.t-touchpoint .bp-card-icon{background:var(--blue-bg);color:var(--blue);}
+.bp-card.t-data .bp-card-icon{background:var(--teal-bg);color:var(--teal);}
+.bp-card.t-ai .bp-card-icon{background:var(--purple-bg);color:var(--purple);}
+.bp-card.t-system .bp-card-icon{background:var(--bg2);color:var(--text2);}
+.bp-card.t-gov .bp-card-icon{background:var(--green-bg);color:var(--green);}
+.bp-card.t-handoff .bp-card-icon{background:var(--amber-bg);color:var(--amber);}
+.bp-card.t-risk .bp-card-icon{background:var(--red-bg);color:var(--red);}
+.bp-card-text{flex:1;font-size:9.5px;font-weight:500;color:var(--text);line-height:1.3;}
+.bp-card-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:3px;background:var(--text3);}
+.bp-card.live .bp-card-dot{background:var(--green);}
+
+/* Source highlight on cards that will export — pulsing border briefly */
+.bp-card.source{position:relative;}
+.bp-card.source::after{
+  content:'';position:absolute;inset:-3px;border-radius:8px;
+  border:1.5px solid var(--purple);pointer-events:none;
+  opacity:0;
+}
+.bp-card.source.s1::after{animation:src-pulse-1 var(--loop) infinite ease;}
+.bp-card.source.s2::after{animation:src-pulse-2 var(--loop) infinite ease;}
+.bp-card.source.s3::after{animation:src-pulse-3 var(--loop) infinite ease;}
+@keyframes src-pulse-1{0%,14%{opacity:0;}16%{opacity:1;}19%{opacity:0;}100%{opacity:0;}}
+@keyframes src-pulse-2{0%,26%{opacity:0;}28%{opacity:1;}31%{opacity:0;}100%{opacity:0;}}
+@keyframes src-pulse-3{0%,38%{opacity:0;}40%{opacity:1;}43%{opacity:0;}100%{opacity:0;}}
+
+/* Flow connectors */
+.flow-svg{position:absolute;top:36px;left:140px;width:calc(100% - 140px);height:calc(100% - 36px);pointer-events:none;z-index:1;}
+.flow-svg path,.flow-svg line{fill:none;stroke:var(--text3);stroke-width:1.2;vector-effect:non-scaling-stroke;opacity:.4;}
+.flow-svg .flow-handoff{stroke:var(--amber);stroke-dasharray:3 3;opacity:.5;}
+.flow-svg polygon.flow-arrow{fill:var(--text3);stroke:none;opacity:.5;}
+.flow-svg polygon.flow-handoff-arrow{fill:var(--amber);stroke:none;opacity:.6;}
+
+/* ── Integrations panel (right) ── */
+.int-panel{
+  width:360px;flex-shrink:0;
+  background:var(--surface);
+  border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.int-head{
+  padding:9px 12px;border-bottom:1px solid var(--border);
+  background:var(--text);display:flex;align-items:center;gap:9px;flex-shrink:0;color:#fff;
+}
+.int-icon{
+  width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.14);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  font-size:13px;color:#fff;font-weight:500;
+}
+.int-icon::after{content:'↗';font-family:'DM Sans',sans-serif;}
+.int-name{font-size:12px;font-weight:600;line-height:1.2;}
+.int-status{font-size:9px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,.65);display:flex;align-items:center;gap:5px;margin-top:2px;}
+.int-status::before{content:'';width:5px;height:5px;border-radius:50%;background:#9DD6CC;animation:status-pulse 1.8s ease-in-out infinite;}
+@keyframes status-pulse{50%{opacity:.4;}}
+.int-close{margin-left:auto;width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.55);font-size:14px;}
+
+.int-summary{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 12px;border-bottom:1px solid var(--border);
+  background:var(--bg);font-size:10.5px;color:var(--text2);font-weight:500;
+}
+.int-summary .badge{
+  font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;
+  background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);
+  border-radius:99px;padding:2px 7px;letter-spacing:.4px;
+}
+.int-summary .push-btn{
+  margin-left:auto;
+  font-size:10px;font-weight:600;
+  background:var(--text);color:#fff;border-radius:6px;padding:5px 10px;
+  display:inline-flex;align-items:center;gap:5px;
+  position:relative;
+  animation:push-pulse var(--loop) infinite ease-out;
+}
+.int-summary .push-btn::before{content:'↗';color:var(--purple-bd);font-size:11px;}
+@keyframes push-pulse{
+  0%      {box-shadow:0 0 0 0 rgba(109,40,217,.5);}
+  4%      {box-shadow:0 0 0 0 rgba(109,40,217,.5);}
+  9%      {box-shadow:0 0 0 12px rgba(109,40,217,0);}
+  100%    {box-shadow:0 0 0 0 rgba(109,40,217,0);}
+}
+
+.int-section-label{
+  font-size:9px;font-family:'JetBrains Mono',monospace;
+  text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-weight:600;
+  padding:9px 12px 6px;
+}
+
+/* Tools grid */
+.int-tools{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;
+  padding:0 12px;
+}
+.tool-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:8px 9px;
+  display:flex;flex-direction:column;gap:5px;
+  min-width:0;position:relative;
+  transition:none;
+}
+.tool-head{display:flex;align-items:center;gap:6px;min-width:0;}
+.tool-logo{
+  width:24px;height:24px;border-radius:5px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-family:'Fraunces',serif;font-weight:500;font-size:13px;
+  letter-spacing:-.3px;
+}
+.tool-logo.jira{background:#1A4FD8;}
+.tool-logo.conf{background:#0A7065;}
+.tool-logo.miro{background:#A35800;}
+.tool-logo.figma{background:#6D28D9;}
+.tool-logo.hubspot{background:#B91C1C;}
+.tool-logo.datadog{background:#1D1C18;}
+.tool-name{
+  flex:1;min-width:0;line-height:1.15;
+}
+.tool-name-text{font-size:11px;font-weight:600;color:var(--text);}
+.tool-role{font-size:8.5px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;font-weight:600;margin-top:1px;}
+.tool-status{
+  display:flex;align-items:center;gap:4px;
+  font-size:9px;font-family:'JetBrains Mono',monospace;
+  color:var(--text3);font-weight:500;
+  padding-top:5px;border-top:1px solid var(--bg2);
+  min-height:18px;
+}
+/* Status layers — idle, syncing, synced */
+.tool-status .layer{display:flex;align-items:center;gap:4px;position:absolute;left:9px;right:9px;}
+.tool-status .l-idle{color:var(--text3);}
+.tool-status .l-idle::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--green);}
+.tool-status .l-syncing{color:var(--purple);font-weight:600;}
+.tool-status .l-syncing .spin{
+  width:8px;height:8px;border-radius:50%;
+  border:1.5px solid var(--purple-bd);border-top-color:var(--purple);
+  animation:spin 1s linear infinite;
+}
+.tool-status .l-synced{color:var(--green);font-weight:700;}
+.tool-status .l-synced::before{content:'✓';color:var(--green);font-weight:700;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Per-tool animation: idle → (syncing at chip arrival) → synced */
+.tool-card .l-idle      {opacity:1;}
+.tool-card .l-syncing   {opacity:0;}
+.tool-card .l-synced    {opacity:0;}
+.tool-card.t-conf .l-idle{animation:i-conf var(--loop) infinite steps(1,end);}
+.tool-card.t-conf .l-syncing{animation:s-conf var(--loop) infinite steps(1,end);}
+.tool-card.t-conf .l-synced{animation:d-conf var(--loop) infinite steps(1,end);}
+@keyframes i-conf{0%,15%{opacity:1;}16%{opacity:0;}100%{opacity:0;}}
+@keyframes s-conf{0%,15%{opacity:0;}16%{opacity:1;}20%{opacity:1;}21%{opacity:0;}100%{opacity:0;}}
+@keyframes d-conf{0%,20%{opacity:0;}21%{opacity:1;}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+
+.tool-card.t-jira .l-idle{animation:i-jira var(--loop) infinite steps(1,end);}
+.tool-card.t-jira .l-syncing{animation:s-jira var(--loop) infinite steps(1,end);}
+.tool-card.t-jira .l-synced{animation:d-jira var(--loop) infinite steps(1,end);}
+@keyframes i-jira{0%,27%{opacity:1;}28%{opacity:0;}100%{opacity:0;}}
+@keyframes s-jira{0%,27%{opacity:0;}28%{opacity:1;}32%{opacity:1;}33%{opacity:0;}100%{opacity:0;}}
+@keyframes d-jira{0%,32%{opacity:0;}33%{opacity:1;}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+
+.tool-card.t-datadog .l-idle{animation:i-dd var(--loop) infinite steps(1,end);}
+.tool-card.t-datadog .l-syncing{animation:s-dd var(--loop) infinite steps(1,end);}
+.tool-card.t-datadog .l-synced{animation:d-dd var(--loop) infinite steps(1,end);}
+@keyframes i-dd{0%,39%{opacity:1;}40%{opacity:0;}100%{opacity:0;}}
+@keyframes s-dd{0%,39%{opacity:0;}40%{opacity:1;}44%{opacity:1;}45%{opacity:0;}100%{opacity:0;}}
+@keyframes d-dd{0%,44%{opacity:0;}45%{opacity:1;}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+
+/* Brief glow on receiving tool on chip arrival */
+.tool-card.recv{position:relative;}
+.tool-card.recv::after{
+  content:'';position:absolute;inset:-2px;border-radius:10px;pointer-events:none;
+  border:1.5px solid var(--purple);background:rgba(109,40,217,.06);
+  opacity:0;
+}
+.tool-card.recv.r1::after{animation:r-conf var(--loop) infinite ease-out;}
+.tool-card.recv.r2::after{animation:r-jira var(--loop) infinite ease-out;}
+.tool-card.recv.r3::after{animation:r-dd var(--loop) infinite ease-out;}
+@keyframes r-conf{0%,15%{opacity:0;}17%{opacity:1;}22%{opacity:.5;}30%{opacity:0;}100%{opacity:0;}}
+@keyframes r-jira{0%,27%{opacity:0;}29%{opacity:1;}34%{opacity:.5;}42%{opacity:0;}100%{opacity:0;}}
+@keyframes r-dd{0%,39%{opacity:0;}41%{opacity:1;}46%{opacity:.5;}54%{opacity:0;}100%{opacity:0;}}
+
+/* Push history section */
+.int-history{
+  margin-top:6px;
+  padding:0 12px 12px;
+  display:flex;flex-direction:column;gap:5px;
+}
+.hist-row{
+  display:flex;align-items:center;gap:7px;
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:6px;padding:5px 8px;
+  font-size:10px;font-family:'DM Sans',sans-serif;
+  opacity:0;
+}
+.hist-tag{
+  font-size:8.5px;font-family:'JetBrains Mono',monospace;font-weight:700;
+  background:var(--purple-bg);color:var(--purple);
+  border:1px solid var(--purple-bd);border-radius:99px;
+  padding:1px 6px;letter-spacing:.4px;flex-shrink:0;
+}
+.hist-text{flex:1;color:var(--text2);font-weight:500;}
+.hist-text .arr{color:var(--text3);margin:0 4px;}
+.hist-text .dest{color:var(--text);font-weight:600;}
+.hist-time{font-size:8.5px;font-family:'JetBrains Mono',monospace;color:var(--text3);}
+.hist-row.h1{animation:hist-1 var(--loop) infinite ease-out;}
+.hist-row.h2{animation:hist-2 var(--loop) infinite ease-out;}
+.hist-row.h3{animation:hist-3 var(--loop) infinite ease-out;}
+@keyframes hist-1{0%,21%{opacity:0;transform:translateY(2px);}24%{opacity:1;transform:translateY(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes hist-2{0%,33%{opacity:0;transform:translateY(2px);}36%{opacity:1;transform:translateY(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes hist-3{0%,45%{opacity:0;transform:translateY(2px);}48%{opacity:1;transform:translateY(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+
+/* ── Payload chips — fly from board cell into right panel ──
+   Stage 1200×675. Topbar 42 + subbar 34 = 76. Workspace starts at 76.
+   canvas-area: padding 14, so x from 14 to 826 (canvas width 840 minus panel 360 - hmm)
+   Wait, let me recompute: stage 1200 wide.
+   panel = 360, canvas = 840 (with internal padding 14 each side)
+   bp-wrap covers x=14 to x=826 (interior).
+   panel covers x=840 to x=1200.
+   Inside panel, tools section padding 12, so tool cards start at x=852.
+   Tool cards in 2 columns, panel content width = 360 - 24 = 336. Each tool ~165 wide.
+   Left col tools at x≈852+82=934 center, right col at x≈852+82+165+6=1102.
+   Vertical positions (within int-panel) approximate:
+     int-head 44 + summary ~34 + section label ~30 = ~108px from panel top (which is 76 from stage top).
+     So tool cards y starts at 76+108=184.
+     Row 1: y=184-228 (center ~206)
+     Row 2: y=234-278 (center ~256)
+     Row 3: y=284-328 (center ~306)
+   Tools layout:
+     [Jira (col R, row 1)] [Confluence (col L? Maybe rearrange)]
+   Actually let me put the 3 receiving tools in a clear order:
+     Row 1: [Jira][Confluence]
+     Row 2: [Datadog][Miro]
+     Row 3: [Figma][HubSpot]
+   
+   Source cells in board (left side):
+     Card 1 (PRD source - blueprint title area, e.g., a cell in customer/sign-up): roughly x=200, y=190
+     Card 2 (Tickets source - cell in service lane): roughly x=420, y=340
+     Card 3 (Risk source - red risk card): roughly x=620, y=440
+   
+   Chip translation deltas (from source to destination tool):
+     PRD → Confluence (col R row 1, x=1102 y=206):
+       from (200, 190): dx=902, dy=16
+     Tickets → Jira (col L row 1, x=934 y=206):
+       from (420, 340): dx=514, dy=-134
+     Risk → Datadog (col L row 2, x=934 y=256):
+       from (620, 440): dx=314, dy=-184
+*/
+.payload{
+  position:absolute;
+  background:var(--surface);
+  border:1px solid var(--purple-bd);
+  border-radius:99px;
+  padding:5px 10px 5px 5px;
+  display:inline-flex;align-items:center;gap:6px;
+  box-shadow:0 8px 18px rgba(109,40,217,.2),0 1px 3px rgba(0,0,0,.06);
+  z-index:50;
+  white-space:nowrap;
+  opacity:0;
+  transform:translate(0,0) scale(.85);
+}
+.payload-tag{
+  font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:700;
+  color:#fff;background:var(--purple);
+  border-radius:99px;padding:2px 8px;letter-spacing:.4px;
+}
+.payload-text{
+  font-size:10.5px;font-weight:600;color:var(--text);
+}
+.payload-text .arr{color:var(--text3);margin:0 4px;}
+.payload-text .dest{color:var(--text2);}
+
+/* Position chips at source cell location */
+.payload.pay1{left:120px;top:200px;}  /* PRD source */
+.payload.pay2{left:340px;top:350px;}  /* Tickets source */
+.payload.pay3{left:540px;top:450px;}  /* Risk source */
+
+.payload.pay1{animation:pay-1 var(--loop) infinite cubic-bezier(.5,.1,.3,1);}
+.payload.pay2{animation:pay-2 var(--loop) infinite cubic-bezier(.5,.1,.3,1);}
+.payload.pay3{animation:pay-3 var(--loop) infinite cubic-bezier(.5,.1,.3,1);}
+
+@keyframes pay-1{
+  0%,12%  {opacity:0;transform:translate(0,0) scale(.85);}
+  15%     {opacity:1;transform:translate(0,0) scale(1);}
+  18%     {opacity:1;transform:translate(0,0) scale(1);}
+  22%     {opacity:1;transform:translate(810px,6px) scale(.9);}
+  25%     {opacity:0;transform:translate(900px,6px) scale(.8);}
+  100%    {opacity:0;}
+}
+@keyframes pay-2{
+  0%,24%  {opacity:0;transform:translate(0,0) scale(.85);}
+  27%     {opacity:1;transform:translate(0,0) scale(1);}
+  30%     {opacity:1;transform:translate(0,0) scale(1);}
+  34%     {opacity:1;transform:translate(490px,-144px) scale(.9);}
+  37%     {opacity:0;transform:translate(560px,-144px) scale(.8);}
+  100%    {opacity:0;}
+}
+@keyframes pay-3{
+  0%,36%  {opacity:0;transform:translate(0,0) scale(.85);}
+  39%     {opacity:1;transform:translate(0,0) scale(1);}
+  42%     {opacity:1;transform:translate(0,0) scale(1);}
+  46%     {opacity:1;transform:translate(370px,-194px) scale(.9);}
+  49%     {opacity:0;transform:translate(440px,-194px) scale(.8);}
+  100%    {opacity:0;}
+}
+
+/* SVG trail lines from source to destination */
+.trail-svg{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;z-index:40;
+}
+.trail-svg path{
+  fill:none;stroke:var(--purple);stroke-width:1.2;
+  stroke-dasharray:3 3;vector-effect:non-scaling-stroke;
+  opacity:0;
+  pathLength:1;stroke-dashoffset:1;
+}
+.trail-svg path.tr1{animation:tr1 var(--loop) infinite ease-out;}
+.trail-svg path.tr2{animation:tr2 var(--loop) infinite ease-out;}
+.trail-svg path.tr3{animation:tr3 var(--loop) infinite ease-out;}
+@keyframes tr1{0%,15%{opacity:0;stroke-dashoffset:1;}18%{opacity:.5;stroke-dashoffset:0;}24%{opacity:.5;}28%{opacity:0;}100%{opacity:0;}}
+@keyframes tr2{0%,27%{opacity:0;stroke-dashoffset:1;}30%{opacity:.5;stroke-dashoffset:0;}36%{opacity:.5;}40%{opacity:0;}100%{opacity:0;}}
+@keyframes tr3{0%,39%{opacity:0;stroke-dashoffset:1;}42%{opacity:.5;stroke-dashoffset:0;}48%{opacity:.5;}52%{opacity:0;}100%{opacity:0;}}
+
+/* Caption */
+.caption{position:absolute;left:0;right:0;bottom:18px;display:flex;justify-content:center;z-index:60;pointer-events:none;}
+.caption-inner{display:flex;align-items:center;gap:8px;background:rgba(29,28,24,.92);color:#F5F3EF;border-radius:99px;padding:8px 16px;font-size:12px;font-weight:500;letter-spacing:.1px;box-shadow:0 6px 20px rgba(0,0,0,.25);backdrop-filter:blur(6px);opacity:0;transform:translateY(8px);animation:cap-life var(--loop) infinite ease-out;}
+.caption-inner .cap-dot{width:5px;height:5px;border-radius:50%;background:#DDD6FE;box-shadow:0 0 0 3px rgba(221,214,254,.18);}
+.caption-inner .cap-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:#9A9790;}
+@keyframes cap-life{0%,55%{opacity:0;transform:translateY(8px);}60%{opacity:1;transform:translateY(0);}93%{opacity:1;}97%{opacity:0;transform:translateY(4px);}100%{opacity:0;}}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important;}
+  .payload,.trail-svg path{display:none !important;}
+  .tool-card .l-idle{opacity:0 !important;}
+  .tool-card .l-synced{opacity:1 !important;}
+  .tool-card.recv::after{opacity:.6 !important;}
+  .hist-row,.caption-inner{opacity:1 !important;transform:none !important;}
+}
+</style>
+</head>
+<body>
+<div class="stage-wrap">
+  <div class="stage">
+
+    <div class="app-chrome">
+      <div class="topbar">
+        <div class="tb-back">‹</div>
+        <div class="logo-mark"></div>
+        <div class="tb-crumb">
+          <span class="crumb-main">Blueprint AI</span>
+          <span class="crumb-sep">/</span>
+          <span class="crumb-title">AI-enhanced SaaS onboarding — B2B team collaboration</span>
+        </div>
+        <div class="tb-branch">main</div>
+        <div class="tb-connectors">Connectors · 6</div>
+        <div class="tb-role">Delivery</div>
+        <div class="tb-help">?</div>
+        <div class="tb-export">Push to tools</div>
+      </div>
+
+      <div class="subbar">
+        <div class="ph-tab u"><span class="ph-dot"></span>Understand</div>
+        <div class="ph-tab h"><span class="ph-dot"></span>Design</div>
+        <div class="ph-tab active"><span class="ph-dot"></span>Operate</div>
+        <div class="export-pill">Pushing to 3 destinations</div>
+      </div>
+
+      <div class="workspace">
+
+        <!-- Canvas -->
+        <div class="canvas-area">
+          <div class="bp-wrap">
+            <div class="bp-head">
+              <div class="bp-head-title">AI-enhanced SaaS onboarding — B2B team collaboration</div>
+              <div class="bp-head-meta">
+                <span><span class="mdot"></span>4 lanes</span>
+                <span><span class="mdot"></span>5 steps</span>
+                <span><span class="mdot"></span>13 elements</span>
+              </div>
+            </div>
+
+            <div class="bp-grid-wrap">
+              <div class="bp-grid">
+                <div class="bp-corner">LANE / STEP</div>
+                <div class="bp-step-header"><span class="stepnum">01</span><span class="stepname">Initial contact</span></div>
+                <div class="bp-step-header"><span class="stepnum">02</span><span class="stepname">Sign up</span></div>
+                <div class="bp-step-header"><span class="stepnum">03</span><span class="stepname">Activation</span></div>
+                <div class="bp-step-header"><span class="stepnum">04</span><span class="stepname">Adoption</span></div>
+                <div class="bp-step-header"><span class="stepnum">05</span><span class="stepname">Health</span></div>
+
+                <!-- Customer -->
+                <div class="bp-lane-label"><div class="lane-icon l-customer">◐</div><div class="lane-name-wrap"><span class="lane-name">Customer</span><span class="lane-meta">Actions</span></div></div>
+                <div class="bp-cell"><div class="bp-card t-touchpoint live source s1"><div class="bp-card-icon">◆</div><div class="bp-card-text">Admin receives trial invite</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"><div class="bp-card t-touchpoint live"><div class="bp-card-icon">◆</div><div class="bp-card-text">Signs up with work email</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell"><div class="bp-card t-touchpoint live"><div class="bp-card-icon">◆</div><div class="bp-card-text">Invites first 3 teammates</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"></div>
+
+                <!-- Frontstage UI -->
+                <div class="bp-lane-label"><div class="lane-icon l-frontstage">◑</div><div class="lane-name-wrap"><span class="lane-name">Web / App UI</span><span class="lane-meta">Touchpoints</span></div></div>
+                <div class="bp-cell"><div class="bp-card t-data live"><div class="bp-card-icon">◇</div><div class="bp-card-text">Landing with 'Free trial' CTA</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"><div class="bp-card t-data live source s2"><div class="bp-card-icon">◇</div><div class="bp-card-text">Sign-up form, role detection</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"><div class="bp-card t-data live"><div class="bp-card-icon">◇</div><div class="bp-card-text">Role-based product tour</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell"><div class="bp-card t-data live"><div class="bp-card-icon">◇</div><div class="bp-card-text">CS alert: high-value account</div><div class="bp-card-dot"></div></div></div>
+
+                <div class="bp-lane-divider interaction"><span>Line of interaction</span></div>
+
+                <!-- AI Services -->
+                <div class="bp-lane-label"><div class="lane-icon l-ai">✦</div><div class="lane-name-wrap"><span class="lane-name">AI Services</span><span class="lane-meta">AI Capability</span></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell"><div class="bp-card t-ai live"><div class="bp-card-icon">✦</div><div class="bp-card-text">Tags account by industry &amp; size</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"><div class="bp-card t-ai live"><div class="bp-card-icon">✦</div><div class="bp-card-text">Personalizes tour from signals</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell"><div class="bp-card t-ai live source s3"><div class="bp-card-icon">✦</div><div class="bp-card-text">AI lead scoring &amp; routing</div><div class="bp-card-dot"></div></div></div>
+
+                <div class="bp-lane-divider visibility"><span>Line of visibility</span></div>
+
+                <!-- Backstage -->
+                <div class="bp-lane-label"><div class="lane-icon l-backstage">▣</div><div class="lane-name-wrap"><span class="lane-name">Backstage</span><span class="lane-meta">Data &amp; gov</span></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell"><div class="bp-card t-system live"><div class="bp-card-icon">▣</div><div class="bp-card-text">User DB — account created</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"><div class="bp-card t-handoff live"><div class="bp-card-icon">▦</div><div class="bp-card-text">Marketing sends welcome email</div><div class="bp-card-dot"></div></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell"><div class="bp-card t-gov live"><div class="bp-card-icon">✓</div><div class="bp-card-text">Reviews AI scoring quarterly</div><div class="bp-card-dot"></div></div></div>
+              </div>
+
+              <!-- Flow connectors -->
+              <svg class="flow-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <line x1="18" y1="10" x2="22" y2="10" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="21,8.5 22,10 21,11.5"/>
+                <line x1="38" y1="10" x2="62" y2="10" stroke-linecap="round" stroke-dasharray="2 3"/>
+                <polygon class="flow-arrow" points="61,8.5 62,10 61,11.5"/>
+                <line x1="18" y1="32" x2="22" y2="32" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="21,30.5 22,32 21,33.5"/>
+                <line x1="38" y1="32" x2="42" y2="32" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="41,30.5 42,32 41,33.5"/>
+                <line x1="58" y1="32" x2="82" y2="32" stroke-linecap="round" stroke-dasharray="2 3"/>
+                <polygon class="flow-arrow" points="81,30.5 82,32 81,33.5"/>
+                <line x1="38" y1="58" x2="42" y2="58" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="41,56.5 42,58 41,59.5"/>
+                <line x1="58" y1="58" x2="82" y2="58" stroke-linecap="round" stroke-dasharray="2 3"/>
+                <polygon class="flow-arrow" points="81,56.5 82,58 81,59.5"/>
+                <line x1="38" y1="86" x2="42" y2="86" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="41,84.5 42,86 41,87.5"/>
+                <line x1="58" y1="86" x2="62" y2="86" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="61,84.5 62,86 61,87.5"/>
+                <line x1="78" y1="86" x2="82" y2="86" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="81,84.5 82,86 81,87.5"/>
+                <path class="flow-handoff" d="M 30 14 L 30 28"/>
+                <polygon class="flow-handoff-arrow" points="28.5,27 31.5,27 30,29"/>
+                <path class="flow-handoff" d="M 30 36 L 30 54"/>
+                <polygon class="flow-handoff-arrow" points="28.5,53 31.5,53 30,55"/>
+                <path class="flow-handoff" d="M 30 62 L 30 82"/>
+                <polygon class="flow-handoff-arrow" points="28.5,81 31.5,81 30,83"/>
+                <path class="flow-handoff" d="M 50 62 L 50 82"/>
+                <polygon class="flow-handoff-arrow" points="48.5,81 51.5,81 50,83"/>
+                <path class="flow-handoff" d="M 90 36 L 90 54"/>
+                <polygon class="flow-handoff-arrow" points="88.5,53 91.5,53 90,55"/>
+                <path class="flow-handoff" d="M 90 62 L 90 82"/>
+                <polygon class="flow-handoff-arrow" points="88.5,81 91.5,81 90,83"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Integrations panel -->
+        <div class="int-panel">
+          <div class="int-head">
+            <div class="int-icon"></div>
+            <div>
+              <div class="int-name">Integrations</div>
+              <div class="int-status">connected · 6 of 6 tools</div>
+            </div>
+            <div class="int-close">×</div>
+          </div>
+
+          <div class="int-summary">
+            <span class="badge">6 connected</span>
+            <span>Push PRDs, tickets &amp; insights</span>
+            <span class="push-btn">Push to tools</span>
+          </div>
+
+          <div class="int-section-label">Destinations</div>
+          <div class="int-tools">
+            <div class="tool-card t-jira recv r2">
+              <div class="tool-head">
+                <div class="tool-logo jira">J</div>
+                <div class="tool-name">
+                  <div class="tool-name-text">Jira</div>
+                  <div class="tool-role">Delivery</div>
+                </div>
+              </div>
+              <div class="tool-status">
+                <div class="layer l-idle">Connected</div>
+                <div class="layer l-syncing"><div class="spin"></div>Pushing 12 tickets…</div>
+                <div class="layer l-synced">Synced · 14:03</div>
+              </div>
+            </div>
+
+            <div class="tool-card t-conf recv r1">
+              <div class="tool-head">
+                <div class="tool-logo conf">C</div>
+                <div class="tool-name">
+                  <div class="tool-name-text">Confluence</div>
+                  <div class="tool-role">Docs</div>
+                </div>
+              </div>
+              <div class="tool-status">
+                <div class="layer l-idle">Connected</div>
+                <div class="layer l-syncing"><div class="spin"></div>Publishing PRD…</div>
+                <div class="layer l-synced">Synced · 14:03</div>
+              </div>
+            </div>
+
+            <div class="tool-card t-datadog recv r3">
+              <div class="tool-head">
+                <div class="tool-logo datadog">D</div>
+                <div class="tool-name">
+                  <div class="tool-name-text">Datadog</div>
+                  <div class="tool-role">Monitoring</div>
+                </div>
+              </div>
+              <div class="tool-status">
+                <div class="layer l-idle">Connected</div>
+                <div class="layer l-syncing"><div class="spin"></div>Feeding metrics…</div>
+                <div class="layer l-synced">Synced · 14:03</div>
+              </div>
+            </div>
+
+            <div class="tool-card">
+              <div class="tool-head">
+                <div class="tool-logo miro">M</div>
+                <div class="tool-name">
+                  <div class="tool-name-text">Miro</div>
+                  <div class="tool-role">Design</div>
+                </div>
+              </div>
+              <div class="tool-status">
+                <div class="layer l-idle">Connected</div>
+              </div>
+            </div>
+
+            <div class="tool-card">
+              <div class="tool-head">
+                <div class="tool-logo figma">F</div>
+                <div class="tool-name">
+                  <div class="tool-name-text">Figma</div>
+                  <div class="tool-role">Design</div>
+                </div>
+              </div>
+              <div class="tool-status">
+                <div class="layer l-idle">Connected</div>
+              </div>
+            </div>
+
+            <div class="tool-card">
+              <div class="tool-head">
+                <div class="tool-logo hubspot">H</div>
+                <div class="tool-name">
+                  <div class="tool-name-text">HubSpot</div>
+                  <div class="tool-role">CRM</div>
+                </div>
+              </div>
+              <div class="tool-status">
+                <div class="layer l-idle">Connected</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="int-section-label">Push history</div>
+          <div class="int-history">
+            <div class="hist-row h1">
+              <span class="hist-tag">PRD</span>
+              <span class="hist-text">Auto-published<span class="arr">→</span><span class="dest">Confluence</span></span>
+              <span class="hist-time">14:03</span>
+            </div>
+            <div class="hist-row h2">
+              <span class="hist-tag">TICKETS</span>
+              <span class="hist-text">12 + acceptance criteria<span class="arr">→</span><span class="dest">Jira</span></span>
+              <span class="hist-time">14:03</span>
+            </div>
+            <div class="hist-row h3">
+              <span class="hist-tag">RISK</span>
+              <span class="hist-text">Hotspot metrics<span class="arr">→</span><span class="dest">Datadog</span></span>
+              <span class="hist-time">14:03</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Payload chips flying from board cells to right panel -->
+    <div class="payload pay1">
+      <span class="payload-tag">PRD</span>
+      <span class="payload-text">→ <span class="dest">Confluence</span></span>
+    </div>
+    <div class="payload pay2">
+      <span class="payload-tag">TICKETS + AC</span>
+      <span class="payload-text">→ <span class="dest">Jira</span></span>
+    </div>
+    <div class="payload pay3">
+      <span class="payload-tag">RISK METRICS</span>
+      <span class="payload-text">→ <span class="dest">Datadog</span></span>
+    </div>
+
+    <!-- SVG trails (purely decorative arcs) -->
+    <svg class="trail-svg" viewBox="0 0 1200 675" preserveAspectRatio="none">
+      <path class="tr1" d="M 200 210 C 500 150, 800 150, 1080 215"/>
+      <path class="tr2" d="M 420 360 C 600 320, 800 240, 920 215"/>
+      <path class="tr3" d="M 620 450 C 750 360, 850 300, 920 265"/>
+    </svg>
+
+    <div class="caption">
+      <div class="caption-inner">
+        <span class="cap-dot"></span>
+        <span class="cap-num">08 / USP</span>
+        Push PRDs, tickets, and insights straight into your team's tools.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const stage = document.querySelector('.stage');
+  function fit(){
+    const scale = Math.min(window.innerWidth/1200, window.innerHeight/675);
+    stage.style.transform = 'scale(' + scale + ')';
+  }
+  fit();
+  window.addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blueprint AI — Connect a repo. Get an instant audit map.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F3EF;--bg2:#EDEBE5;--bg3:#E3E0D8;--surface:#FFFFFF;
+  --border:#D9D6CE;--border2:#C3BFB5;
+  --text:#1D1C18;--text2:#5A5850;--text3:#9A9790;
+  --blue:#1A4FD8;--blue-bg:#EEF2FD;--blue-bd:#C0CFFA;
+  --teal:#0A7065;--teal-bg:#E6F5F2;--teal-bd:#9DD6CC;
+  --amber:#A35800;--amber-bg:#FEF3E6;--amber-bd:#F5C07A;
+  --red:#B91C1C;--red-bg:#FEF2F2;--red-bd:#FECACA;
+  --purple:#6D28D9;--purple-bg:#F5F0FE;--purple-bd:#DDD6FE;
+  --green:#166534;--green-bg:#F0FDF4;--green-bd:#BBF7D0;
+  --r:8px;--rl:12px;--rxl:16px;
+  --sh:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --sh2:0 10px 30px rgba(0,0,0,.12),0 3px 10px rgba(0,0,0,.06);
+  --loop:17000ms;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:#1d1c18;color:var(--text);font-size:13px;line-height:1.5;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.stage-wrap{position:relative;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;}
+.stage{width:1200px;height:675px;position:relative;background:var(--bg);overflow:hidden;transform-origin:center center;box-shadow:0 30px 80px rgba(0,0,0,.4);}
+
+/* Topbar */
+.app-chrome{position:absolute;inset:0;display:flex;flex-direction:column;}
+.topbar{height:44px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px 0 6px;gap:8px;flex-shrink:0;}
+.tb-back{width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;flex-shrink:0;}
+.logo-mark{width:24px;height:24px;background:var(--text);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-mark::after{content:'';width:9px;height:9px;border:1.5px solid #fff;border-radius:2px;}
+.tb-crumb{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:6px;flex:1;min-width:0;overflow:hidden;}
+.tb-crumb .crumb-main{color:var(--text2);font-weight:600;}
+.tb-crumb .crumb-sep{color:var(--text3);}
+.tb-crumb .crumb-title{color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tb-branch{display:flex;align-items:center;gap:5px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-weight:600;white-space:nowrap;flex-shrink:0;}
+.tb-branch::before{content:'';width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--text2);margin-right:3px;}
+.tb-connectors{display:flex;align-items:center;gap:5px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--purple);background:var(--purple-bg);border:1px solid var(--purple-bd);border-radius:6px;padding:4px 9px;font-weight:600;white-space:nowrap;flex-shrink:0;}
+.tb-connectors::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--purple);animation:purple-pulse 2s ease-in-out infinite;}
+@keyframes purple-pulse{50%{opacity:.4;}}
+.tb-role{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-weight:600;white-space:nowrap;flex-shrink:0;}
+.tb-role::after{content:'';width:0;height:0;border-left:3.5px solid transparent;border-right:3.5px solid transparent;border-top:4.5px solid var(--text2);margin-left:2px;}
+.tb-help{width:26px;height:26px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text2);flex-shrink:0;}
+.tb-export{font-size:10px;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-weight:600;white-space:nowrap;flex-shrink:0;}
+
+/* Sub bar */
+.subbar{height:34px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:18px;flex-shrink:0;}
+.ph-tab{font-size:11px;font-weight:600;color:var(--text3);display:flex;align-items:center;gap:5px;padding:8px 0;border-bottom:2px solid transparent;}
+.ph-tab .ph-dot{width:6px;height:6px;border-radius:50%;}
+.ph-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+.ph-tab.active .ph-dot{background:var(--blue);}
+.ph-tab.h .ph-dot{background:var(--teal);}
+.ph-tab.i .ph-dot{background:var(--amber);}
+.audit-pill{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:9px;background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd);padding:3px 8px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-weight:600;}
+.audit-pill::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--purple);animation:purple-pulse 2s ease-in-out infinite;}
+
+/* Workspace */
+.workspace{flex:1;display:flex;overflow:hidden;}
+
+/* Canvas */
+.canvas-area{flex:1;position:relative;padding:14px;overflow:hidden;min-width:0;}
+.bp-wrap{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);box-shadow:var(--sh);height:100%;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.bp-head{padding:9px 14px;border-bottom:1px solid var(--border);background:var(--bg);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.bp-head-title{font-family:'Fraunces',serif;font-size:13px;font-weight:400;flex:1;}
+.bp-head-title .title-text{font-family:'Fraunces',serif;font-size:13px;font-weight:400;color:var(--text);white-space:nowrap;clip-path:inset(0 100% 0 0);animation:title-fill var(--loop) infinite cubic-bezier(.4,0,.2,1);}
+@keyframes title-fill{
+  0%,38%  {clip-path:inset(0 100% 0 0);}
+  44%     {clip-path:inset(0 0% 0 0);}
+  93%     {clip-path:inset(0 0% 0 0);}
+  97%     {clip-path:inset(0 100% 0 0);}
+  100%    {clip-path:inset(0 100% 0 0);}
+}
+.bp-head-meta{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);display:flex;align-items:center;gap:8px;}
+.bp-head-meta span{display:inline-flex;align-items:center;gap:4px;}
+.bp-head-meta .mdot{width:5px;height:5px;border-radius:50%;background:var(--text3);}
+
+.bp-grid-wrap{flex:1;position:relative;overflow:hidden;}
+
+/* Empty state visible early before audit completes */
+.bp-empty{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;color:var(--text2);background:var(--surface);z-index:3;
+  animation:empty-life var(--loop) infinite ease;
+}
+@keyframes empty-life{
+  0%,40%   {opacity:1;visibility:visible;}
+  44%      {opacity:0;visibility:hidden;}
+  93%      {opacity:0;visibility:hidden;}
+  97%      {opacity:1;visibility:visible;}
+  100%     {opacity:1;}
+}
+.empty-icon{
+  width:48px;height:48px;border-radius:12px;background:var(--bg2);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text3);font-size:22px;
+}
+.empty-icon::after{
+  content:'';width:22px;height:22px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%, var(--text3) 0%, var(--text3) 30%, transparent 60%);
+}
+.empty-title{font-family:'Fraunces',serif;font-size:17px;font-weight:300;color:var(--text);}
+.empty-sub{font-size:11px;color:var(--text2);max-width:340px;text-align:center;line-height:1.5;}
+
+/* Repo banner inside empty state — looking at the actual repo */
+.empty-repo{
+  background:var(--bg);border:1px solid var(--border);border-radius:10px;
+  padding:9px 13px;margin-top:6px;
+  display:flex;align-items:center;gap:9px;font-family:'JetBrains Mono',monospace;font-size:11px;
+}
+.empty-repo-mark{
+  width:22px;height:22px;border-radius:50%;background:var(--text);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.empty-repo-mark::after{
+  content:'';width:11px;height:11px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%, #fff 0%, #fff 30%, transparent 60%);
+}
+.empty-repo-name{color:var(--text2);}
+.empty-repo-name .org{color:var(--text3);}
+.empty-repo-name .slash{color:var(--text3);}
+.empty-repo-name .repo{color:var(--text);font-weight:600;}
+
+/* ── Grid (revealed after parse) ── */
+.bp-grid{position:absolute;inset:0;display:grid;grid-template-columns:170px repeat(4, 1fr);grid-template-rows:36px 1fr 1fr 1fr 1fr;background:var(--bg2);gap:1px;z-index:1;}
+.bp-corner{background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:9px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);text-align:center;line-height:1.1;}
+.bp-step-header{background:var(--bg);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:0 10px;opacity:0;transform:translateY(-4px);}
+.bp-step-header .stepnum{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);font-weight:500;}
+.bp-step-header .stepname{font-size:11px;font-weight:600;line-height:1.2;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+
+.bp-lane-label{background:var(--bg);display:flex;align-items:center;gap:8px;padding:0 12px;opacity:0;transform:translateX(-16px);}
+.lane-icon{width:22px;height:22px;border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;}
+.lane-icon.l-api{background:var(--blue-bg);color:var(--blue);}
+.lane-icon.l-svc{background:var(--teal-bg);color:var(--teal);}
+.lane-icon.l-db{background:var(--amber-bg);color:var(--amber);}
+.lane-icon.l-auth{background:var(--red-bg);color:var(--red);}
+.lane-name-wrap{display:flex;flex-direction:column;line-height:1.2;min-width:0;}
+.lane-name{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lane-meta{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);font-weight:500;margin-top:2px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+.bp-cell{background:var(--surface);padding:6px 5px;display:flex;flex-direction:column;gap:4px;min-width:0;position:relative;overflow:visible;}
+.bp-card{display:flex;align-items:flex-start;gap:5px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 7px 5px 10px;font-size:10px;font-weight:500;color:var(--text);line-height:1.3;position:relative;box-shadow:0 1px 2px rgba(0,0,0,.03);min-height:32px;opacity:0;transform:scale(.78) translateY(3px);}
+.bp-card::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:2.5px;border-radius:0 2px 2px 0;background:var(--text2);}
+.bp-card.t-api::before{background:var(--blue);}
+.bp-card.t-svc::before{background:var(--teal);}
+.bp-card.t-db::before{background:var(--amber);}
+.bp-card.t-auth::before{background:var(--red);}
+.bp-card-icon{width:14px;height:14px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:7.5px;flex-shrink:0;line-height:1;font-family:'JetBrains Mono',monospace;font-weight:600;}
+.bp-card.t-api .bp-card-icon{background:var(--blue-bg);color:var(--blue);}
+.bp-card.t-svc .bp-card-icon{background:var(--teal-bg);color:var(--teal);}
+.bp-card.t-db  .bp-card-icon{background:var(--amber-bg);color:var(--amber);}
+.bp-card.t-auth .bp-card-icon{background:var(--red-bg);color:var(--red);}
+.bp-card-text{flex:1;font-size:10px;font-weight:500;color:var(--text);line-height:1.3;}
+.bp-card-file{display:block;font-size:8px;font-family:'JetBrains Mono',monospace;color:var(--text3);margin-top:2px;font-weight:500;}
+
+/* Annotation badges */
+.bp-card .annot{
+  position:absolute;top:-7px;right:-7px;
+  display:inline-flex;align-items:center;gap:3px;
+  padding:2px 6px 2px 4px;border-radius:99px;
+  font-size:8.5px;font-family:'JetBrains Mono',monospace;
+  font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+  box-shadow:0 2px 6px rgba(0,0,0,.12);z-index:5;
+  opacity:0;transform:scale(.6);white-space:nowrap;
+}
+.bp-card .annot::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.annot.risk{background:var(--red);color:#fff;}.annot.risk::before{background:#fff;}
+.annot.gap{background:var(--amber);color:#fff;}.annot.gap::before{background:#fff;}
+.annot.opp{background:var(--green);color:#fff;}.annot.opp::before{background:#fff;}
+.annot.ai{background:var(--purple);color:#fff;}.annot.ai::before{background:#fff;}
+
+/* Lane label stagger (after empty state hides @ 44%) */
+.bp-lane-label.l1{animation:ln-1 var(--loop) infinite cubic-bezier(.4,0,.2,1);}
+.bp-lane-label.l2{animation:ln-2 var(--loop) infinite cubic-bezier(.4,0,.2,1);}
+.bp-lane-label.l3{animation:ln-3 var(--loop) infinite cubic-bezier(.4,0,.2,1);}
+.bp-lane-label.l4{animation:ln-4 var(--loop) infinite cubic-bezier(.4,0,.2,1);}
+@keyframes ln-1{0%,44%{opacity:0;transform:translateX(-16px);}47%{opacity:1;transform:translateX(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes ln-2{0%,45.5%{opacity:0;transform:translateX(-16px);}48.5%{opacity:1;transform:translateX(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes ln-3{0%,47%{opacity:0;transform:translateX(-16px);}50%{opacity:1;transform:translateX(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes ln-4{0%,48.5%{opacity:0;transform:translateX(-16px);}51.5%{opacity:1;transform:translateX(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+
+.bp-step-header.s1{animation:stp-1 var(--loop) infinite cubic-bezier(.4,0,.2,1);}
+.bp-step-header.s2{animation:stp-2 var(--loop) infinite cubic-bezier(.4,0,.2,1);}
+.bp-step-header.s3{animation:stp-3 var(--loop) infinite cubic-bezier(.4,0,.2,1);}
+.bp-step-header.s4{animation:stp-4 var(--loop) infinite cubic-bezier(.4,0,.2,1);}
+@keyframes stp-1{0%,50%{opacity:0;transform:translateY(-4px);}53%{opacity:1;transform:translateY(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes stp-2{0%,51.5%{opacity:0;transform:translateY(-4px);}54.5%{opacity:1;transform:translateY(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes stp-3{0%,53%{opacity:0;transform:translateY(-4px);}56%{opacity:1;transform:translateY(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes stp-4{0%,54.5%{opacity:0;transform:translateY(-4px);}57.5%{opacity:1;transform:translateY(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+
+.bp-card.dyn{animation-duration:var(--loop);animation-iteration-count:infinite;animation-timing-function:cubic-bezier(.34,1.5,.64,1);}
+.bp-card.e1 {animation-name:cd-1;}
+.bp-card.e2 {animation-name:cd-2;}
+.bp-card.e3 {animation-name:cd-3;}
+.bp-card.e4 {animation-name:cd-4;}
+.bp-card.e5 {animation-name:cd-5;}
+.bp-card.e6 {animation-name:cd-6;}
+.bp-card.e7 {animation-name:cd-7;}
+.bp-card.e8 {animation-name:cd-8;}
+.bp-card.e9 {animation-name:cd-9;}
+.bp-card.e10{animation-name:cd-10;}
+.bp-card.e11{animation-name:cd-11;}
+.bp-card.e12{animation-name:cd-12;}
+@keyframes cd-1 {0%,56%{opacity:0;transform:scale(.78) translateY(3px);}59%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes cd-2 {0%,57%{opacity:0;transform:scale(.78) translateY(3px);}60%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes cd-3 {0%,58%{opacity:0;transform:scale(.78) translateY(3px);}61%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes cd-4 {0%,59%{opacity:0;transform:scale(.78) translateY(3px);}62%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes cd-5 {0%,60%{opacity:0;transform:scale(.78) translateY(3px);}63%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes cd-6 {0%,61%{opacity:0;transform:scale(.78) translateY(3px);}64%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes cd-7 {0%,62%{opacity:0;transform:scale(.78) translateY(3px);}65%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes cd-8 {0%,63%{opacity:0;transform:scale(.78) translateY(3px);}66%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes cd-9 {0%,64%{opacity:0;transform:scale(.78) translateY(3px);}67%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes cd-10{0%,65%{opacity:0;transform:scale(.78) translateY(3px);}68%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes cd-11{0%,66%{opacity:0;transform:scale(.78) translateY(3px);}69%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+@keyframes cd-12{0%,67%{opacity:0;transform:scale(.78) translateY(3px);}70%{opacity:1;transform:scale(1) translateY(0);}93%{opacity:1;}97%{opacity:0;transform:scale(.9);}100%{opacity:0;}}
+
+/* Annotations stagger */
+.bp-card.a-risk1 .annot{animation:an-1 var(--loop) infinite cubic-bezier(.34,1.56,.64,1);}
+.bp-card.a-risk2 .annot{animation:an-2 var(--loop) infinite cubic-bezier(.34,1.56,.64,1);}
+.bp-card.a-risk3 .annot{animation:an-3 var(--loop) infinite cubic-bezier(.34,1.56,.64,1);}
+.bp-card.a-risk4 .annot{animation:an-4 var(--loop) infinite cubic-bezier(.34,1.56,.64,1);}
+.bp-card.a-gap1 .annot{animation:an-5 var(--loop) infinite cubic-bezier(.34,1.56,.64,1);}
+.bp-card.a-gap2 .annot{animation:an-6 var(--loop) infinite cubic-bezier(.34,1.56,.64,1);}
+.bp-card.a-gap3 .annot{animation:an-7 var(--loop) infinite cubic-bezier(.34,1.56,.64,1);}
+.bp-card.a-opp1 .annot{animation:an-8 var(--loop) infinite cubic-bezier(.34,1.56,.64,1);}
+.bp-card.a-ai1 .annot{animation:an-9 var(--loop) infinite cubic-bezier(.34,1.56,.64,1);}
+@keyframes an-1{0%,71%{opacity:0;transform:scale(.6);}74%{opacity:1;transform:scale(1.1);}76%{opacity:1;transform:scale(1);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes an-2{0%,72.5%{opacity:0;transform:scale(.6);}75.5%{opacity:1;transform:scale(1.1);}77.5%{opacity:1;transform:scale(1);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes an-3{0%,74%{opacity:0;transform:scale(.6);}77%{opacity:1;transform:scale(1.1);}79%{opacity:1;transform:scale(1);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes an-4{0%,75.5%{opacity:0;transform:scale(.6);}78.5%{opacity:1;transform:scale(1.1);}80.5%{opacity:1;transform:scale(1);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes an-5{0%,77%{opacity:0;transform:scale(.6);}80%{opacity:1;transform:scale(1.1);}82%{opacity:1;transform:scale(1);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes an-6{0%,78.5%{opacity:0;transform:scale(.6);}81.5%{opacity:1;transform:scale(1.1);}83.5%{opacity:1;transform:scale(1);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes an-7{0%,80%{opacity:0;transform:scale(.6);}83%{opacity:1;transform:scale(1.1);}85%{opacity:1;transform:scale(1);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes an-8{0%,81.5%{opacity:0;transform:scale(.6);}84.5%{opacity:1;transform:scale(1.1);}86.5%{opacity:1;transform:scale(1);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes an-9{0%,83%{opacity:0;transform:scale(.6);}86%{opacity:1;transform:scale(1.1);}88%{opacity:1;transform:scale(1);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+
+/* Flow connectors */
+.flow-svg{position:absolute;top:36px;left:170px;width:calc(100% - 170px);height:calc(100% - 36px);pointer-events:none;z-index:1;opacity:0;animation:flow-in var(--loop) infinite ease-out;}
+@keyframes flow-in{0%,69%{opacity:0;}73%{opacity:1;}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+.flow-svg path,.flow-svg line{fill:none;stroke:var(--text3);stroke-width:1.2;vector-effect:non-scaling-stroke;opacity:.4;}
+.flow-svg .flow-handoff{stroke:var(--amber);stroke-dasharray:3 3;opacity:.5;}
+.flow-svg polygon.flow-arrow{fill:var(--text3);stroke:none;opacity:.5;}
+.flow-svg polygon.flow-handoff-arrow{fill:var(--amber);stroke:none;opacity:.6;}
+
+/* ── GitHub panel (right) ── */
+.gh-panel{
+  width:360px;flex-shrink:0;
+  background:var(--surface);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.gh-head{
+  padding:9px 12px;border-bottom:1px solid var(--border);background:var(--text);
+  display:flex;align-items:center;gap:9px;flex-shrink:0;color:#fff;
+}
+.gh-avatar{
+  width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.14);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.gh-avatar::after{content:'';width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 35%, #fff 0%, #fff 30%, transparent 60%);}
+.gh-name{font-size:12px;font-weight:600;line-height:1.2;}
+.gh-status{font-size:9px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,.65);display:flex;align-items:center;gap:5px;margin-top:2px;}
+.gh-status::before{content:'';width:5px;height:5px;border-radius:50%;background:#9DD6CC;animation:status-pulse 1.8s ease-in-out infinite;}
+@keyframes status-pulse{50%{opacity:.4;}}
+.gh-close{margin-left:auto;width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.55);font-size:14px;}
+
+.gh-body{flex:1;overflow:hidden;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--bg);}
+
+/* Repo input (Act 1) */
+.gh-input-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:11px 12px;display:flex;flex-direction:column;gap:8px;
+}
+.gh-input-label{
+  font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.5px;font-weight:600;
+}
+.gh-input-row{
+  display:flex;align-items:center;gap:7px;
+  background:var(--bg);border:1px solid var(--border);border-radius:6px;
+  padding:5px 9px;
+}
+.gh-input-prefix{
+  font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text3);
+}
+.gh-input-text{
+  font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);
+  font-weight:600;flex:1;
+}
+.gh-input-caret{
+  display:inline-block;width:1.5px;height:13px;background:var(--text);
+  vertical-align:-2px;margin-left:1px;
+  animation:caret 1s steps(2) infinite;
+}
+@keyframes caret{50%{opacity:0;}}
+.gh-input-typed{
+  white-space:nowrap;overflow:hidden;display:inline-block;
+  width:0;animation:gh-type var(--loop) infinite steps(36,end);vertical-align:bottom;
+}
+@keyframes gh-type{
+  0%,4%   {width:0;}
+  16%     {width:100%;}
+  44%     {width:100%;}
+  47%     {width:100%;}
+  100%    {width:100%;}
+}
+.gh-connect-btn{
+  display:flex;align-items:center;gap:5px;
+  background:var(--text);color:#fff;border-radius:6px;
+  padding:6px 11px;font-size:10.5px;font-weight:600;
+  align-self:flex-start;position:relative;
+}
+.gh-connect-btn::before{content:'→';font-size:11px;color:var(--purple-bd);}
+.gh-connect-btn{animation:gh-btn-pulse var(--loop) infinite ease-out;}
+@keyframes gh-btn-pulse{
+  0%,17%   {box-shadow:0 0 0 0 rgba(109,40,217,.5);}
+  18%      {box-shadow:0 0 0 0 rgba(109,40,217,.5);}
+  22%      {box-shadow:0 0 0 14px rgba(109,40,217,0);}
+  100%     {box-shadow:0 0 0 0 rgba(109,40,217,0);}
+}
+.gh-input-card{
+  animation:input-life var(--loop) infinite ease;
+}
+@keyframes input-life{
+  0%,3%    {opacity:0;transform:translateY(4px);max-height:200px;padding:11px 12px;border-color:var(--border);}
+  6%       {opacity:1;transform:translateY(0);max-height:200px;padding:11px 12px;border-color:var(--border);}
+  23%      {opacity:1;max-height:200px;padding:11px 12px;border-color:var(--border);}
+  26%      {opacity:0;max-height:0;padding:0;margin:0;border-color:transparent;overflow:hidden;}
+  100%     {opacity:0;max-height:0;overflow:hidden;}
+}
+
+/* Parsing card (Act 2) */
+.gh-parse-card{
+  background:var(--surface);border:1px solid var(--purple-bd);border-radius:8px;
+  padding:10px 12px;display:flex;flex-direction:column;gap:7px;
+  opacity:0;animation:parse-life var(--loop) infinite ease;
+}
+@keyframes parse-life{
+  0%,23%   {opacity:0;max-height:0;padding:0;border-color:transparent;overflow:hidden;}
+  27%      {opacity:1;max-height:240px;padding:10px 12px;border-color:var(--purple-bd);}
+  42%      {opacity:1;max-height:240px;padding:10px 12px;border-color:var(--purple-bd);}
+  46%      {opacity:0;max-height:0;padding:0;border-color:transparent;overflow:hidden;}
+  100%     {opacity:0;}
+}
+.parse-head{
+  display:flex;align-items:center;gap:8px;font-size:11px;color:var(--purple);font-weight:600;
+}
+.parse-spin{
+  width:11px;height:11px;border-radius:50%;
+  border:1.8px solid var(--purple-bd);border-top-color:var(--purple);
+  animation:spin 1s linear infinite;flex-shrink:0;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.parse-bar{height:3px;background:var(--purple-bg);border-radius:2px;overflow:hidden;}
+.parse-bar-fill{height:100%;width:0;background:var(--purple);animation:parse-fill var(--loop) infinite ease-out;}
+@keyframes parse-fill{0%,24%{width:0%;}28%{width:10%;}42%{width:100%;}100%{width:100%;}}
+.parse-files{
+  display:flex;flex-direction:column;gap:3px;
+  font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2);
+}
+.parse-file{display:flex;align-items:center;gap:5px;}
+.parse-file::before{content:'▢';color:var(--text3);font-size:8px;}
+.parse-file .read{color:var(--green);font-size:9px;margin-left:auto;}
+.parse-file.pf-1{animation:pf-1 var(--loop) infinite ease;}
+.parse-file.pf-2{animation:pf-2 var(--loop) infinite ease;}
+.parse-file.pf-3{animation:pf-3 var(--loop) infinite ease;}
+.parse-file.pf-4{animation:pf-4 var(--loop) infinite ease;}
+.parse-file.pf-5{animation:pf-5 var(--loop) infinite ease;}
+@keyframes pf-1{0%,28%{opacity:.4;}30%{opacity:1;}100%{opacity:1;}}
+@keyframes pf-2{0%,31%{opacity:.4;}33%{opacity:1;}100%{opacity:1;}}
+@keyframes pf-3{0%,34%{opacity:.4;}36%{opacity:1;}100%{opacity:1;}}
+@keyframes pf-4{0%,37%{opacity:.4;}39%{opacity:1;}100%{opacity:1;}}
+@keyframes pf-5{0%,40%{opacity:.4;}42%{opacity:1;}100%{opacity:1;}}
+.parse-stats{
+  display:flex;gap:9px;padding-top:5px;border-top:1px solid var(--bg2);
+  font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);
+}
+.parse-stats .num{font-weight:700;color:var(--text2);}
+
+/* Summary card (Act 3, after parse) */
+.gh-summary{
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:11px 12px;display:flex;flex-direction:column;gap:9px;
+  opacity:0;animation:sum-life var(--loop) infinite ease;
+}
+@keyframes sum-life{
+  0%,45%   {opacity:0;transform:translateY(4px);max-height:0;padding:0;border-color:transparent;overflow:hidden;margin:0;}
+  49%      {opacity:1;transform:translateY(0);max-height:600px;padding:11px 12px;border-color:var(--border);}
+  93%      {opacity:1;}
+  97%      {opacity:0;}
+  100%     {opacity:0;}
+}
+.sum-head{
+  font-family:'Fraunces',serif;font-size:14px;font-weight:400;color:var(--text);line-height:1.3;
+}
+.sum-head .src{
+  font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;color:var(--text3);
+  display:block;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;
+}
+.sum-stats{display:flex;flex-direction:column;gap:6px;}
+.sum-stat{
+  display:flex;align-items:center;gap:9px;
+  padding:7px 9px;border-radius:7px;
+  background:var(--bg);border:1px solid var(--border);
+  opacity:0;transform:translateX(6px);
+}
+.sum-stat-icon{
+  width:22px;height:22px;border-radius:5px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace;
+}
+.sum-stat-icon.risk{background:var(--red);}
+.sum-stat-icon.gap{background:var(--amber);}
+.sum-stat-icon.opp{background:var(--green);}
+.sum-stat-icon.ai{background:var(--purple);}
+.sum-stat-body{flex:1;line-height:1.2;}
+.sum-stat-num{font-family:'Fraunces',serif;font-size:18px;font-weight:400;color:var(--text);line-height:1;}
+.sum-stat-label{font-size:9.5px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-top:3px;}
+
+.sum-stat.ss-1{animation:ss-1 var(--loop) infinite cubic-bezier(.34,1.45,.64,1);}
+.sum-stat.ss-2{animation:ss-2 var(--loop) infinite cubic-bezier(.34,1.45,.64,1);}
+.sum-stat.ss-3{animation:ss-3 var(--loop) infinite cubic-bezier(.34,1.45,.64,1);}
+.sum-stat.ss-4{animation:ss-4 var(--loop) infinite cubic-bezier(.34,1.45,.64,1);}
+@keyframes ss-1{0%,78%{opacity:0;transform:translateX(6px);}81%{opacity:1;transform:translateX(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes ss-2{0%,80%{opacity:0;transform:translateX(6px);}83%{opacity:1;transform:translateX(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes ss-3{0%,82%{opacity:0;transform:translateX(6px);}85%{opacity:1;transform:translateX(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+@keyframes ss-4{0%,84%{opacity:0;transform:translateX(6px);}87%{opacity:1;transform:translateX(0);}93%{opacity:1;}97%{opacity:0;}100%{opacity:0;}}
+
+/* Caption */
+.caption{position:absolute;left:0;right:0;bottom:18px;display:flex;justify-content:center;z-index:60;pointer-events:none;}
+.caption-inner{display:flex;align-items:center;gap:8px;background:rgba(29,28,24,.92);color:#F5F3EF;border-radius:99px;padding:8px 16px;font-size:12px;font-weight:500;letter-spacing:.1px;box-shadow:0 6px 20px rgba(0,0,0,.25);backdrop-filter:blur(6px);opacity:0;transform:translateY(8px);animation:cap-life var(--loop) infinite ease-out;}
+.caption-inner .cap-dot{width:5px;height:5px;border-radius:50%;background:#DDD6FE;box-shadow:0 0 0 3px rgba(221,214,254,.18);}
+.caption-inner .cap-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:#9A9790;}
+@keyframes cap-life{0%,75%{opacity:0;transform:translateY(8px);}80%{opacity:1;transform:translateY(0);}93%{opacity:1;}97%{opacity:0;transform:translateY(4px);}100%{opacity:0;}}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important;}
+  .bp-empty,.gh-input-card,.gh-parse-card{display:none !important;}
+  .bp-head-title .title-text{clip-path:none !important;}
+  .bp-lane-label,.bp-step-header,.bp-card,.flow-svg,.bp-card .annot,.gh-summary,.sum-stat,.caption-inner{opacity:1 !important;transform:none !important;max-height:none !important;}
+}
+</style>
+</head>
+<body>
+<div class="stage-wrap">
+  <div class="stage">
+
+    <div class="app-chrome">
+      <div class="topbar">
+        <div class="tb-back">‹</div>
+        <div class="logo-mark"></div>
+        <div class="tb-crumb">
+          <span class="crumb-main">Blueprint AI</span>
+          <span class="crumb-sep">/</span>
+          <span class="crumb-title">legacy-billing-service · reverse-engineered</span>
+        </div>
+        <div class="tb-branch">main</div>
+        <div class="tb-connectors">GitHub · connected</div>
+        <div class="tb-role">Engineering</div>
+        <div class="tb-help">?</div>
+        <div class="tb-export">Export</div>
+      </div>
+
+      <div class="subbar">
+        <div class="ph-tab active"><span class="ph-dot"></span>Understand</div>
+        <div class="ph-tab h"><span class="ph-dot"></span>Design</div>
+        <div class="ph-tab i"><span class="ph-dot"></span>Operate</div>
+        <div class="audit-pill">Code audit · in progress</div>
+      </div>
+
+      <div class="workspace">
+
+        <!-- Canvas -->
+        <div class="canvas-area">
+          <div class="bp-wrap">
+            <div class="bp-head">
+              <div class="bp-head-title">
+                <span class="title-text">legacy-billing-service — reverse-engineered map</span>
+              </div>
+              <div class="bp-head-meta">
+                <span><span class="mdot"></span>4 layers</span>
+                <span><span class="mdot"></span>4 stages</span>
+                <span><span class="mdot"></span>12 elements</span>
+              </div>
+            </div>
+
+            <div class="bp-grid-wrap">
+
+              <!-- Empty state with repo banner -->
+              <div class="bp-empty">
+                <div class="empty-icon"></div>
+                <div class="empty-title">Connect a repository to begin</div>
+                <div class="empty-sub">Blueprint AI will read your repo, reconstruct the system flow, and flag risks, gaps and opportunities.</div>
+                <div class="empty-repo">
+                  <div class="empty-repo-mark"></div>
+                  <div class="empty-repo-name">
+                    <span class="org">acme-corp</span><span class="slash">/</span><span class="repo">legacy-billing-service</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bp-grid">
+                <div class="bp-corner">LAYER / STAGE</div>
+                <div class="bp-step-header s1"><span class="stepnum">01</span><span class="stepname">Ingress</span></div>
+                <div class="bp-step-header s2"><span class="stepnum">02</span><span class="stepname">Process</span></div>
+                <div class="bp-step-header s3"><span class="stepnum">03</span><span class="stepname">Persist</span></div>
+                <div class="bp-step-header s4"><span class="stepnum">04</span><span class="stepname">Notify</span></div>
+
+                <!-- API layer -->
+                <div class="bp-lane-label l1"><div class="lane-icon l-api">API</div><div class="lane-name-wrap"><span class="lane-name">API gateway</span><span class="lane-meta">Routes</span></div></div>
+                <div class="bp-cell"><div class="bp-card dyn t-api e1 a-gap1"><div class="bp-card-icon">{ }</div><div class="bp-card-text">POST /invoices<span class="bp-card-file">api/routes.js</span></div><span class="annot gap">Missing · no rate limit</span></div></div>
+                <div class="bp-cell"><div class="bp-card dyn t-api e2"><div class="bp-card-icon">{ }</div><div class="bp-card-text">GET /invoices/:id<span class="bp-card-file">api/routes.js</span></div></div></div>
+                <div class="bp-cell"><div class="bp-card dyn t-api e3 a-risk1"><div class="bp-card-icon">{ }</div><div class="bp-card-text">PUT /payments<span class="bp-card-file">api/routes.js</span></div><span class="annot risk">Risk · unsanitized</span></div></div>
+                <div class="bp-cell"></div>
+
+                <!-- Service layer -->
+                <div class="bp-lane-label l2"><div class="lane-icon l-svc">SV</div><div class="lane-name-wrap"><span class="lane-name">Service layer</span><span class="lane-meta">Business logic</span></div></div>
+                <div class="bp-cell"><div class="bp-card dyn t-svc e4"><div class="bp-card-icon">fn</div><div class="bp-card-text">validateInput()<span class="bp-card-file">middleware.js</span></div></div></div>
+                <div class="bp-cell"><div class="bp-card dyn t-svc e5 a-opp1"><div class="bp-card-icon">fn</div><div class="bp-card-text">processBilling()<span class="bp-card-file">billing.service.js</span></div><span class="annot opp">Opp · add cache</span></div></div>
+                <div class="bp-cell"><div class="bp-card dyn t-svc e6 a-gap2"><div class="bp-card-icon">fn</div><div class="bp-card-text">generateInvoice()<span class="bp-card-file">invoice.service.js</span></div><span class="annot gap">Missing · error handler</span></div></div>
+                <div class="bp-cell"><div class="bp-card dyn t-svc e7 a-ai1"><div class="bp-card-icon">fn</div><div class="bp-card-text">sendNotification()<span class="bp-card-file">notify.service.js</span></div><span class="annot ai">+AI · auto-retry</span></div></div>
+
+                <!-- DB layer -->
+                <div class="bp-lane-label l3"><div class="lane-icon l-db">DB</div><div class="lane-name-wrap"><span class="lane-name">Database</span><span class="lane-meta">Postgres + Redis</span></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell"><div class="bp-card dyn t-db e8 a-risk2"><div class="bp-card-icon">sql</div><div class="bp-card-text">accounts table<span class="bp-card-file">db/accounts.sql</span></div><span class="annot risk">Risk · PII unencrypted</span></div></div>
+                <div class="bp-cell"><div class="bp-card dyn t-db e9"><div class="bp-card-icon">sql</div><div class="bp-card-text">invoices table<span class="bp-card-file">db/invoices.sql</span></div></div></div>
+                <div class="bp-cell"><div class="bp-card dyn t-db e10 a-gap3"><div class="bp-card-icon">sql</div><div class="bp-card-text">audit_log table<span class="bp-card-file">db/audit.sql</span></div><span class="annot gap">Missing · indexes</span></div></div>
+
+                <!-- Auth layer -->
+                <div class="bp-lane-label l4"><div class="lane-icon l-auth">A!</div><div class="lane-name-wrap"><span class="lane-name">Auth</span><span class="lane-meta">JWT · legacy</span></div></div>
+                <div class="bp-cell"><div class="bp-card dyn t-auth e11 a-risk3"><div class="bp-card-icon">key</div><div class="bp-card-text">verifyToken()<span class="bp-card-file">auth/jwt.legacy.js</span></div><span class="annot risk">Risk · deprecated</span></div></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell"></div>
+                <div class="bp-cell"><div class="bp-card dyn t-auth e12 a-risk4"><div class="bp-card-icon">key</div><div class="bp-card-text">refreshToken()<span class="bp-card-file">auth/jwt.legacy.js</span></div><span class="annot risk">Risk · CVE-2024</span></div></div>
+              </div>
+
+              <svg class="flow-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <line x1="22" y1="12.5" x2="26" y2="12.5" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="25,11 26,12.5 25,14"/>
+                <line x1="47" y1="12.5" x2="51" y2="12.5" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="50,11 51,12.5 50,14"/>
+                <line x1="72" y1="12.5" x2="98" y2="12.5" stroke-linecap="round" stroke-dasharray="2 3"/>
+                <polygon class="flow-arrow" points="97,11 98,12.5 97,14"/>
+                <line x1="22" y1="37.5" x2="26" y2="37.5" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="25,36 26,37.5 25,39"/>
+                <line x1="47" y1="37.5" x2="51" y2="37.5" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="50,36 51,37.5 50,39"/>
+                <line x1="72" y1="37.5" x2="76" y2="37.5" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="75,36 76,37.5 75,39"/>
+                <line x1="47" y1="62.5" x2="51" y2="62.5" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="50,61 51,62.5 50,64"/>
+                <line x1="72" y1="62.5" x2="76" y2="62.5" stroke-linecap="round"/>
+                <polygon class="flow-arrow" points="75,61 76,62.5 75,64"/>
+                <line x1="22" y1="87.5" x2="76" y2="87.5" stroke-linecap="round" stroke-dasharray="2 3"/>
+                <polygon class="flow-arrow" points="75,86 76,87.5 75,89"/>
+                <path class="flow-handoff" d="M 11 16 L 11 33"/>
+                <polygon class="flow-handoff-arrow" points="9.5,32 12.5,32 11,34"/>
+                <path class="flow-handoff" d="M 36 41 L 36 58"/>
+                <polygon class="flow-handoff-arrow" points="34.5,57 37.5,57 36,59"/>
+                <path class="flow-handoff" d="M 61 41 L 61 58"/>
+                <polygon class="flow-handoff-arrow" points="59.5,57 62.5,57 61,59"/>
+                <path class="flow-handoff" d="M 86 41 L 86 83"/>
+                <polygon class="flow-handoff-arrow" points="84.5,82 87.5,82 86,84"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- GitHub panel -->
+        <div class="gh-panel">
+          <div class="gh-head">
+            <div class="gh-avatar"></div>
+            <div>
+              <div class="gh-name">GitHub connector</div>
+              <div class="gh-status">authorized · acme-corp</div>
+            </div>
+            <div class="gh-close">×</div>
+          </div>
+
+          <div class="gh-body">
+
+            <!-- Act 1: Input form -->
+            <div class="gh-input-card">
+              <div class="gh-input-label">Repository to analyse</div>
+              <div class="gh-input-row">
+                <span class="gh-input-prefix">github.com/</span>
+                <span class="gh-input-text">
+                  <span class="gh-input-typed">acme-corp/legacy-billing-service</span><span class="gh-input-caret"></span>
+                </span>
+              </div>
+              <div class="gh-connect-btn">Connect &amp; analyse</div>
+            </div>
+
+            <!-- Act 2: Parsing -->
+            <div class="gh-parse-card">
+              <div class="parse-head">
+                <div class="parse-spin"></div>
+                <span>Parsing repository…</span>
+              </div>
+              <div class="parse-bar"><div class="parse-bar-fill"></div></div>
+              <div class="parse-files">
+                <div class="parse-file pf-1">api/routes.js <span class="read">read</span></div>
+                <div class="parse-file pf-2">middleware.js <span class="read">read</span></div>
+                <div class="parse-file pf-3">billing.service.js <span class="read">read</span></div>
+                <div class="parse-file pf-4">auth/jwt.legacy.js <span class="read">read</span></div>
+                <div class="parse-file pf-5">db/*.sql <span class="read">read</span></div>
+              </div>
+              <div class="parse-stats">
+                <span>files <span class="num">247</span></span>
+                <span>routes <span class="num">38</span></span>
+                <span>services <span class="num">11</span></span>
+                <span>deps <span class="num">76</span></span>
+              </div>
+            </div>
+
+            <!-- Act 3: Audit summary -->
+            <div class="gh-summary">
+              <div class="sum-head">
+                <span class="src">Audit summary</span>
+                9 issues found across the codebase.
+              </div>
+              <div class="sum-stats">
+                <div class="sum-stat ss-1">
+                  <div class="sum-stat-icon risk">!</div>
+                  <div class="sum-stat-body">
+                    <div class="sum-stat-num">4</div>
+                    <div class="sum-stat-label">Risks</div>
+                  </div>
+                </div>
+                <div class="sum-stat ss-2">
+                  <div class="sum-stat-icon gap">?</div>
+                  <div class="sum-stat-body">
+                    <div class="sum-stat-num">3</div>
+                    <div class="sum-stat-label">Gaps · missing pieces</div>
+                  </div>
+                </div>
+                <div class="sum-stat ss-3">
+                  <div class="sum-stat-icon opp">+</div>
+                  <div class="sum-stat-body">
+                    <div class="sum-stat-num">1</div>
+                    <div class="sum-stat-label">Opportunity</div>
+                  </div>
+                </div>
+                <div class="sum-stat ss-4">
+                  <div class="sum-stat-icon ai">✦</div>
+                  <div class="sum-stat-body">
+                    <div class="sum-stat-num">1</div>
+                    <div class="sum-stat-label">AI capability</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="caption">
+      <div class="caption-inner">
+        <span class="cap-dot"></span>
+        <span class="cap-num">09 / USP</span>
+        Connect a repo. Get an instant map of risks, gaps, and opportunities.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const stage = document.querySelector('.stage');
+  function fit(){
+    const scale = Math.min(window.innerWidth/1200, window.innerHeight/675);
+    stage.style.transform = 'scale(' + scale + ')';
+  }
+  fit();
+  window.addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>
