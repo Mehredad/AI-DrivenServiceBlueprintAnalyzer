@@ -921,7 +921,6 @@ select.fi{appearance:none;cursor:pointer;}
 .sidebar.collapsed .sb-item{padding:6px 0;justify-content:center;gap:0;}
 .sidebar.collapsed .sb-icon{width:100%;opacity:.5;}
 .sidebar.collapsed .sb-item.active .sb-icon{opacity:1;}
-.sidebar.collapsed .agent-sb-btn{padding:7px 0;justify-content:center;gap:0;}
 .sidebar.collapsed .logo-row{justify-content:center;}
 .sidebar.collapsed .sb-sec{padding:8px 4px 4px;}
 .sb-toggle{width:22px;height:22px;border:none;border-radius:4px;background:none;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:all .12s;line-height:1;padding:0;}
@@ -991,6 +990,45 @@ select.fi{appearance:none;cursor:pointer;}
 .sk-bubble{border-radius:12px;height:40px;}
 /* chat session skeleton */
 .sk-sess{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);}
+
+/* ── Monitor full-screen overlay ── */
+.monitor-overlay{position:fixed;inset:0;background:var(--bg);z-index:400;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .2s;}
+.monitor-overlay.open{opacity:1;pointer-events:all;}
+.monitor-hdr{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;}
+.monitor-hdr-title{font-family:'Fraunces',serif;font-size:17px;font-weight:400;letter-spacing:-.2px;flex:1;}
+.monitor-tabs{display:flex;gap:2px;background:var(--bg2);border-radius:var(--r);padding:2px;}
+.monitor-tab{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .12s;white-space:nowrap;}
+.monitor-tab.active{background:var(--surface);color:var(--text);box-shadow:var(--sh);}
+.monitor-close{width:30px;height:30px;border:none;background:none;cursor:pointer;color:var(--text2);font-size:18px;display:flex;align-items:center;justify-content:center;border-radius:var(--r);transition:background .12s;}
+.monitor-close:hover{background:var(--bg2);}
+.monitor-body{flex:1;overflow:auto;}
+.monitor-pane{display:none;padding:20px;max-width:1200px;margin:0 auto;width:100%;flex-direction:column;gap:16px;}
+.monitor-pane.active{display:flex;}
+
+/* ── Floating chat button (right edge) ── */
+.chat-float-btn{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:300;width:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;cursor:pointer;border:none;background:var(--text);color:white;border-radius:8px 0 0 8px;padding:14px 6px;box-shadow:-2px 0 12px rgba(0,0,0,.12);transition:all .15s;writing-mode:vertical-rl;}
+.chat-float-btn:hover{background:var(--blue);padding-right:10px;}
+.chat-float-btn-dot{width:7px;height:7px;border-radius:50%;background:white;animation:adp 2.5s ease-in-out infinite;display:block;margin:0 auto 6px;writing-mode:horizontal-tb;}
+.chat-float-lbl{font-size:11px;font-weight:600;letter-spacing:.5px;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.chat-float-btn.hidden{display:none!important;}
+
+/* ── Persona badge on element cards ── */
+.persona-badge{display:inline-flex;align-items:center;gap:3px;padding:1px 5px;border-radius:8px;background:var(--purple-bg);border:1px solid var(--purple-bd);color:var(--purple);font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:500;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ── Stakeholders & Personas overlay ── */
+.persona-list{display:flex;flex-direction:column;gap:6px;}
+.persona-card{border:1px solid var(--border);border-radius:var(--rl);background:var(--surface);overflow:hidden;}
+.persona-card-head{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;}
+.persona-card-avatar{width:32px;height:32px;border-radius:50%;background:var(--purple-bg);border:2px solid var(--purple-bd);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--purple);flex-shrink:0;}
+.persona-card-info{flex:1;min-width:0;}
+.persona-card-name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.persona-card-role{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.persona-card-body{padding:0 12px 12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px;margin-top:0;}
+.persona-field{display:flex;flex-direction:column;gap:3px;}
+.persona-field-label{font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-weight:600;}
+.persona-field-val{font-size:12px;color:var(--text2);}
+.persona-tag{display:inline-block;padding:2px 7px;border-radius:8px;background:var(--bg2);font-size:11px;color:var(--text2);margin:1px;}
+.persona-expand-icon{font-size:10px;color:var(--text3);flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -1445,31 +1483,15 @@ select.fi{appearance:none;cursor:pointer;}
     </div>
   </div>
 
-  <div class="sb-sec" style="padding-bottom:8px;">
-    <button class="agent-sb-btn" onclick="openAgentPanel('chat')" title="Ask Blueprint Agent">
-      <div class="adw"><div class="adot"></div></div>
-      <span class="sb-txt">Ask Blueprint Agent</span>
-    </button>
-  </div>
-
   <div class="sb-sec">
     <div class="sb-label">Canvas</div>
     <button class="sb-item active" id="nav-blueprint" onclick="showView('blueprint',this)" title="Blueprint Canvas">
       <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x=".5" y=".5" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x="6" y=".5" width="6.5" height="4" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x=".5" y="7" width="6.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x="9" y="7" width="4" height="5.5" rx="1" stroke="currentColor" stroke-width="1.1"/></svg></span>
       <span class="sb-txt">Blueprint Canvas</span>
     </button>
-    <button class="sb-item" id="nav-outcomes" onclick="showView('outcomes',this)" title="Outcomes">
-      <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><polyline points="1,9.5 4,6 6.5,7.5 9.5,4 12,5" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linecap="round"/></svg></span>
-      <span class="sb-txt">Outcomes</span>
-    </button>
-    <button class="sb-item" id="nav-register" onclick="showView('register',this)" title="Capability Register">
-      <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x=".5" y=".5" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.1"/><line x1="3.5" y1="4" x2="9.5" y2="4" stroke="currentColor"/><line x1="3.5" y1="6.5" x2="9.5" y2="6.5" stroke="currentColor"/><line x1="3.5" y1="9" x2="6.5" y2="9" stroke="currentColor"/></svg></span>
-      <span class="sb-txt">Capability Register</span>
-      <span class="sb-badge" id="sb-badge-register" style="display:none;"></span>
-    </button>
-    <button class="sb-item" id="nav-monitor" onclick="showView('monitor',this)" title="Monitor">
-      <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x=".5" y=".5" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.1"/><line x1="5" y1="9.5" x2="8" y2="9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
-      <span class="sb-txt">Monitor</span>
+    <button class="sb-item" id="nav-stakeholders" onclick="openPersonasOverlay()" title="Stakeholders &amp; Personas">
+      <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="4" r="1.8" stroke="currentColor" stroke-width="1.1"/><circle cx="2.2" cy="9" r="1.4" stroke="currentColor" stroke-width="1.1"/><circle cx="10.8" cy="9" r="1.4" stroke="currentColor" stroke-width="1.1"/><line x1="4.2" y1="5" x2="2.2" y2="7.6" stroke="currentColor" stroke-width=".9"/><line x1="8.8" y1="5" x2="10.8" y2="7.6" stroke="currentColor" stroke-width=".9"/></svg></span>
+      <span class="sb-txt">Stakeholders &amp; Personas</span>
     </button>
     <button class="sb-item" id="nav-history" onclick="showView('history',this)" title="History">
       <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.1"/><polyline points="6.5,3.5 6.5,6.5 8.5,8" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" fill="none"/></svg></span>
@@ -1478,10 +1500,11 @@ select.fi{appearance:none;cursor:pointer;}
   </div>
 
   <div class="sb-sec">
-    <div class="sb-label">Governance</div>
-    <button class="sb-item" onclick="openModal('stakeholders')" title="Stakeholders"><span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="4" r="1.8" stroke="currentColor" stroke-width="1.1"/><circle cx="2.2" cy="9" r="1.4" stroke="currentColor" stroke-width="1.1"/><circle cx="10.8" cy="9" r="1.4" stroke="currentColor" stroke-width="1.1"/><line x1="4.2" y1="5" x2="2.2" y2="7.6" stroke="currentColor" stroke-width=".9"/><line x1="8.8" y1="5" x2="10.8" y2="7.6" stroke="currentColor" stroke-width=".9"/></svg></span><span class="sb-txt">Stakeholders</span></button>
-    <button class="sb-item" onclick="openModal('incidents')" title="Incidents"><span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1.5L12 11H1L6.5 1.5Z" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linejoin="round"/><line x1="6.5" y1="5" x2="6.5" y2="7.5" stroke="currentColor" stroke-width="1.1"/><circle cx="6.5" cy="9.3" r=".7" fill="currentColor"/></svg></span><span class="sb-txt">Incidents</span><span class="sb-badge warn" id="sb-badge-incidents" style="display:none;"></span></button>
-    <button class="sb-item" onclick="openModal('gov-review')" title="Gov. Review"><span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1L1.5 3.5v5c0 2.5 2.5 4 5 4.5 2.5-.5 5-2 5-4.5V3.5L6.5 1Z" stroke="currentColor" stroke-width="1.1" fill="none"/></svg></span><span class="sb-txt">Gov. Review</span></button>
+    <div class="sb-label">Operate</div>
+    <button class="sb-item" id="nav-monitor" onclick="openMonitorOverlay()" title="Monitor">
+      <span class="sb-icon"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x=".5" y=".5" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.1"/><line x1="5" y1="9.5" x2="8" y2="9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+      <span class="sb-txt">Monitor</span>
+    </button>
   </div>
 
   <div class="sb-collapsed-footer">
@@ -1514,6 +1537,161 @@ select.fi{appearance:none;cursor:pointer;}
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </button>
 </div>
+
+<!-- ═══ FLOATING CHAT BUTTON ═══ -->
+<button class="chat-float-btn" id="chat-float-btn" onclick="openAgentPanel('chat')" title="Ask Blueprint Agent">
+  <span class="chat-float-btn-dot"></span>
+  <span class="chat-float-lbl">Agent</span>
+</button>
+
+<!-- ═══ MONITOR FULL-SCREEN OVERLAY ═══ -->
+<div class="monitor-overlay" id="monitor-overlay">
+  <div class="monitor-hdr">
+    <div class="monitor-hdr-title">Monitor</div>
+    <div class="monitor-tabs">
+      <button class="monitor-tab active" id="mtab-dashboard" onclick="switchMonitorTab('dashboard',this)">Dashboard</button>
+      <button class="monitor-tab" id="mtab-register" onclick="switchMonitorTab('register',this)">AI Register<span class="sb-badge" id="mtab-badge-register" style="display:none;margin-left:4px;"></span></button>
+      <button class="monitor-tab" id="mtab-outcomes" onclick="switchMonitorTab('outcomes',this)">Outcomes</button>
+      <button class="monitor-tab" id="mtab-incidents" onclick="switchMonitorTab('incidents',this)">Incidents<span class="sb-badge warn" id="mtab-badge-incidents" style="display:none;margin-left:4px;"></span></button>
+      <button class="monitor-tab" id="mtab-governance" onclick="switchMonitorTab('governance',this)">Governance</button>
+    </div>
+    <button class="monitor-close" onclick="closeMonitorOverlay()" title="Close Monitor">×</button>
+  </div>
+  <div class="monitor-body">
+
+    <!-- Dashboard tab -->
+    <div class="monitor-pane active" id="mpane-dashboard">
+      <div style="display:flex;align-items:center;gap:8px;"><div class="view-title">Monitoring Dashboard</div><button class="btn btn-ghost" style="height:26px;margin-left:auto;" onclick="askAgent('Analyse all current monitoring metrics and tell me if anything needs immediate attention, and what I should do.')">AI Analysis</button></div>
+      <div class="m-grid" id="monitor-metrics-grid-overlay">
+        <div style="grid-column:1/-1;text-align:center;color:var(--text3);padding:24px;font-size:11px;border:1px dashed var(--border);border-radius:var(--r);">No monitoring metrics yet — add capabilities and define metrics in the Outcomes tab.</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="m-card"><div style="display:flex;align-items:center;margin-bottom:9px;"><div style="font-size:12px;font-weight:600;flex:1;">Recent Incidents</div><button class="btn btn-ghost" style="height:22px;font-size:10px;" onclick="switchMonitorTab('incidents',document.getElementById('mtab-incidents'))">View all</button></div>
+          <div id="monitor-incidents-preview-overlay"><div style="color:var(--text3);font-size:11px;text-align:center;padding:12px;">No incidents reported.</div></div>
+        </div>
+        <div class="m-card"><div style="font-size:12px;font-weight:600;margin-bottom:9px;">Quick Actions</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <button class="btn btn-ghost" style="font-size:11px;justify-content:flex-start;" onclick="switchMonitorTab('incidents',document.getElementById('mtab-incidents'))">+ Report incident</button>
+            <button class="btn btn-ghost" style="font-size:11px;justify-content:flex-start;" onclick="openModal('add-metric')">+ Add monitoring metric</button>
+            <button class="btn btn-ghost" style="font-size:11px;justify-content:flex-start;" onclick="switchMonitorTab('register',document.getElementById('mtab-register'))">+ Register AI capability</button>
+            <button class="btn btn-ghost" style="font-size:11px;justify-content:flex-start;" onclick="askAgent('Review the current board state and identify the most important monitoring gaps and risks.')">AI: review gaps</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Register tab -->
+    <div class="monitor-pane" id="mpane-register">
+      <div style="display:flex;align-items:center;gap:8px;"><div class="view-title">AI Capability Register</div><button class="btn btn-primary" style="height:26px;margin-left:auto;" onclick="openAddElement(null,null,'ai_capability')">+ Add AI Capability</button></div>
+      <div id="monitor-register-empty" style="text-align:center;padding:40px;color:var(--text3);font-size:12px;display:none;">No AI capabilities on this board yet. Add one from the canvas or click "+ Add AI Capability".</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);overflow:hidden;" id="monitor-register-table-wrap">
+        <table class="reg-table"><thead><tr><th>CAP ID</th><th>Name</th><th>AI Type</th><th>Risk</th><th>XAI Strategy</th><th>Autonomy</th><th>Status</th><th>Owner</th></tr></thead>
+        <tbody id="monitor-reg-table-body"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Outcomes tab -->
+    <div class="monitor-pane" id="mpane-outcomes">
+      <div style="display:flex;align-items:center;gap:8px;"><div class="view-title">Generated Outcomes</div><button class="btn btn-ghost" style="height:26px;margin-left:auto;" onclick="showToast('Outcomes exported')">Export</button></div>
+      <div class="out-tabs"><button class="out-tab active" onclick="showMonOutTab('inv',this)">Capability Inventory</button><button class="out-tab" onclick="showMonOutTab('risk',this)">Risk Checklist</button><button class="out-tab" onclick="showMonOutTab('mon',this)">Monitoring Plan</button></div>
+      <div id="mon-out-inv"><div class="out-card"><div class="out-head" style="background:var(--bg);">🧠<div class="out-head-title">AI Capability Inventory</div><span id="mon-inv-count" style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);">0 capabilities</span></div><div class="out-body"><table class="reg-table"><thead><tr><th>Capability</th><th>Type</th><th>Input → Output</th><th>Autonomy</th><th>XAI</th><th>Risk</th></tr></thead><tbody id="mon-out-inv-body"><tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px;font-size:11px;">No capabilities yet — register one from the AI Register tab.</td></tr></tbody></table></div></div></div>
+      <div id="mon-out-risk" style="display:none;"><div class="out-card"><div class="out-head" style="background:var(--bg);">⚠️<div class="out-head-title">Risk &amp; Governance Checklist</div><button class="btn btn-ghost" style="height:22px;font-size:10px;margin-left:auto;" onclick="openAddRiskItem()">+ Add item</button></div><div class="out-body" id="mon-out-risk-body" style="display:flex;flex-direction:column;gap:6px;"><div style="text-align:center;color:var(--text3);padding:20px;font-size:11px;">No checklist items yet — add governance or risk items.</div></div></div></div>
+      <div id="mon-out-mon" style="display:none;"><div class="out-card"><div class="out-head" style="background:var(--bg);">📊<div class="out-head-title">Monitoring Plan</div><button class="btn btn-ghost" style="height:22px;font-size:10px;margin-left:auto;" onclick="openModal('add-metric')">+ Add metric</button></div><div class="out-body"><table class="reg-table"><thead><tr><th>Metric</th><th>Capability</th><th>Target</th><th>Alert threshold</th><th>Frequency</th><th>Owner</th><th></th></tr></thead><tbody id="mon-out-mon-body"><tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px;font-size:11px;">No monitoring metrics yet — add one to start your plan.</td></tr></tbody></table></div></div></div>
+    </div>
+
+    <!-- Incidents tab -->
+    <div class="monitor-pane" id="mpane-incidents">
+      <div style="display:flex;align-items:center;gap:8px;"><div class="view-title">Incident Log</div></div>
+      <div id="monitor-incidents-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:12px;"></div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:14px;display:flex;flex-direction:column;gap:10px;">
+        <div style="font-size:12px;font-weight:600;">Report new incident</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
+          <div class="fg" style="margin:0;"><div class="fl">Severity</div><select class="fi" id="mon-inc-severity"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+          <div class="fg" style="margin:0;"><div class="fl">Title</div><input class="fi" type="text" id="mon-inc-title" placeholder="Brief summary"></div>
+        </div>
+        <div class="fg" style="margin:0;"><div class="fl">Description</div><textarea class="fi" rows="2" id="mon-inc-desc" placeholder="What happened?"></textarea></div>
+        <button class="btn btn-primary" style="align-self:flex-end;" onclick="reportIncidentFromMonitor()">Report incident</button>
+      </div>
+    </div>
+
+    <!-- Governance tab -->
+    <div class="monitor-pane" id="mpane-governance">
+      <div style="display:flex;align-items:center;gap:8px;"><div class="view-title">Governance Reviews</div></div>
+      <div id="monitor-gov-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:12px;"></div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:14px;display:flex;flex-direction:column;gap:10px;">
+        <div style="font-size:12px;font-weight:600;">Log a committee decision</div>
+        <div class="fg" style="margin:0;"><div class="fl">Capability</div><select class="fi" id="mon-gov-cap-select"><option value="">— Select capability —</option></select></div>
+        <div class="fg" style="margin:0;"><div class="fl">Decision</div><div style="display:flex;flex-direction:column;gap:5px;" id="mon-gov-decision">
+          <div class="risk-chip" onclick="selectGovDecision(this,'approve')" style="cursor:pointer;"><div class="rdot l"></div>Approve unchanged</div>
+          <div class="risk-chip" onclick="selectGovDecision(this,'modify')" style="border-color:var(--amber-bd);cursor:pointer;"><div class="rdot m"></div><strong>Approve with modifications</strong></div>
+          <div class="risk-chip" onclick="selectGovDecision(this,'pause')" style="cursor:pointer;"><div class="rdot h"></div>Pause pending retraining</div>
+        </div></div>
+        <div class="fg" style="margin:0;"><div class="fl">Rationale</div><textarea class="fi" rows="2" id="mon-gov-rationale" placeholder="Document the reasoning…"></textarea></div>
+        <div class="fg" style="margin:0;"><div class="fl">Decision by</div><input class="fi" type="text" id="mon-gov-by" placeholder="Name + role"></div>
+        <button class="btn btn-primary" style="align-self:flex-end;" onclick="logGovReview()">Log decision</button>
+      </div>
+    </div>
+
+  </div><!-- /monitor-body -->
+</div><!-- /monitor-overlay -->
+
+<!-- ═══ STAKEHOLDERS & PERSONAS OVERLAY ═══ -->
+<div class="overlay" id="overlay-personas"><div class="modal" style="max-width:720px;width:calc(100vw - 40px);">
+  <div class="modal-head"><div class="modal-icon" style="background:var(--purple-bg);">👤</div><div><div class="modal-title">Stakeholders &amp; Personas</div><div class="modal-sub">Map stakeholders and build persona profiles for canvas elements</div></div><button class="btn-icon btn" onclick="closeModal('personas')" style="border:none;font-size:15px;margin-left:auto;">×</button></div>
+  <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
+    <div style="display:flex;gap:10px;margin-bottom:12px;" class="out-tabs" id="personas-tab-bar">
+      <button class="out-tab active" onclick="switchPersonasTab('stakeholders',this)">Stakeholders</button>
+      <button class="out-tab" onclick="switchPersonasTab('personas',this)">Personas</button>
+    </div>
+
+    <!-- Stakeholders sub-panel -->
+    <div id="personas-sth-panel">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;" id="stakeholder-columns">
+        <div class="detail-block" style="border-color:var(--amber-bd);"><div class="detail-block-label" style="color:var(--amber);">Directly affected</div><div class="detail-content" id="sth-affected"><span style="color:var(--text3);font-size:10px;">None added yet.</span></div></div>
+        <div class="detail-block" style="border-color:var(--blue-bd);"><div class="detail-block-label" style="color:var(--blue);">Backstage</div><div class="detail-content" id="sth-backstage"><span style="color:var(--text3);font-size:10px;">None added yet.</span></div></div>
+        <div class="detail-block" style="border-color:var(--red-bd);"><div class="detail-block-label" style="color:var(--red);">Governance</div><div class="detail-content" id="sth-governance"><span style="color:var(--text3);font-size:10px;">None added yet.</span></div></div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:11px;display:flex;flex-direction:column;gap:8px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text2);">Add stakeholder</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:7px;align-items:end;">
+          <div class="fg" style="margin:0;"><div class="fl">Name</div><input class="fi" type="text" id="sth-name" placeholder="e.g. End user"></div>
+          <div class="fg" style="margin:0;"><div class="fl">Role / description</div><input class="fi" type="text" id="sth-role" placeholder="e.g. primary decision subject"></div>
+          <div class="fg" style="margin:0;"><div class="fl">Category</div><select class="fi" id="sth-cat"><option value="affected">Directly affected</option><option value="backstage">Backstage</option><option value="governance">Governance</option></select></div>
+          <button class="btn btn-primary" style="height:32px;" onclick="addStakeholder()">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Personas sub-panel -->
+    <div id="personas-panel" style="display:none;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <span style="font-size:12px;color:var(--text3);">Personas can be assigned to canvas elements to represent who performs each step.</span>
+        <button class="btn btn-primary" style="height:28px;font-size:11px;margin-left:auto;" onclick="openAddPersonaForm()">+ New persona</button>
+      </div>
+      <div id="personas-list" class="persona-list"></div>
+      <!-- Add/edit form (hidden by default) -->
+      <div id="persona-form" style="display:none;border:1px solid var(--border);border-radius:var(--rl);background:var(--surface);padding:14px;margin-top:10px;flex-direction:column;gap:10px;">
+        <div style="font-size:12px;font-weight:600;" id="persona-form-title">New persona</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="fg" style="margin:0;"><div class="fl">Name <span style="color:var(--red);">*</span></div><input class="fi" type="text" id="pf-name" placeholder="e.g. Clinical lead"></div>
+          <div class="fg" style="margin:0;"><div class="fl">Role <span style="color:var(--red);">*</span></div><input class="fi" type="text" id="pf-role" placeholder="e.g. Decision maker"></div>
+        </div>
+        <div class="fg" style="margin:0;"><div class="fl">Bio <span style="color:var(--text3);">(optional)</span></div><textarea class="fi" rows="2" id="pf-bio" placeholder="Short description of who this person is…"></textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="fg" style="margin:0;"><div class="fl">Needs <span style="color:var(--text3);">(comma-separated)</span></div><input class="fi" type="text" id="pf-needs" placeholder="e.g. fast results, clear output"></div>
+          <div class="fg" style="margin:0;"><div class="fl">Goals <span style="color:var(--text3);">(comma-separated)</span></div><input class="fi" type="text" id="pf-goals" placeholder="e.g. reduce errors, save time"></div>
+        </div>
+        <div class="fg" style="margin:0;"><div class="fl">Pain points <span style="color:var(--text3);">(comma-separated)</span></div><input class="fi" type="text" id="pf-pain" placeholder="e.g. too many manual steps, unclear ownership"></div>
+        <input type="hidden" id="pf-editing-id">
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button class="btn btn-ghost" onclick="cancelPersonaForm()">Cancel</button>
+          <button class="btn btn-primary" onclick="savePersona()">Save persona</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal('personas')">Done</button></div>
+</div></div>
 
 <!-- ═══ TOUR OVERLAY ═══ -->
 <div class="tour-overlay" id="tour-overlay">
@@ -2113,22 +2291,6 @@ select.fi{appearance:none;cursor:pointer;}
 
 <div class="overlay" id="overlay-add-risk"><div class="modal sm"><div class="modal-head"><div class="modal-icon" style="background:var(--red-bg);">⚠️</div><div><div class="modal-title">Flag a Risk</div></div><button class="btn-icon btn" onclick="closeModal('add-risk')" style="border:none;font-size:15px;margin-left:auto;">×</button></div><div class="modal-body"><div class="fg"><div class="fl">Risk type</div><select class="fi"><option>Bias / fairness</option><option>Opacity / transparency</option><option>Over-reliance</option><option>Accountability gap</option><option>Digital wellbeing</option></select></div><div class="fg"><div class="fl">Severity</div><div class="auto-sel"><div class="auto-opt" style="border-color:var(--teal);background:var(--teal-bg);color:var(--teal);">Low</div><div class="auto-opt selrec" onclick="selAuto(this)">Medium</div><div class="auto-opt" style="border-color:var(--red);background:var(--red-bg);color:var(--red);">High</div></div></div><div class="fg"><div class="fl">Description</div><textarea class="fi" rows="2"></textarea></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('add-risk')">Cancel</button><button class="btn btn-primary" onclick="closeModal('add-risk');showToast('Risk flagged ✓')">Flag</button></div></div></div>
 
-<div class="overlay" id="overlay-stakeholders"><div class="modal lg"><div class="modal-head"><div class="modal-icon" style="background:var(--blue-bg);">👥</div><div><div class="modal-title">Stakeholder Map</div><div class="modal-sub">Add and manage affected, backstage, and governance stakeholders</div></div><button class="btn-icon btn" onclick="closeModal('stakeholders')" style="border:none;font-size:15px;margin-left:auto;">×</button></div><div class="modal-body">
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;" id="stakeholder-columns">
-    <div class="detail-block" style="border-color:var(--amber-bd);"><div class="detail-block-label" style="color:var(--amber);">Directly affected</div><div class="detail-content" id="sth-affected"><span style="color:var(--text3);font-size:10px;">None added yet.</span></div></div>
-    <div class="detail-block" style="border-color:var(--blue-bd);"><div class="detail-block-label" style="color:var(--blue);">Backstage</div><div class="detail-content" id="sth-backstage"><span style="color:var(--text3);font-size:10px;">None added yet.</span></div></div>
-    <div class="detail-block" style="border-color:var(--red-bd);"><div class="detail-block-label" style="color:var(--red);">Governance</div><div class="detail-content" id="sth-governance"><span style="color:var(--text3);font-size:10px;">None added yet.</span></div></div>
-  </div>
-  <div style="border-top:1px solid var(--border);padding-top:11px;display:flex;flex-direction:column;gap:8px;">
-    <div style="font-size:11px;font-weight:600;color:var(--text2);">Add stakeholder</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:7px;align-items:end;">
-      <div class="fg" style="margin:0;"><div class="fl">Name</div><input class="fi" type="text" id="sth-name" placeholder="e.g. End user"></div>
-      <div class="fg" style="margin:0;"><div class="fl">Role / description</div><input class="fi" type="text" id="sth-role" placeholder="e.g. primary decision subject"></div>
-      <div class="fg" style="margin:0;"><div class="fl">Category</div><select class="fi" id="sth-cat"><option value="affected">Directly affected</option><option value="backstage">Backstage</option><option value="governance">Governance</option></select></div>
-      <button class="btn btn-primary" style="height:32px;" onclick="addStakeholder()">Add</button>
-    </div>
-  </div>
-</div><div class="modal-foot"><button class="btn btn-primary" onclick="closeModal('stakeholders')">Done</button></div></div></div>
 
 <div class="overlay" id="overlay-incidents"><div class="modal"><div class="modal-head"><div class="modal-icon" style="background:var(--red-bg);">⚠️</div><div><div class="modal-title">Incident Log</div></div><button class="btn-icon btn" onclick="closeModal('incidents')" style="border:none;font-size:15px;margin-left:auto;">×</button></div><div class="modal-body">
   <div id="incidents-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:12px;"></div>
@@ -2183,6 +2345,7 @@ const boardState = {
   monitoringMetrics: {},
   incidents: [],
   governance: { policy: '', auditCoverage: '', reviewCadence: '', missingItems: [] },
+  personas: [],
   version: 1,
 };
 
@@ -5555,6 +5718,8 @@ function startOnboard(role) {
 // ═══════════════════════════════════════════════════════
 function openAgentPanel(tab) {
   document.getElementById('agent-panel').classList.add('open');
+  const fb = document.getElementById('chat-float-btn');
+  if (fb) fb.classList.add('hidden');
   switchTab(tab, document.getElementById('tab-' + tab));
   // Show welcome message only once when chat first opens (in an empty session)
   const _sessEmpty = !_activeChatId || (_getActiveSession()?.messages || []).length === 0;
@@ -5591,6 +5756,8 @@ function openAgentPanel(tab) {
 
 function closeAgentPanel() {
   document.getElementById('agent-panel').classList.remove('open');
+  const fb = document.getElementById('chat-float-btn');
+  if (fb) fb.classList.remove('hidden');
 }
 
 function switchTab(name, btn) {
@@ -5628,6 +5795,235 @@ function showView(name, btn) {
   if (btn) btn.classList.add('active');
   if (name === 'history') loadHistory(true);
 }
+
+// ── Monitor overlay ──────────────────────────────────────────────────────────
+function openMonitorOverlay() {
+  document.getElementById('monitor-overlay').classList.add('open');
+  syncMonitorOverlayData();
+}
+
+function closeMonitorOverlay() {
+  document.getElementById('monitor-overlay').classList.remove('open');
+}
+
+function switchMonitorTab(name, btn) {
+  ['dashboard','register','outcomes','incidents','governance'].forEach(t => {
+    const p = document.getElementById('mpane-' + t);
+    if (p) p.classList.remove('active');
+    const b = document.getElementById('mtab-' + t);
+    if (b) b.classList.remove('active');
+  });
+  const pane = document.getElementById('mpane-' + name);
+  if (pane) pane.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+function showMonOutTab(name, btn) {
+  ['inv','risk','mon'].forEach(t => {
+    const el = document.getElementById('mon-out-' + t);
+    if (el) el.style.display = 'none';
+  });
+  const el = document.getElementById('mon-out-' + name);
+  if (el) el.style.display = '';
+  document.querySelectorAll('#mpane-outcomes .out-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+function syncMonitorOverlayData() {
+  // Sync incidents list into monitor overlay
+  const src = document.getElementById('incidents-list');
+  const dst = document.getElementById('monitor-incidents-list');
+  if (src && dst) dst.innerHTML = src.innerHTML;
+
+  // Sync metrics grid
+  const msrc = document.getElementById('monitor-metrics-grid');
+  const mdst = document.getElementById('monitor-metrics-grid-overlay');
+  if (msrc && mdst) mdst.innerHTML = msrc.innerHTML;
+
+  // Sync incidents preview
+  const isrc = document.getElementById('monitor-incidents-preview');
+  const idst = document.getElementById('monitor-incidents-preview-overlay');
+  if (isrc && idst) idst.innerHTML = isrc.innerHTML;
+
+  // Sync register table
+  const rsrc = document.getElementById('reg-table-body');
+  const rdst = document.getElementById('monitor-reg-table-body');
+  if (rsrc && rdst) rdst.innerHTML = rsrc.innerHTML;
+
+  // Sync capability inventory
+  const cisrc = document.getElementById('out-inv-body');
+  const cidst = document.getElementById('mon-out-inv-body');
+  if (cisrc && cidst) cidst.innerHTML = cisrc.innerHTML;
+
+  // Sync risk checklist
+  const rksrc = document.getElementById('out-risk-body');
+  const rkdst = document.getElementById('mon-out-risk-body');
+  if (rksrc && rkdst) rkdst.innerHTML = rksrc.innerHTML;
+
+  // Sync monitoring plan
+  const mpsrc = document.getElementById('out-mon-body');
+  const mpdst = document.getElementById('mon-out-mon-body');
+  if (mpsrc && mpdst) mpdst.innerHTML = mpsrc.innerHTML;
+
+  // Sync capability select for governance
+  const csrc = document.getElementById('gov-review-cap-select');
+  const cdst = document.getElementById('mon-gov-cap-select');
+  if (csrc && cdst) cdst.innerHTML = csrc.innerHTML;
+}
+
+function reportIncidentFromMonitor() {
+  const sev   = document.getElementById('mon-inc-severity').value;
+  const title = document.getElementById('mon-inc-title').value.trim();
+  const desc  = document.getElementById('mon-inc-desc').value.trim();
+  if (!title) { showToast('Enter an incident title'); return; }
+  // Delegate to existing reportIncident after populating the original form fields
+  const se = document.getElementById('inc-severity');
+  const te = document.getElementById('inc-title');
+  const de = document.getElementById('inc-desc');
+  if (se) se.value = sev;
+  if (te) te.value = title;
+  if (de) de.value = desc;
+  reportIncident();
+  document.getElementById('mon-inc-title').value = '';
+  document.getElementById('mon-inc-desc').value = '';
+  setTimeout(syncMonitorOverlayData, 300);
+}
+
+let _govDecisionSelected = '';
+function selectGovDecision(el, val) {
+  _govDecisionSelected = val;
+  document.querySelectorAll('#mon-gov-decision .risk-chip').forEach(c => c.classList.remove('selrec'));
+  el.classList.add('selrec');
+}
+
+function logGovReview() {
+  showToast('Decision logged ✓');
+  document.getElementById('mon-gov-rationale').value = '';
+  document.getElementById('mon-gov-by').value = '';
+  _govDecisionSelected = '';
+  document.querySelectorAll('#mon-gov-decision .risk-chip').forEach(c => c.classList.remove('selrec'));
+}
+
+// ── Personas overlay ─────────────────────────────────────────────────────────
+function openPersonasOverlay() {
+  renderPersonasList();
+  if (typeof renderStakeholders === 'function') renderStakeholders();
+  openModal('personas');
+}
+
+function switchPersonasTab(name, btn) {
+  document.getElementById('personas-sth-panel').style.display = name === 'stakeholders' ? '' : 'none';
+  document.getElementById('personas-panel').style.display = name === 'personas' ? '' : 'none';
+  document.querySelectorAll('#personas-tab-bar .out-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (name === 'personas') renderPersonasList();
+}
+
+function openAddPersonaForm() {
+  document.getElementById('persona-form').style.display = 'flex';
+  document.getElementById('persona-form-title').textContent = 'New persona';
+  document.getElementById('pf-editing-id').value = '';
+  ['pf-name','pf-role','pf-bio','pf-needs','pf-goals','pf-pain'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+function cancelPersonaForm() {
+  document.getElementById('persona-form').style.display = 'none';
+}
+
+function savePersona() {
+  const name = document.getElementById('pf-name').value.trim();
+  const role = document.getElementById('pf-role').value.trim();
+  if (!name || !role) { showToast('Name and role are required'); return; }
+  const editId = document.getElementById('pf-editing-id').value;
+  const persona = {
+    id: editId || ('p' + Date.now()),
+    name,
+    role,
+    bio: document.getElementById('pf-bio').value.trim(),
+    needs: document.getElementById('pf-needs').value.split(',').map(s=>s.trim()).filter(Boolean),
+    goals: document.getElementById('pf-goals').value.split(',').map(s=>s.trim()).filter(Boolean),
+    pain_points: document.getElementById('pf-pain').value.split(',').map(s=>s.trim()).filter(Boolean),
+  };
+  if (!boardState.personas) boardState.personas = [];
+  if (editId) {
+    const idx = boardState.personas.findIndex(p => p.id === editId);
+    if (idx >= 0) boardState.personas[idx] = persona;
+  } else {
+    boardState.personas.push(persona);
+  }
+  cancelPersonaForm();
+  renderPersonasList();
+  showToast('Persona saved ✓');
+}
+
+function editPersona(id) {
+  const p = (boardState.personas || []).find(p => p.id === id);
+  if (!p) return;
+  openAddPersonaForm();
+  document.getElementById('persona-form-title').textContent = 'Edit persona';
+  document.getElementById('pf-editing-id').value = p.id;
+  document.getElementById('pf-name').value = p.name;
+  document.getElementById('pf-role').value = p.role;
+  document.getElementById('pf-bio').value = p.bio || '';
+  document.getElementById('pf-needs').value = (p.needs || []).join(', ');
+  document.getElementById('pf-goals').value = (p.goals || []).join(', ');
+  document.getElementById('pf-pain').value = (p.pain_points || []).join(', ');
+}
+
+function deletePersona(id) {
+  if (!boardState.personas) return;
+  boardState.personas = boardState.personas.filter(p => p.id !== id);
+  // Unassign from elements
+  (boardState.elements || []).forEach(el => { if (el.persona_id === id) delete el.persona_id; });
+  renderPersonasList();
+  showToast('Persona removed');
+}
+
+function renderPersonasList() {
+  const list = document.getElementById('personas-list');
+  if (!list) return;
+  const personas = boardState.personas || [];
+  if (personas.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text3);padding:24px;font-size:11px;">No personas yet — click "+ New persona" to create one.</div>';
+    return;
+  }
+  list.innerHTML = personas.map(p => {
+    const initials = p.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const fields = [
+      p.bio ? `<div class="persona-field"><div class="persona-field-label">Bio</div><div class="persona-field-val">${escHtml(p.bio)}</div></div>` : '',
+      p.needs?.length ? `<div class="persona-field"><div class="persona-field-label">Needs</div><div>${p.needs.map(n=>`<span class="persona-tag">${escHtml(n)}</span>`).join('')}</div></div>` : '',
+      p.goals?.length ? `<div class="persona-field"><div class="persona-field-label">Goals</div><div>${p.goals.map(g=>`<span class="persona-tag">${escHtml(g)}</span>`).join('')}</div></div>` : '',
+      p.pain_points?.length ? `<div class="persona-field"><div class="persona-field-label">Pain points</div><div>${p.pain_points.map(pp=>`<span class="persona-tag" style="background:var(--red-bg);color:var(--red);">${escHtml(pp)}</span>`).join('')}</div></div>` : '',
+    ].filter(Boolean).join('');
+    const hasDetail = !!fields;
+    return `<div class="persona-card">
+      <div class="persona-card-head" onclick="togglePersonaCard('${p.id}')">
+        <div class="persona-card-avatar">${initials}</div>
+        <div class="persona-card-info">
+          <div class="persona-card-name">${escHtml(p.name)}</div>
+          <div class="persona-card-role">${escHtml(p.role)}</div>
+        </div>
+        ${hasDetail ? `<span class="persona-expand-icon" id="pexp-${p.id}">▼</span>` : ''}
+        <button class="btn btn-ghost" style="height:24px;font-size:10px;" onclick="event.stopPropagation();editPersona('${p.id}')">Edit</button>
+        <button class="btn-icon" onclick="event.stopPropagation();deletePersona('${p.id}')" title="Delete" style="font-size:13px;color:var(--red);">×</button>
+      </div>
+      ${hasDetail ? `<div class="persona-card-body" id="pbody-${p.id}" style="display:none;">${fields}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function togglePersonaCard(id) {
+  const body = document.getElementById('pbody-' + id);
+  const icon = document.getElementById('pexp-' + id);
+  if (!body) return;
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : '';
+  if (icon) icon.textContent = open ? '▼' : '▲';
+}
+
 
 // ═══════════════════════════════════════════════════════
 // HISTORY (PRD-17a)
@@ -7116,12 +7512,15 @@ async function dismissInsight(id) {
 }
 
 function openModal(id) {
+  // Redirect legacy stakeholders modal to the new personas overlay
+  if (id === 'stakeholders') { openPersonasOverlay(); return; }
   const el = document.getElementById('overlay-' + id);
   if (el) el.classList.add('open');
   if (id === 'add-element') renderTypePickerUI(_selectedElType);
   if (id === 'add-ai-cap') renderCapTypes();
   if (id === 'add-metric') updateMetCapSelect();
   if (id === 'gov-review') updateGovCapSelect();
+  if (id === 'personas') { if (typeof renderPersonasList === 'function') renderPersonasList(); }
 }
 function closeModal(id) { const el = document.getElementById('overlay-' + id); if (el) el.classList.remove('open'); }
 document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); }));
