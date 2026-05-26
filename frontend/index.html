@@ -951,7 +951,7 @@ select.fi{appearance:none;cursor:pointer;}
       Blueprint AI
     </div>
     <div class="lp-nav-btns">
-      <button class="btn btn-ghost" onclick="lpOpenAuth('login')">Sign in</button>
+      <button class="btn btn-ghost lp-signin-btn" style="display:none" onclick="lpOpenAuth('login')">Sign in</button>
       <button class="btn btn-primary" onclick="lpOpenCapture()">Start for free</button>
     </div>
   </nav>
@@ -971,7 +971,7 @@ select.fi{appearance:none;cursor:pointer;}
     </div>
     <div class="lp-hero-ctas">
       <button class="lp-btn-primary" onclick="lpOpenCapture()">Start for free</button>
-      <button class="btn btn-ghost" style="font-size:15px;padding:10px 20px;height:auto;" onclick="lpOpenAuth('login')">Sign in →</button>
+      <button class="btn btn-ghost lp-signin-btn" style="display:none;font-size:15px;padding:10px 20px;height:auto;" onclick="lpOpenAuth('login')">Sign in →</button>
     </div>
     <div style="display:flex;gap:32px;margin-top:4px;">
       <div><div style="font-family:'Fraunces',serif;font-size:28px;font-weight:400;letter-spacing:-1px;color:var(--text);">6</div><div style="font-size:13px;color:var(--text2);margin-top:2px;">stakeholder lenses</div></div>
@@ -1209,7 +1209,7 @@ select.fi{appearance:none;cursor:pointer;}
   <div class="lp-footer">
     <div class="lp-footer-copy">Blueprint AI &middot; Built on research presented at CHI 2026 &middot; &copy; 2025</div>
     <div class="lp-footer-links">
-      <a href="#" onclick="lpOpenAuth('login');return false;">Sign in</a>
+      <a href="#" class="lp-signin-btn" style="display:none" onclick="lpOpenAuth('login');return false;">Sign in</a>
       <a href="#" onclick="lpOpenCapture();return false;">Join waitlist</a>
       <!-- TODO: replace with actual links when pages exist -->
       <a href="#" title="TODO: About page">About</a>
@@ -7176,14 +7176,9 @@ async function initApp() {
 
   if (!currentUser) {
     hideAuthLoading();
-    if (window.location.pathname.startsWith('/blueprintai')) {
-      // On the app subpath — show the tool shell and auth overlay, not the landing page
-      document.getElementById('landing').style.display = 'none';
-      document.getElementById('app').style.display = 'flex';
-      lpOpenAuth('login');
-    } else {
-      showLanding();
-    }
+    showLanding();
+    const isAuthPath = window.location.pathname.startsWith('/blueprintai') || window.location.pathname.startsWith('/test');
+    if (isAuthPath) lpOpenAuth('login');
     return;
   }
 
@@ -8015,6 +8010,8 @@ let _lpTab = 'login';
 let _googleInitDone = false;
 
 function showLanding() {
+  const isAuthPath = window.location.pathname.startsWith('/blueprintai') || window.location.pathname.startsWith('/test');
+  document.querySelectorAll('.lp-signin-btn').forEach(el => { el.style.display = isAuthPath ? '' : 'none'; });
   document.getElementById('landing').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
 }
