@@ -859,9 +859,23 @@ select.fi{appearance:none;cursor:pointer;}
 }
 
 /* DEMO FEATURE SECTIONS */
-.lp-demo-wrap{position:relative;width:100%;border-radius:var(--rxl);overflow:hidden;border:1px solid var(--border);background:#1d1c18;aspect-ratio:16/9;box-shadow:0 20px 60px rgba(0,0,0,.1),0 4px 16px rgba(0,0,0,.06);}
-.lp-demo-iframe{width:100%;height:100%;border:none;display:block;pointer-events:none;}
+/* padding-top:56.25% = 9/16 — gives iframe an exact 16:9 viewport so demos fill edge-to-edge */
+.lp-demo-wrap{position:relative;width:100%;padding-top:56.25%;border-radius:var(--rxl);overflow:hidden;border:1px solid var(--border);background:#1d1c18;box-shadow:0 20px 60px rgba(0,0,0,.1),0 4px 16px rgba(0,0,0,.06);cursor:zoom-in;}
+.lp-demo-iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;display:block;pointer-events:none;}
 .lp-hero-demo{margin-top:48px;box-shadow:0 32px 80px rgba(0,0,0,.14),0 8px 24px rgba(0,0,0,.08);}
+/* Expand hint — appears on hover */
+.lp-demo-expand-hint{position:absolute;bottom:0;right:0;padding:10px;opacity:0;transition:opacity .18s;pointer-events:none;z-index:5;}
+.lp-demo-wrap:hover .lp-demo-expand-hint{opacity:1;}
+.lp-demo-expand-hint span{display:inline-flex;align-items:center;gap:5px;background:rgba(0,0,0,.72);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:5px 10px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:.3px;backdrop-filter:blur(6px);white-space:nowrap;}
+/* Demo lightbox */
+.lp-demo-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:2000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(10px);}
+.lp-demo-lightbox.open{display:flex;}
+.lp-demo-lb-wrap{position:relative;width:min(92vw,calc(88vh * 1.7778));flex-shrink:0;}
+.lp-demo-lb-inner{position:relative;width:100%;padding-top:56.25%;}
+.lp-demo-lb-iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;border-radius:var(--rxl);display:block;}
+.lp-demo-lb-close{position:absolute;top:-40px;right:0;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:6px;color:#fff;width:32px;height:32px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:background .12s;line-height:1;padding:0;}
+.lp-demo-lb-close:hover{background:rgba(255,255,255,.25);}
+.lp-demo-lb-title{position:absolute;top:-40px;left:0;font-size:12px;color:rgba(255,255,255,.45);font-family:'JetBrains Mono',monospace;letter-spacing:.4px;line-height:32px;}
 .lp-feat-section{padding:72px 0;border-top:1px solid var(--border);}
 .lp-feat-section--alt{background:var(--surface);}
 .lp-feat-section-inner{max-width:1160px;margin:0 auto;padding:0 48px;}
@@ -1294,6 +1308,17 @@ select.fi{appearance:none;cursor:pointer;}
 
 </div>
 <!-- ═══ END LANDING ═══ -->
+
+<!-- DEMO LIGHTBOX -->
+<div id="lp-demo-lightbox" class="lp-demo-lightbox" onclick="if(event.target===this)lpCloseDemoLightbox()">
+  <div class="lp-demo-lb-wrap">
+    <div class="lp-demo-lb-title" id="lp-demo-lb-title"></div>
+    <button class="lp-demo-lb-close" onclick="lpCloseDemoLightbox()" title="Close (Esc)">&times;</button>
+    <div class="lp-demo-lb-inner">
+      <iframe id="lp-demo-lb-iframe" class="lp-demo-lb-iframe" sandbox="allow-scripts" scrolling="no" frameborder="0"></iframe>
+    </div>
+  </div>
+</div>
 
 <!-- ═══ AUTH OVERLAY — no backdrop dismiss (PRD-13) ═══ -->
 <div id="lp-auth-overlay" class="lp-auth-overlay">
@@ -8103,6 +8128,24 @@ function lpCloseAuth() {
   document.getElementById('lp-auth-overlay').classList.remove('open');
 }
 
+function lpOpenDemoLightbox(src, title) {
+  const lb = document.getElementById('lp-demo-lightbox');
+  const iframe = document.getElementById('lp-demo-lb-iframe');
+  const titleEl = document.getElementById('lp-demo-lb-title');
+  iframe.src = src;
+  if (titleEl && title) titleEl.textContent = title;
+  lb.classList.add('open');
+  document.addEventListener('keydown', _lpLightboxEsc);
+}
+function lpCloseDemoLightbox() {
+  const lb = document.getElementById('lp-demo-lightbox');
+  const iframe = document.getElementById('lp-demo-lb-iframe');
+  lb.classList.remove('open');
+  iframe.src = '';
+  document.removeEventListener('keydown', _lpLightboxEsc);
+}
+function _lpLightboxEsc(e) { if (e.key === 'Escape') lpCloseDemoLightbox(); }
+
 function lpOpenCapture() {
   document.getElementById('lp-cap-step1').style.display = '';
   document.getElementById('lp-cap-step2').style.display = 'none';
@@ -8323,6 +8366,19 @@ renderIncidents();
 renderRiskChecklist();
 renderMonitoringPlan();
 
+(function(){
+  document.querySelectorAll('.lp-demo-wrap').forEach(function(wrap){
+    var iframe = wrap.querySelector('.lp-demo-iframe');
+    if (!iframe) return;
+    var src = iframe.getAttribute('src');
+    var title = iframe.getAttribute('title') || '';
+    wrap.addEventListener('click', function(){ lpOpenDemoLightbox(src, title); });
+    var hint = document.createElement('div');
+    hint.className = 'lp-demo-expand-hint';
+    hint.innerHTML = '<span>&#8599; View larger</span>';
+    wrap.appendChild(hint);
+  });
+})();
 
 initApp();
 </script>
