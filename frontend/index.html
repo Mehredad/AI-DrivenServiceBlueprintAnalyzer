@@ -740,8 +740,18 @@ select.fi{appearance:none;cursor:pointer;}
 .lp-nav-btns{display:flex;align-items:center;gap:8px;}
 .lp-nav .btn{font-size:14px;padding:8px 16px;min-height:36px;}
 .lp-inner{max-width:1160px;margin:0 auto;width:100%;padding:0 48px;}
-.lp-hero{padding:80px 48px 72px;max-width:1160px;margin:0 auto;width:100%;}
-.lp-hero-text{max-width:680px;}
+/* Cinematic hero — demo plays as full-bleed background */
+.lp-hero{position:relative;width:100%;overflow:hidden;background:#1d1c18;min-height:620px;display:flex;align-items:center;}
+.lp-hero-bg{position:absolute;inset:0;overflow:hidden;}
+.lp-hero-bg-iframe{position:absolute;top:50%;left:50%;width:1200px;height:675px;border:none;pointer-events:none;transform-origin:center center;}
+.lp-hero-bg-tint{position:absolute;inset:0;background:linear-gradient(160deg,rgba(17,17,16,.68) 0%,rgba(17,17,16,.82) 65%,rgba(17,17,16,.97) 100%);}
+.lp-hero-content{position:relative;z-index:2;width:100%;max-width:1160px;margin:0 auto;padding:100px 48px;}
+.lp-hero-text{max-width:640px;}
+/* Text colours for dark cinematic background */
+.lp-hero .lp-h1{color:#F5F3EF;}
+.lp-hero .lp-sub{color:rgba(245,243,239,.76);}
+.lp-hero .lp-badge{background:rgba(245,243,239,.1);color:rgba(245,243,239,.7);border-color:rgba(245,243,239,.16);}
+.lp-hero .lp-role-chip{background:rgba(245,243,239,.07);color:rgba(245,243,239,.55);border-color:rgba(245,243,239,.12);}
 .lp-badge{display:inline-flex;align-items:center;gap:6px;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);border-radius:20px;padding:4px 12px;font-size:12px;font-family:'JetBrains Mono',monospace;font-weight:500;letter-spacing:.5px;margin-bottom:24px;}
 .lp-h1{font-family:'Fraunces',serif;font-size:50px;font-weight:300;line-height:1.06;letter-spacing:-1.5px;margin-bottom:20px;color:var(--text);}
 .lp-h1 em{font-style:italic;color:var(--blue);}
@@ -882,25 +892,23 @@ select.fi{appearance:none;cursor:pointer;}
 .lp-feat-hdr{max-width:700px;margin-bottom:40px;}
 .lp-feat-hdr h2{font-family:'Fraunces',serif;font-size:32px;font-weight:300;letter-spacing:-.8px;margin:12px 0 14px;color:var(--text);line-height:1.15;}
 .lp-feat-hdr p{font-size:16px;color:var(--text2);line-height:1.7;}
-.lp-demo-row{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.lp-demo-row{display:grid;grid-template-columns:1fr;gap:52px;}
 .lp-demo-cap{padding:14px 0 0;}
 .lp-demo-cap h3{font-family:'Fraunces',serif;font-size:18px;font-weight:400;margin-bottom:7px;color:var(--text);}
 .lp-demo-cap p{font-size:14px;color:var(--text2);line-height:1.65;}
-.lp-feat-split{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;}
-.lp-feat-split--rev .lp-demo-wrap{order:1;}
-.lp-feat-split--rev .lp-feat-split-text{order:2;}
+.lp-feat-split{display:flex;flex-direction:column;gap:28px;}
+.lp-feat-split-text{max-width:700px;}
 .lp-feat-split-text h2{font-family:'Fraunces',serif;font-size:32px;font-weight:300;letter-spacing:-.8px;margin:12px 0 16px;color:var(--text);line-height:1.15;}
 .lp-feat-split-text p{font-size:16px;color:var(--text2);line-height:1.7;}
 @media(max-width:1024px){
-  .lp-hero{padding:48px 32px 56px;}
+  .lp-hero{min-height:520px;}
+  .lp-hero-content{padding:72px 32px;}
   .lp-feat-section-inner{padding:0 32px;}
-  .lp-demo-row{grid-template-columns:1fr;}
-  .lp-feat-split{grid-template-columns:1fr;gap:32px;}
-  .lp-feat-split--rev .lp-demo-wrap,.lp-feat-split--rev .lp-feat-split-text{order:unset;}
 }
 @media(max-width:640px){
   .lp-feat-section-inner{padding:0 20px;}
-  .lp-hero{padding:32px 20px 48px;}
+  .lp-hero{min-height:480px;}
+  .lp-hero-content{padding:56px 20px;}
   .lp-feat-hdr h2,.lp-feat-split-text h2{font-size:26px;}
 }
 
@@ -1005,25 +1013,30 @@ select.fi{appearance:none;cursor:pointer;}
 
   <!-- HERO -->
   <div class="lp-hero">
-    <div class="lp-hero-text">
-      <div class="lp-badge">Beta &middot; By invite only</div>
-      <h1 class="lp-h1">Turn any service — even a legacy system — into a structured blueprint your whole team can act on.</h1>
-      <p class="lp-sub">Map, audit, and modernise complex services on one shared canvas — with an AI that actually understands the flow, not just the sticky notes.</p>
-      <div class="lp-roles">
-        <span class="lp-role-chip">Service Designer</span>
-        <span class="lp-role-chip">PM</span>
-        <span class="lp-role-chip">UX Researcher</span>
-        <span class="lp-role-chip">Developer</span>
-        <span class="lp-role-chip">Delivery Lead</span>
-        <span class="lp-role-chip">Governance</span>
-      </div>
-      <div class="lp-hero-ctas">
-        <button class="lp-btn-primary" onclick="lpOpenCapture()">Start for free</button>
-        <button class="btn btn-ghost lp-signin-btn" style="display:none;font-size:15px;padding:10px 20px;height:auto;" onclick="lpOpenAuth('login')">Sign in →</button>
-      </div>
+    <!-- Full-bleed animated background -->
+    <div class="lp-hero-bg">
+      <iframe class="lp-hero-bg-iframe" src="/demos/01-populate-from-prompt.html" sandbox="allow-scripts" scrolling="no" frameborder="0" tabindex="-1" aria-hidden="true"></iframe>
+      <div class="lp-hero-bg-tint"></div>
     </div>
-    <div class="lp-demo-wrap lp-hero-demo">
-      <iframe src="/demos/01-populate-from-prompt.html" class="lp-demo-iframe" loading="lazy" sandbox="allow-scripts" scrolling="no" frameborder="0" title="Demo: build a blueprint from one prompt" tabindex="-1" aria-hidden="true"></iframe>
+    <!-- Text content -->
+    <div class="lp-hero-content">
+      <div class="lp-hero-text">
+        <div class="lp-badge">Beta &middot; By invite only</div>
+        <h1 class="lp-h1">Turn any service — even a legacy system — into a structured blueprint your whole team can act on.</h1>
+        <p class="lp-sub">Map, audit, and modernise complex services on one shared canvas — with an AI that actually understands the flow, not just the sticky notes.</p>
+        <div class="lp-roles">
+          <span class="lp-role-chip">Service Designer</span>
+          <span class="lp-role-chip">PM</span>
+          <span class="lp-role-chip">UX Researcher</span>
+          <span class="lp-role-chip">Developer</span>
+          <span class="lp-role-chip">Delivery Lead</span>
+          <span class="lp-role-chip">Governance</span>
+        </div>
+        <div class="lp-hero-ctas">
+          <button class="lp-btn-primary" onclick="lpOpenCapture()">Start for free</button>
+          <button class="btn btn-ghost lp-signin-btn" style="display:none;font-size:15px;padding:10px 20px;height:auto;" onclick="lpOpenAuth('login')">Sign in →</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1108,14 +1121,14 @@ select.fi{appearance:none;cursor:pointer;}
   <!-- SECTION: AUDIT AGAINST STANDARDS (demo 07) -->
   <div class="lp-feat-section lp-feat-section--alt">
     <div class="lp-feat-section-inner">
-      <div class="lp-feat-split lp-feat-split--rev">
-        <div class="lp-demo-wrap">
-          <iframe src="/demos/07-audit-against-standards.html" class="lp-demo-iframe" loading="lazy" sandbox="allow-scripts" scrolling="no" frameborder="0" title="Demo: audit against legal and ethical standards" tabindex="-1" aria-hidden="true"></iframe>
-        </div>
+      <div class="lp-feat-split">
         <div class="lp-feat-split-text">
           <div class="lp-section-label">Governance</div>
           <h2>Audit against standards, not just instincts</h2>
           <p>Check every AI touchpoint against legal, ethical, and technical standards — including EU AI Act requirements — without leaving your canvas. The agent maps each element to the standard it needs to satisfy and flags what's missing.</p>
+        </div>
+        <div class="lp-demo-wrap">
+          <iframe src="/demos/07-audit-against-standards.html" class="lp-demo-iframe" loading="lazy" sandbox="allow-scripts" scrolling="no" frameborder="0" title="Demo: audit against legal and ethical standards" tabindex="-1" aria-hidden="true"></iframe>
         </div>
       </div>
     </div>
@@ -8367,6 +8380,19 @@ renderRiskChecklist();
 renderMonitoringPlan();
 
 (function(){
+  // Scale hero background iframe to cover the hero container (like CSS cover)
+  var heroBg = document.querySelector('.lp-hero-bg');
+  var heroBgIframe = document.querySelector('.lp-hero-bg-iframe');
+  function fitHeroBg() {
+    if (!heroBg || !heroBgIframe) return;
+    var s = Math.max(heroBg.offsetWidth / 1200, heroBg.offsetHeight / 675) + 0.02;
+    heroBgIframe.style.transform = 'translate(-50%,-50%) scale(' + s + ')';
+  }
+  fitHeroBg();
+  setTimeout(fitHeroBg, 120);
+  window.addEventListener('resize', fitHeroBg);
+
+  // Wire demo lightbox clicks onto all demo tiles
   document.querySelectorAll('.lp-demo-wrap').forEach(function(wrap){
     var iframe = wrap.querySelector('.lp-demo-iframe');
     if (!iframe) return;
