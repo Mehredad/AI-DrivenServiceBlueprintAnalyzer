@@ -318,7 +318,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .type-chip:hover{border-color:var(--blue);background:var(--blue-bg);color:var(--blue);}
 .type-chip.sel{border-color:var(--blue);background:var(--blue-bg);color:var(--blue);font-weight:600;}
 .type-chip-icon{font-size:18px;}
-.el-drawer{position:fixed;top:0;right:-390px;width:360px;height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:150;display:flex;flex-direction:column;transition:right .22s cubic-bezier(.4,0,.2,1);box-shadow:-4px 0 20px rgba(0,0,0,.08);}
+.el-drawer{position:fixed;top:0;right:-390px;width:360px;height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:500;display:flex;flex-direction:column;transition:right .22s cubic-bezier(.4,0,.2,1);box-shadow:-4px 0 20px rgba(0,0,0,.08);}
 .el-drawer.open{right:0;}
 .el-drawer-head{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);gap:8px;flex-shrink:0;}
 .el-drawer-title{flex:1;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -446,7 +446,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .detail-content{font-size:11px;color:var(--text2);line-height:1.5;}
 
 /* MODALS */
-.overlay{position:fixed;inset:0;background:rgba(29,28,24,.42);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .18s;}
+.overlay{position:fixed;inset:0;background:rgba(29,28,24,.42);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .18s;}
 .overlay.open{opacity:1;pointer-events:all;}
 .modal{background:var(--surface);border-radius:var(--rxl);border:1px solid var(--border);box-shadow:0 24px 64px rgba(0,0,0,.18);width:100%;max-width:520px;max-height:88vh;display:flex;flex-direction:column;transform:translateY(10px);transition:transform .18s;}
 .overlay.open .modal{transform:translateY(0);}
@@ -1003,8 +1003,11 @@ select.fi{appearance:none;cursor:pointer;}
 .sk-sess{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);}
 
 /* ── Monitor full-screen overlay ── */
-.monitor-overlay{position:fixed;inset:0;background:var(--bg);z-index:400;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .2s;}
+.monitor-overlay{position:fixed;inset:0;z-index:400;display:flex;justify-content:flex-end;opacity:0;pointer-events:none;transition:opacity .22s;}
 .monitor-overlay.open{opacity:1;pointer-events:all;}
+.monitor-backdrop{position:absolute;inset:0;background:rgba(29,28,24,.25);backdrop-filter:blur(2px);}
+.monitor-panel{position:relative;z-index:1;width:min(820px,calc(100vw - 56px));height:100%;background:var(--bg);border-left:1px solid var(--border);box-shadow:-8px 0 40px rgba(0,0,0,.1);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);}
+.monitor-overlay.open .monitor-panel{transform:translateX(0);}
 .monitor-hdr{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;}
 .monitor-hdr-title{font-family:'Fraunces',serif;font-size:17px;font-weight:400;letter-spacing:-.2px;flex:1;}
 .monitor-tabs{display:flex;gap:2px;background:var(--bg2);border-radius:var(--r);padding:2px;}
@@ -1555,8 +1558,10 @@ select.fi{appearance:none;cursor:pointer;}
   <span class="chat-float-lbl">Agent</span>
 </button>
 
-<!-- ═══ MONITOR FULL-SCREEN OVERLAY ═══ -->
+<!-- ═══ MONITOR PANEL ═══ -->
 <div class="monitor-overlay" id="monitor-overlay">
+  <div class="monitor-backdrop" onclick="closeMonitorOverlay()"></div>
+  <div class="monitor-panel">
   <div class="monitor-hdr">
     <div class="monitor-hdr-title">Monitor</div>
     <div class="monitor-tabs">
@@ -1644,6 +1649,7 @@ select.fi{appearance:none;cursor:pointer;}
     </div>
 
   </div><!-- /monitor-body -->
+  </div><!-- /monitor-panel -->
 </div><!-- /monitor-overlay -->
 
 <!-- ═══ STAKEHOLDERS & PERSONAS OVERLAY ═══ -->
@@ -2164,7 +2170,7 @@ select.fi{appearance:none;cursor:pointer;}
 <!-- ═══════════════════════════════════════════════════════
      AUTH MODAL — shown on first load if not logged in
 ═══════════════════════════════════════════════════════ -->
-<div class="overlay" id="overlay-auth" style="z-index:300;">
+<div class="overlay" id="overlay-auth">
   <div class="modal sm">
     <div class="modal-head" style="flex-direction:column;align-items:flex-start;gap:6px;">
       <div style="display:flex;align-items:center;gap:8px;width:100%;">
