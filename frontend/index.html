@@ -192,7 +192,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .pq:active{opacity:.4;transform:scale(0.96);}
 
 /* CANVAS */
-.canvas-area{flex:1;overflow:auto;padding:16px;min-width:0;overscroll-behavior:none;}
+.canvas-area{flex:1;overflow:auto;padding:16px;min-width:0;overscroll-behavior:none;will-change:scroll-position;}
 .bp-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);overflow:hidden;box-shadow:var(--sh);min-width:840px;}
 .bp-grid-scroll{overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;will-change:scroll-position;}.bp-grid-scroll::-webkit-scrollbar{height:6px;}.bp-grid-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 .bp-head{padding:11px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:var(--bg);}
@@ -216,7 +216,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .bp-lane-type-icon{font-size:13px;flex-shrink:0;opacity:.45;line-height:1;}
 .bp-lane-actions{display:none;flex-direction:column;position:absolute;left:100%;top:8px;gap:3px;background:var(--bg2);border:1px solid var(--border);border-left:none;border-radius:0 6px 6px 0;padding:4px 4px 4px 3px;box-shadow:4px 0 10px rgba(0,0,0,.1);z-index:20;}
 .bp-lane-label:hover .bp-lane-actions{display:flex;}
-.bp-cell{min-height:100px;border-right:1px solid var(--border2);border-bottom:1px solid var(--border2);position:relative;background:var(--surface);display:flex;flex-wrap:wrap;align-content:flex-start;padding:4px;overflow:hidden;min-width:0;contain:style paint;}
+.bp-cell{min-height:100px;border-right:1px solid var(--border2);border-bottom:1px solid var(--border2);position:relative;background:var(--surface);display:flex;flex-wrap:wrap;align-content:flex-start;padding:4px;overflow:hidden;min-width:0;contain:layout style paint;}
 .bp-cell-spacer{min-height:100px;background:var(--bg);border-bottom:1px solid var(--border2);}
 .bp-cell-add-hint{display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:10px;color:var(--text3);cursor:pointer;gap:3px;}
 .bp-cell:hover .bp-cell-add-hint{display:flex;}
@@ -263,7 +263,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .el-backstage_action{border-color:var(--purple);background:var(--purple-bg);}
 .el-support_process{border-color:var(--amber);background:var(--amber-bg);}
 .el-moment_of_truth{border-color:var(--red);background:var(--red-bg);}
-.el-card.dimmed{opacity:0.3;filter:grayscale(0.5);}
+.el-card.dimmed{opacity:0.25;}
 .el-ai-badge{font-size:8px;font-weight:700;background:rgba(139,92,246,.13);color:#7c3aed;border-radius:3px;padding:1px 4px;flex-shrink:0;line-height:1.5;}
 .el-prov-section{border-top:1px solid var(--border);margin-top:12px;padding-top:10px;}
 .el-prov-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
@@ -6781,6 +6781,20 @@ window.addEventListener('resize', () => {
   _connRenderTimer = setTimeout(renderConnectors, 60);
 });
 
+// Re-sync connectors after canvas scroll: sticky step/lane headers shift viewport
+// position relative to the SVG origin, so paths must be recomputed. Passive so
+// the browser can scroll without waiting for JS.
+function _initCanvasScrollSync() {
+  const canvasArea = document.getElementById('view-blueprint');
+  const gridScroll = document.querySelector('.bp-grid-scroll');
+  function _onScroll() {
+    clearTimeout(_connRenderTimer);
+    _connRenderTimer = setTimeout(renderConnectors, 80);
+  }
+  if (canvasArea) canvasArea.addEventListener('scroll', _onScroll, { passive: true });
+  if (gridScroll) gridScroll.addEventListener('scroll', _onScroll, { passive: true });
+}
+
 // ═══════════════════════════════════════════════════════
 // PRD-20 — CONNECTOR EDITOR: CREATE, EDIT, DELETE
 // ═══════════════════════════════════════════════════════
@@ -7242,6 +7256,7 @@ function _bestInsertIdx(pathEl, px, py, nWps) {
 }
 
 let _portHideTimer = null;
+let _portMoveRaf   = null;
 
 function _portEnter() {
   clearTimeout(_portHideTimer);
@@ -7250,6 +7265,8 @@ function _portEnter() {
 function _portLeave(cardEl, e) {
   if (e && e.relatedTarget && e.relatedTarget.classList && e.relatedTarget.classList.contains('conn-port')) return;
   clearTimeout(_portHideTimer);
+  // Cancel any pending port-move RAF so a stale edge doesn't show after leave
+  if (_portMoveRaf) { cancelAnimationFrame(_portMoveRaf); _portMoveRaf = null; }
   _portHideTimer = setTimeout(() => {
     if (cardEl) cardEl.querySelectorAll('.conn-port').forEach(p => p.classList.remove('active'));
   }, 120);
@@ -7257,17 +7274,22 @@ function _portLeave(cardEl, e) {
 
 function _portMove(cardEl, e) {
   clearTimeout(_portHideTimer);
-  const r = cardEl.getBoundingClientRect();
-  const mx = e.clientX - r.left;
-  const my = e.clientY - r.top;
-  const dL = mx, dR = r.width - mx, dT = my, dB = r.height - my;
-  const min = Math.min(dL, dR, dT, dB);
-  let edge;
-  if      (min === dT) edge = 'top';
-  else if (min === dB) edge = 'bottom';
-  else if (min === dL) edge = 'left';
-  else                 edge = 'right';
-  cardEl.querySelectorAll('.conn-port').forEach(p => p.classList.toggle('active', p.dataset.edge === edge));
+  // Capture coords before RAF — event object is recycled
+  const ex = e.clientX, ey = e.clientY;
+  if (_portMoveRaf) return; // coalesce: one layout read per animation frame
+  _portMoveRaf = requestAnimationFrame(() => {
+    _portMoveRaf = null;
+    const r = cardEl.getBoundingClientRect();
+    const mx = ex - r.left, my = ey - r.top;
+    const dL = mx, dR = r.width - mx, dT = my, dB = r.height - my;
+    const min = Math.min(dL, dR, dT, dB);
+    let edge;
+    if      (min === dT) edge = 'top';
+    else if (min === dB) edge = 'bottom';
+    else if (min === dL) edge = 'left';
+    else                 edge = 'right';
+    cardEl.querySelectorAll('.conn-port').forEach(p => p.classList.toggle('active', p.dataset.edge === edge));
+  });
 }
 
 async function loadHistory(reset) {
@@ -7921,6 +7943,7 @@ async function initApp() {
   initChatDragDrop();
   _initCanvasConnHandlers();
   _initStepResize();
+  _initCanvasScrollSync();
   // PRD-19: sync connector toggle button and conn-mode class to persisted state
   const _ctBtn = document.getElementById('conn-toggle-btn');
   if (_ctBtn) _ctBtn.classList.toggle('active', showElementConnectors);
