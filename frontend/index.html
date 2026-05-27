@@ -238,7 +238,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .step-resize-handle:hover,.step-resize-handle.resizing{background:var(--blue);opacity:.35;}
 .bp-inline-edit{border:1.5px solid var(--blue);border-radius:4px;padding:2px 5px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;background:white;color:var(--text);outline:none;width:100%;min-width:60px;}
 /* ELEMENTS — PRD-03 */
-.el-card{display:flex;align-items:center;gap:4px;padding:6px 6px;border-radius:6px;border:1.5px solid var(--border);background:rgba(255,255,255,0.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin:3px 6px;cursor:pointer;font-size:11px;line-height:1.3;transition:box-shadow .1s;width:calc(80% - 12px);height:48px;position:relative;overflow:visible;z-index:3;}
+.el-card{display:flex;align-items:center;gap:4px;padding:6px 6px;border-radius:6px;border:1.5px solid var(--border);background:#fff;margin:3px 6px;cursor:pointer;font-size:11px;line-height:1.3;transition:box-shadow .1s;width:calc(80% - 12px);height:48px;position:relative;overflow:visible;z-index:3;}
 .el-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.1);}
 .el-icon{font-size:12px;flex-shrink:0;}
 .el-name{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -3202,6 +3202,12 @@ async function createNewBoard(title, domain) {
 
 // RAF-deduped renderCanvas: multiple calls in the same tick collapse to one render.
 let _renderPending = false;
+let _connectorRafPending = false;
+function _scheduleConnectors() {
+  if (_connectorRafPending) return;
+  _connectorRafPending = true;
+  requestAnimationFrame(() => { _connectorRafPending = false; renderConnectors(); });
+}
 function renderCanvas() {
   if (_renderPending) return;
   _renderPending = true;
@@ -3245,7 +3251,7 @@ function _refreshCell(laneId, stepId) {
   cell.innerHTML = cellEls.map(renderElementCard).join('') +
     `<button class="bp-cell-add-btn" onclick="openAddElement('${lid}','${sid}')">+ add element</button>`;
   updateCanvasMeta();
-  renderConnectors();
+  _scheduleConnectors();
 }
 
 function _getOrphanedElements() {
@@ -3389,6 +3395,14 @@ function renderGrid() {
   // + Step button (last header column)
   html += `<div class="bp-add-step-cell"><button class="btn btn-ghost" style="height:26px;font-size:10px;white-space:nowrap;" onclick="addStep()">+ Step</button></div>`;
 
+  // Pre-bucket elements by cell key — O(n) instead of O(lanes×steps×elements)
+  const _cellMap = Object.create(null);
+  boardState.elements.forEach(e => {
+    if (!e.swimlane_id || !e.step_id) return;
+    const k = e.swimlane_id + '\x00' + e.step_id;
+    (_cellMap[k] || (_cellMap[k] = [])).push(e);
+  });
+
   // Swimlane rows
   lanes.forEach((lane, li) => {
     const isFirst = li === 0;
@@ -3408,7 +3422,7 @@ function renderGrid() {
       </span>
     </div>`;
     steps.forEach(step => {
-      const cellEls = boardState.elements.filter(e => e.swimlane_id === lane.id && e.step_id === step.id);
+      const cellEls = _cellMap[lane.id + '\x00' + step.id] || [];
       html += `<div class="bp-cell" data-lane="${escHtml(lane.id)}" data-step="${escHtml(step.id)}">
         ${cellEls.map(renderElementCard).join('')}
         <button class="bp-cell-add-btn" onclick="openAddElement('${escHtml(lane.id)}','${escHtml(step.id)}')">+ add element</button>
@@ -6436,8 +6450,13 @@ function _clearConnectorSvg() {
   if (svg) { svg.innerHTML = ''; svg.style.width = '0'; svg.style.height = '0'; }
 }
 
+// Per-render-pass rect cache — cleared at the start of each renderConnectors() call.
+// Eliminates repeated getBoundingClientRect reads for the same element/svgEl within one pass.
+let _passRectCache = null;
+let _passSvgRect   = null;
+
 function getEndpointXY(type, id, svgEl) {
-  const svgRect = svgEl.getBoundingClientRect();
+  const svgRect = _passSvgRect || svgEl.getBoundingClientRect();
   let el;
   if (type === 'element') el = document.querySelector(`.el-card[data-el-id="${id}"]`);
   else if (type === 'step') el = document.querySelector(`.bp-step-header[data-id="${id}"]`);
@@ -6447,14 +6466,18 @@ function getEndpointXY(type, id, svgEl) {
 }
 
 function getEndpointRect(type, id, svgEl) {
-  const svgRect = svgEl.getBoundingClientRect();
+  const svgRect = _passSvgRect || svgEl.getBoundingClientRect();
+  const cacheKey = type + ':' + id;
+  if (_passRectCache && _passRectCache.has(cacheKey)) return _passRectCache.get(cacheKey);
   let el;
   if (type === 'element') el = document.querySelector(`.el-card[data-el-id="${id}"]`);
   else if (type === 'step') el = document.querySelector(`.bp-step-header[data-id="${id}"]`);
   if (!el) return null;
   const r = el.getBoundingClientRect();
   const x = r.left - svgRect.left, y = r.top - svgRect.top;
-  return { x, y, w: r.width, h: r.height, cx: x + r.width / 2, cy: y + r.height / 2 };
+  const result = { x, y, w: r.width, h: r.height, cx: x + r.width / 2, cy: y + r.height / 2 };
+  if (_passRectCache) _passRectCache.set(cacheKey, result);
+  return result;
 }
 
 function _edgePts(s, t, srcOff, tgtOff) {
@@ -6493,6 +6516,9 @@ function renderConnectors() {
   const svg  = document.getElementById('connector-svg');
   const grid = document.getElementById('canvas-grid');
   if (!svg || !grid || grid.style.display === 'none') { _clearConnectorSvg(); return; }
+  // Prime per-pass rect cache — one svgRect read, one element rect per unique ID
+  _passRectCache = new Map();
+  _passSvgRect   = svg.getBoundingClientRect();
 
   const w = grid.scrollWidth, h = grid.scrollHeight;
   svg.style.width  = w + 'px';
@@ -6707,6 +6733,9 @@ function renderConnectors() {
       if (typeof _openConnCtxMenu === 'function') _openConnCtxMenu(e, cId);
     });
   });
+  // Release per-pass cache
+  _passRectCache = null;
+  _passSvgRect   = null;
 }
 
 function showConnTooltip(e, type, label) {
@@ -6801,28 +6830,34 @@ function _portClick(type, id, e) {
   }
 }
 
+let _connDragRaf = null;
 function _connDragMove(e) {
   if (connectorState.mode !== 'selecting_target') return;
-  const svg = document.getElementById('connector-svg');
-  if (!svg) return;
-  const svgRect = svg.getBoundingClientRect();
-  let px = e.clientX - svgRect.left;
-  let py = e.clientY - svgRect.top;
+  // Capture coords before RAF — event object is recycled
+  const ex = e.clientX, ey = e.clientY;
+  if (_connDragRaf) return; // already have a frame queued
+  _connDragRaf = requestAnimationFrame(() => {
+    _connDragRaf = null;
+    if (connectorState.mode !== 'selecting_target') return;
+    const svg = document.getElementById('connector-svg');
+    if (!svg) return;
+    const svgRect = svg.getBoundingClientRect();
+    let px = ex - svgRect.left;
+    let py = ey - svgRect.top;
 
-  // Snap-to-element center within 30px
-  const candidates = [
-    ...document.querySelectorAll('.el-card[data-el-id]'),
-  ];
-  let snapPt = null, minDist = 30;
-  candidates.forEach(el => {
-    const r = el.getBoundingClientRect();
-    const cx = r.left - svgRect.left + r.width / 2;
-    const cy = r.top - svgRect.top + r.height / 2;
+    // Snap-to-element center within 30px
+    const candidates = [...document.querySelectorAll('.el-card[data-el-id]')];
+    let snapPt = null, minDist = 30;
+    candidates.forEach(el => {
+      const r = el.getBoundingClientRect();
+      const cx = r.left - svgRect.left + r.width / 2;
+      const cy = r.top - svgRect.top + r.height / 2;
     const dist = Math.sqrt((px - cx) ** 2 + (py - cy) ** 2);
-    if (dist < minDist) { minDist = dist; snapPt = { x: cx, y: cy }; }
+      if (dist < minDist) { minDist = dist; snapPt = { x: cx, y: cy }; }
+    });
+    connectorState.ghostPos = snapPt || { x: px, y: py };
+    _renderGhostLine();
   });
-  connectorState.ghostPos = snapPt || { x: px, y: py };
-  _renderGhostLine();
 }
 
 async function _connDragEnd(e) {
