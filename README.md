@@ -1,6 +1,6 @@
 # Blueprint AI
 
-**Human-Centred AI Service Design Tool** — a collaborative web application for designing, governing, and improving AI-powered services using the Understand → Harvest → Improve framework.
+**Human-Centred AI Service Design Tool** - a collaborative web application for designing, governing, and improving AI-powered services using the Understand → Harvest → Improve framework.
 
 Built on the research of [Atariani & Ajala (2026) — AI-Driven Service Blueprints](https://github.com/Mehredad/AI-DrivenServiceBlueprintAnalyzer).
 
@@ -21,14 +21,14 @@ Built on the research of [Atariani & Ajala (2026) — AI-Driven Service Blueprin
 
 ## Features
 
-- **Service blueprint canvas** — swimlane editor with 6 lanes (Patient, Staff, AI System, Doctor, Governance, Data Flow)
-- **AI capability register** — structured CRUD for AI capabilities with XAI strategy, autonomy level, and harm checks
-- **AI agent** — board-aware collaborator powered by Anthropic AI, proxied server-side (API key never exposed)
-- **Proactive insights** — AI analyses the board and surfaces risks, gaps, and positive observations
-- **Real-time collaboration** — multiple users edit the same board simultaneously via Supabase Realtime
-- **Governance tracking** — decisions, audit log, oversight checkpoints
-- **Export** — PDF and JSON board exports
-- **Onboarding** — role-aware AI guide for designers, clinicians, data scientists, and governance officers
+- **Service blueprint canvas** | swimlane editor with 6 lanes (Patient, Staff, AI System, Doctor, Governance, Data Flow)
+- **AI capability register** | structured CRUD for AI capabilities with XAI strategy, autonomy level, and harm checks
+- **AI agent** | board-aware collaborator powered by Anthropic AI, proxied server-side (API key never exposed)
+- **Proactive insights** | AI analyses the board and surfaces risks, gaps, and positive observations
+- **Real-time collaboration** | multiple users edit the same board simultaneously via Supabase Realtime
+- **Governance tracking** | decisions, audit log, oversight checkpoints
+- **Export** | PDF and JSON board exports
+- **Onboarding** | role-aware AI guide for designers, clinicians, data scientists, and governance officers
 
 ---
 
