@@ -14,7 +14,7 @@ Built on the research of [Atariani & Ajala (2026) — AI-Driven Service Blueprin
 | API | FastAPI (Python 3.12) | Vercel serverless |
 | Database | PostgreSQL | Supabase (free tier) |
 | Realtime | Supabase Realtime | Supabase |
-| AI agent | Anthropic claude-sonnet | Server-side proxy |
+| AI agent | Anthropic API | Server-side proxy |
 | Auth | JWT + bcrypt | Self-contained |
 
 ---
@@ -23,7 +23,7 @@ Built on the research of [Atariani & Ajala (2026) — AI-Driven Service Blueprin
 
 - **Service blueprint canvas** — swimlane editor with 6 lanes (Patient, Staff, AI System, Doctor, Governance, Data Flow)
 - **AI capability register** — structured CRUD for AI capabilities with XAI strategy, autonomy level, and harm checks
-- **AI agent** — board-aware collaborator powered by Claude, proxied server-side (API key never exposed)
+- **AI agent** — board-aware collaborator powered by Anthropic AI, proxied server-side (API key never exposed)
 - **Proactive insights** — AI analyses the board and surfaces risks, gaps, and positive observations
 - **Real-time collaboration** — multiple users edit the same board simultaneously via Supabase Realtime
 - **Governance tracking** — decisions, audit log, oversight checkpoints
