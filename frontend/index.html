@@ -2357,6 +2357,12 @@ const boardState = {
   personas: [],
   version: 1,
 };
+// Pristine copy used to wipe the in-memory board when the signed-in user changes.
+const _BOARD_STATE_DEFAULTS = JSON.stringify(boardState);
+function _resetBoardState() {
+  Object.keys(boardState).forEach(k => { delete boardState[k]; });
+  Object.assign(boardState, JSON.parse(_BOARD_STATE_DEFAULTS));
+}
 
 
 // ═══════════════════════════════════════════════════════
@@ -2725,12 +2731,31 @@ function logout() {
   const bw = document.getElementById('branch-wrap');
   if (bw) bw.style.display = 'none';
   boardsList = [];
+  // Drop everything tied to the previous account so the next user starts clean:
+  // open board tabs, the ?board= URL param, the realtime channel and all board state.
+  _openTabs = [];
+  try { localStorage.removeItem('bp_open_tabs'); } catch {}
+  renderBoardTabs();
+  if (realtimeChannel) {
+    try { realtimeChannel.unsubscribe(); } catch {}
+    realtimeChannel = null;
+  }
+  try {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('board')) {
+      url.searchParams.delete('board');
+      window.history.replaceState({}, '', url);
+    }
+  } catch {}
+  Object.keys(_stepColWidths).forEach(k => { delete _stepColWidths[k]; });
+  _activeChatId = null; _chatSessions = []; _sessionMsgs = [];
   const chatArea = document.getElementById('chat-area');
   if (chatArea) chatArea.innerHTML = '';
-  boardState.id = null; boardState.title = ''; boardState.domain = '';
-  boardState.swimlanes = []; boardState.steps = []; boardState.stages = []; boardState.elements = [];
-  boardState.capabilities = []; boardState.insights = []; boardState.openRisks = [];
-  boardState.positives = []; boardState.incidents = []; boardState.version = 1;
+  _resetBoardState();
+  ['bp-board-title', 'crumb-board', 'proj-name-display'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '';
+  });
   const nameEl = document.getElementById('sidebar-user-name');
   if (nameEl) nameEl.textContent = 'Not signed in';
   const authBtn = document.getElementById('sidebar-auth-btn');
@@ -2913,7 +2938,7 @@ async function persistBoard(statePatch) {
 async function loadBoard(boardId) {
   _showCanvasSkeleton();
   const res = await apiFetch(`/api/boards/${boardId}`);
-  if (!res || !res.ok) return;
+  if (!res || !res.ok) return false;
   const board = await res.json();
   const state = board.state || {};
   // Merge server state — ensure arrays default to empty
@@ -2952,6 +2977,7 @@ async function loadBoard(boardId) {
   renderCanvas();
   updateAiBadge();
   updateRegistryNavVisibility();
+  return true;
 }
 
 // ── Board list / create ────────────────────────────────
@@ -7503,15 +7529,36 @@ function showOutTab(name, btn) {
 // ═══════════════════════════════════════════════════════
 let _openTabs = []; // [{id, title}]
 
+// Open tabs are stored per user so one account never sees another account's boards.
+function _tabStateKey() {
+  return currentUser && currentUser.id ? `bp_open_tabs_${currentUser.id}` : null;
+}
+
 function _saveTabState() {
-  try { localStorage.setItem('bp_open_tabs', JSON.stringify(_openTabs)); } catch {}
+  const key = _tabStateKey();
+  if (!key) return;
+  try { localStorage.setItem(key, JSON.stringify(_openTabs)); } catch {}
 }
 
 function _loadTabState() {
+  _openTabs = [];
+  // Legacy, un-scoped key — may belong to a different account, so discard it.
+  try { localStorage.removeItem('bp_open_tabs'); } catch {}
+  const key = _tabStateKey();
+  if (!key) return;
   try {
-    const saved = JSON.parse(localStorage.getItem('bp_open_tabs') || '[]');
+    const saved = JSON.parse(localStorage.getItem(key) || '[]');
     if (Array.isArray(saved)) _openTabs = saved;
   } catch {}
+}
+
+// Keep only tabs for boards the current user can actually access.
+function _pruneTabsToBoardList() {
+  const allowed = new Set((boardsList || []).map(b => b.id));
+  const before = _openTabs.length;
+  _openTabs = _openTabs.filter(t => allowed.has(t.id));
+  if (_openTabs.length !== before) _saveTabState();
+  renderBoardTabs();
 }
 
 function openBoardTab(boardId, title) {
@@ -7937,7 +7984,6 @@ function initRoleUI() {
 }
 
 async function initApp() {
-  _loadTabState();
   _initSidebarState();
   initRoleUI();
   initChatDragDrop();
@@ -7961,14 +8007,37 @@ async function initApp() {
 
   lpCloseAuth();
   hideLanding();
+  _loadTabState();
 
   if (!currentUser.has_seen_onboarding) {
     setTimeout(startTour, 600);
   }
 
   // Run board list and active board load in parallel — they don't depend on each other.
-  if (currentBoardId && (currentUser || currentBoardId.startsWith('local-'))) {
-    await Promise.all([loadBoardList(), loadBoard(currentBoardId)]);
+  // A local (unsaved, signed-out) board id can't be loaded from the server.
+  if (currentBoardId && currentBoardId.startsWith('local-')) currentBoardId = '';
+
+  let _boardLoaded = false;
+  if (currentBoardId) {
+    const [, ok] = await Promise.all([loadBoardList(), loadBoard(currentBoardId)]);
+    _boardLoaded = ok;
+    _pruneTabsToBoardList();
+  }
+  if (!_boardLoaded) {
+    // No board, or the one in the URL belongs to someone else / was deleted:
+    // make sure nothing left in memory from a previous session is shown.
+    _resetBoardState();
+    currentBoardId = '';
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('board')) {
+        url.searchParams.delete('board');
+        window.history.replaceState({}, '', url);
+      }
+    } catch {}
+    renderCanvas();
+  }
+  if (_boardLoaded) {
     initRealtime(currentBoardId);
     // insights and chat history are independent — fetch together.
     Promise.all([loadPersistedInsights(), initChatSessions(currentBoardId)]);
@@ -8014,6 +8083,7 @@ async function loadPersistedInsights() {
 
 async function showBoardListModal() {
   await loadBoardList();
+  _pruneTabsToBoardList();
   if (!boardsList.length) {
     // No boards yet — show empty canvas so user can start building directly.
     // A board is auto-created on first addSwimlane() / addStep() call.
