@@ -169,32 +169,18 @@ xs = [215, 590, 960, 1330, 1705]
 ys = [650, 590, 530, 470, 410]  # icon centre: ascending = more value
 
 body = []
-# rising band
-body.append(f'<path d="M{xs[0]},{ys[0]} L{xs[-1]},{ys[-1]}" stroke="url(#rise)" stroke-width="150" stroke-linecap="round"/>')
-
-# value axis label
-body.append(f'<text x="1840" y="250" text-anchor="end" font-family="Inter" font-weight="700" font-size="20" fill="{MUTED}" letter-spacing="3">MORE VALUE TO PEOPLE ↗</text>')
-
+ys = [540] * 5
 for i, (t, sub, icon) in enumerate(stages):
     x, y = xs[i], ys[i]
-    body.append(f'<circle cx="{x}" cy="{y}" r="138" fill="#FFFFFF" opacity="0.9"/>')
+    body.append(f'<circle cx="{x}" cy="{y}" r="138" fill="#FFFFFF"/>')
     body.append(f'<circle cx="{x}" cy="{y}" r="138" fill="none" stroke="{[CARAMEL, CARAMEL, CORAL, BLUE, TEAL][i]}" stroke-width="4"/>')
     body.append(f'<g transform="translate({x},{y}) scale(0.86)">{icon}</g>')
-    body.append(f'<use href="#cycle" transform="translate({x+98},{y-98})"/>')
-    body.append(f'<text x="{x}" y="{y+186}" text-anchor="middle" font-family="Inter" font-weight="800" font-size="32" fill="{INK}">{t}</text>')
-    body.append(f'<text x="{x}" y="{y+222}" text-anchor="middle" font-family="Inter" font-weight="500" font-size="22" fill="{MUTED}">{sub}</text>')
-    body.append(f'<circle cx="{x-120}" cy="{y-108}" r="22" fill="{INK}"/>')
-    body.append(f'<text x="{x-120}" y="{y-100}" text-anchor="middle" font-family="Inter" font-weight="800" font-size="22" fill="#fff">{i+1}</text>')
+    body.append(f'<text x="{x}" y="{y+196}" text-anchor="middle" font-family="Inter" font-weight="800" font-size="32" fill="{INK}">{t}</text>')
+    body.append(f'<text x="{x}" y="{y+232}" text-anchor="middle" font-family="Inter" font-weight="500" font-size="22" fill="{MUTED}">{sub}</text>')
     if i < 4:
-        x1, y1 = x + 146, y - 14
-        x2, y2 = xs[i+1] - 152, ys[i+1] + 14
-        body.append(f'<path d="M{x1},{y1} L{x2},{y2}" stroke="{MUTED}" stroke-width="6" fill="none" stroke-linecap="round" marker-end="url(#ah)"/>')
+        body.append(f'<path d="M{x+150},{y} L{xs[i+1]-158},{y}" stroke="{MUTED}" stroke-width="6" fill="none" stroke-linecap="round" marker-end="url(#ah)"/>')
 
-# continuous evolution loop
-body.append(f'<path d="M1800,690 C1830,1030 1300,1010 960,1010 C620,1010 52,1030 58,800" stroke="url(#loop)" stroke-width="9" fill="none" stroke-linecap="round" marker-end="url(#ahLoop)"/>')
-body.append(f'<rect x="580" y="976" width="760" height="68" rx="34" fill="#FFFFFF" stroke="{TEAL}" stroke-width="3"/>')
-body.append(f'<use href="#cycle" transform="translate(624,1010) scale(1.05)"/>')
-body.append(f'<text x="985" y="1020" text-anchor="middle" font-family="Inter" font-weight="800" font-size="28" fill="{INK}">Continuously evolving through <tspan fill="{TEAL}">Service Design</tspan></text>')
+body.append(f'<text x="960" y="920" text-anchor="middle" font-family="Inter" font-weight="700" font-size="30" fill="{INK}">Continuously evolving through <tspan fill="{TEAL}">Service Design</tspan></text>')
 
 # title
 body.append(f'<text x="80" y="104" font-family="Inter Display, Inter" font-weight="800" font-size="60" fill="{INK}">What is Service Design?</text>')
