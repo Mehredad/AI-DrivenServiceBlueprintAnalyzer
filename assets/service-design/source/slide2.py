@@ -10,9 +10,13 @@ TEAL = "#0F766E"
 TEAL_L = "#E3F4F1"
 CORAL = "#D9532B"
 CORAL_L = "#FCEDE6"
-PURPLE = "#6D4BC2"
+PURPLE = "#8B6CE0"
 PURPLE_L = "#F0EBFB"
 F = "Inter"
+FG = "#FFFFFF"
+FG2 = "#D5DBE1"
+PURPLE_T = "#C4B5FD"
+LIGHT = {BLUE: "#9DB8FF", TEAL: "#5EEAD4", CORAL: "#FFA07F"}
 
 out = []
 add = out.append
@@ -34,7 +38,7 @@ def chip(x, y, w, h, lines, stroke, fill, size=17, weight=600):
 defs = f"""
 <defs>
   <marker id="ah" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-    <path d="M0,0 L10,5 L0,10 z" fill="{MUTED}"/></marker>
+    <path d="M0,0 L10,5 L0,10 z" fill="{FG2}"/></marker>
   <marker id="ahT" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
     <path d="M0,0 L10,5 L0,10 z" fill="{TEAL}"/></marker>
   <marker id="ahP" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="4" markerHeight="4" orient="auto">
@@ -45,8 +49,8 @@ defs = f"""
 </defs>"""
 
 # ---------------- title ----------------
-text(60, 82, "Service Design in digital public services: the NHS App", 50, 800, INK, extra='font-family="Inter Display, Inter"')
-text(60, 124, "One app on the surface; a living system of people, organisations, technology and policy underneath, designed and redesigned as one service.", 22, 500, MUTED)
+text(60, 82, "Service Design in digital public services: the NHS App", 50, 800, FG, extra='font-family="Inter Display, Inter"')
+text(60, 124, "One app on the surface; a living system of people, organisations, technology and policy underneath, designed and redesigned as one service.", 22, 500, FG2)
 
 LX, LW = 60, 230          # lane label column
 CX0, CX1 = 310, 1660      # content columns
@@ -84,27 +88,27 @@ for i, (k, t, s, c) in enumerate(chain):
     x = xs[i]
     add(f'<circle cx="{x}" cy="{cy}" r="44" fill="#fff" stroke="{c}" stroke-width="4"/>')
     add(f'<g transform="translate({x},{cy}) scale(0.66)">{icons[k]}</g>')
-    text(x, cy + 76, t, 20, 800, INK, "middle")
-    text(x, cy + 100, s, 15, 500, MUTED, "middle")
+    text(x, cy + 76, t, 20, 800, FG, "middle")
+    text(x, cy + 100, s, 15, 500, FG2, "middle")
     if i < 4:
-        add(f'<path d="M{x+56},{cy} L{xs[i+1]-60},{cy}" stroke="{MUTED}" stroke-width="4" marker-end="url(#ah)" stroke-linecap="round"/>')
-text(LX, cy + 20, "VALUE CHAIN", 17, 800, INK, extra='letter-spacing="2"')
-text(LX, cy + 46, "from resources", 16, 500, MUTED)
-text(LX, cy + 68, "to transformation", 16, 500, MUTED)
+        add(f'<path d="M{x+56},{cy} L{xs[i+1]-60},{cy}" stroke="{FG2}" stroke-width="4" marker-end="url(#ah)" stroke-linecap="round"/>')
+text(LX, cy + 20, "VALUE CHAIN", 17, 800, FG, extra='letter-spacing="2"')
+text(LX, cy + 46, "from resources", 16, 500, FG2)
+text(LX, cy + 68, "to transformation", 16, 500, FG2)
 
 # ---------------- blueprint lanes ----------------
 lanes = [
-    ("PEOPLE", ["Who the service", "is for and with"], 340, 76, INK, "#FFFFFF"),
+    ("PEOPLE", ["Who the service", "is for and with"], 340, 76, FG, "#FFFFFF"),
     ("FRONTSTAGE", ["What users see", "and do in the app"], 440, 96, BLUE, BLUE_L),
     ("BACKSTAGE", ["Systems and teams", "that make it work"], 584, 96, TEAL, TEAL_L),
     ("ENABLERS", ["Policy, standards", "and governance"], 704, 96, CORAL, CORAL_L),
 ]
 for name, sub, y, h, c, fl in lanes:
-    add(f'<rect x="{LX-10}" y="{y-10}" width="{CX1-LX+20}" height="{h+20}" rx="18" fill="{fl}" opacity="{0.0 if fl=="#FFFFFF" else 0.55}"/>')
+    add(f'<rect x="{LX-10}" y="{y-10}" width="{CX1-LX+20}" height="{h+20}" rx="18" fill="{c}" opacity="{0.0 if fl=="#FFFFFF" else 0.16}"/>')
     add(f'<rect x="{LX-10}" y="{y-10}" width="8" height="{h+20}" rx="4" fill="{c}"/>')
-    text(LX + 12, y + h / 2 - 8, name, 17, 800, c if c != INK else INK, extra='letter-spacing="2"')
-    text(LX + 12, y + h / 2 + 14, sub[0], 15, 500, MUTED)
-    text(LX + 12, y + h / 2 + 32, sub[1], 15, 500, MUTED)
+    text(LX + 12, y + h / 2 - 8, name, 17, 800, LIGHT.get(c, FG), extra='letter-spacing="2"')
+    text(LX + 12, y + h / 2 + 14, sub[0], 15, 500, FG2)
+    text(LX + 12, y + h / 2 + 32, sub[1], 15, 500, FG2)
 
 # people
 people = ["Patients", "Carers", "Practice staff", "Clinicians", "Pharmacists", "Hospital teams", "Product teams"]
@@ -132,9 +136,9 @@ for i in range(cols):
     mx = x + cw / 2
     add(f'<path d="M{mx},{536} L{mx},{582}" stroke="{TEAL}" stroke-width="3" marker-start="url(#ahT)" marker-end="url(#ahT)"/>')
 # line of visibility
-add(f'<path d="M{LX},{558} L{CX1},{558}" stroke="{INK}" stroke-width="2" stroke-dasharray="10 8" opacity="0.55"/>')
-add(f'<rect x="{LX-12}" y="547" width="212" height="22" rx="11" fill="#fff"/>')
-text(LX + 12, 564, "LINE OF VISIBILITY", 14, 800, MUTED, "start", 'letter-spacing="2"')
+add(f'<path d="M{LX+230},{558} L{CX1},{558}" stroke="{FG}" stroke-width="2" stroke-dasharray="10 8" opacity="0.55"/>')
+
+text(LX + 12, 564, "LINE OF VISIBILITY", 14, 800, FG2, "start", 'letter-spacing="2"')
 
 enablers = ["NHS &amp; GDS service standards", "Clinical safety (DCB0129 / 0160)", "Accessibility (WCAG 2.2 AA)",
             "Data protection &amp; consent", "Interoperability (FHIR APIs)", "Digital inclusion",
@@ -150,7 +154,7 @@ for e in enablers:
 
 # ---------------- outcomes ----------------
 oy = 836
-add(f'<rect x="{LX-10}" y="{oy}" width="{CX1-LX+20}" height="96" rx="18" fill="{INK}"/>')
+add(f'<rect x="{LX-10}" y="{oy}" width="{CX1-LX+20}" height="96" rx="18" fill="#FFFFFF" fill-opacity="0.08" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="2"/>')
 text(LX + 12, oy + 42, "OUTCOMES", 17, 800, "#FFFFFF", extra='letter-spacing="2"')
 text(LX + 12, oy + 66, "what changes", 15, 500, "#CBD2D9")
 outs = [("Easier, fairer access", "for patients and carers"), ("Less admin", "for practices and pharmacies"),
@@ -167,9 +171,9 @@ for i, (a, b) in enumerate(outs):
 
 # ---------------- continuous evolution column ----------------
 RW = W - 40 - RX0
-add(f'<rect x="{RX0}" y="156" width="{RW}" height="776" rx="24" fill="{PURPLE_L}" stroke="{PURPLE}" stroke-width="2.5"/>')
-text(RX0 + RW / 2, 196, "CONTINUOUS", 17, 800, PURPLE, "middle", 'letter-spacing="2"')
-text(RX0 + RW / 2, 218, "EVOLUTION", 17, 800, PURPLE, "middle", 'letter-spacing="2"')
+add(f'<rect x="{RX0}" y="156" width="{RW}" height="776" rx="24" fill="{PURPLE}" fill-opacity="0.18" stroke="{PURPLE}" stroke-width="2.5"/>')
+text(RX0 + RW / 2, 196, "CONTINUOUS", 17, 800, PURPLE_T, "middle", 'letter-spacing="2"')
+text(RX0 + RW / 2, 218, "EVOLUTION", 17, 800, PURPLE_T, "middle", 'letter-spacing="2"')
 phases = ["Discover", "Alpha", "Beta", "Live", "Iterate"]
 cx_r = RX0 + RW / 2
 py0, pstep = 262, 74
@@ -182,8 +186,8 @@ for i, ph in enumerate(phases):
 # loop back from Iterate to Discover
 ly1, ly2 = py0 + 4 * pstep + 23, py0 + 23
 add(f'<path d="M{RX0+22},{ly1} C{RX0-6},{ly1} {RX0-6},{ly2} {RX0+18},{ly2}" stroke="{PURPLE}" stroke-width="3" fill="none" marker-end="url(#ahP)"/>')
-text(cx_r, 664, "Signals that", 15, 700, PURPLE, "middle")
-text(cx_r, 684, "feed the loop", 15, 700, PURPLE, "middle")
+text(cx_r, 664, "Signals that", 15, 700, PURPLE_T, "middle")
+text(cx_r, 684, "feed the loop", 15, 700, PURPLE_T, "middle")
 signals = ["User research", "App analytics", "Ratings &amp; reviews", "Clinical incidents", "Staff feedback", "Policy change"]
 for i, s in enumerate(signals):
     y = 702 + i * 36
@@ -194,8 +198,8 @@ for y in (378, 488, 632, 752, 884):
     add(f'<path d="M{RX0-4},{y} L{CX1+16},{y}" stroke="{PURPLE}" stroke-width="3" marker-end="url(#ahP)" opacity="0.8"/>')
 
 # footer
-text(60, 1000, "Service design shapes the whole system, not only the screens, and keeps it evolving as needs, technology and policy change.", 22, 700, INK)
-text(60, 1034, "Illustrative map. System names are examples of the kinds of national services an app like this depends on.", 16, 500, MUTED)
+text(60, 1000, "Service design shapes the whole system, not only the screens, and keeps it evolving as needs, technology and policy change.", 22, 700, FG)
+text(60, 1034, "Illustrative map. System names are examples of the kinds of national services an app like this depends on.", 16, 500, FG2)
 
 svg = f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">{defs}{"".join(out)}</svg>'
 open(sys.argv[1], "w").write(svg)

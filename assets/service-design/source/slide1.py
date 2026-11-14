@@ -11,6 +11,9 @@ CREAM = "#F6EBDD"
 TEAL = "#0F766E"
 BLUE = "#3354C4"
 CORAL = "#E4572E"
+FG = "#FFFFFF"
+FG2 = "#D5DBE1"
+TEAL_T = "#5EEAD4"
 
 defs = f"""
 <defs>
@@ -24,7 +27,7 @@ defs = f"""
     <stop offset="1" stop-color="{CORAL}"/>
   </linearGradient>
   <marker id="ah" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-    <path d="M0,0 L10,5 L0,10 z" fill="{MUTED}"/>
+    <path d="M0,0 L10,5 L0,10 z" fill="{FG2}"/>
   </marker>
   <marker id="ahLoop" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto">
     <path d="M0,0 L10,5 L0,10 z" fill="{CORAL}"/>
@@ -175,16 +178,16 @@ for i, (t, sub, icon) in enumerate(stages):
     body.append(f'<circle cx="{x}" cy="{y}" r="138" fill="#FFFFFF"/>')
     body.append(f'<circle cx="{x}" cy="{y}" r="138" fill="none" stroke="{[CARAMEL, CARAMEL, CORAL, BLUE, TEAL][i]}" stroke-width="4"/>')
     body.append(f'<g transform="translate({x},{y}) scale(0.86)">{icon}</g>')
-    body.append(f'<text x="{x}" y="{y+196}" text-anchor="middle" font-family="Inter" font-weight="800" font-size="32" fill="{INK}">{t}</text>')
-    body.append(f'<text x="{x}" y="{y+232}" text-anchor="middle" font-family="Inter" font-weight="500" font-size="22" fill="{MUTED}">{sub}</text>')
+    body.append(f'<text x="{x}" y="{y+196}" text-anchor="middle" font-family="Inter" font-weight="800" font-size="32" fill="{FG}">{t}</text>')
+    body.append(f'<text x="{x}" y="{y+232}" text-anchor="middle" font-family="Inter" font-weight="500" font-size="22" fill="{FG2}">{sub}</text>')
     if i < 4:
-        body.append(f'<path d="M{x+150},{y} L{xs[i+1]-158},{y}" stroke="{MUTED}" stroke-width="6" fill="none" stroke-linecap="round" marker-end="url(#ah)"/>')
+        body.append(f'<path d="M{x+150},{y} L{xs[i+1]-158},{y}" stroke="{FG2}" stroke-width="6" fill="none" stroke-linecap="round" marker-end="url(#ah)"/>')
 
-body.append(f'<text x="960" y="920" text-anchor="middle" font-family="Inter" font-weight="700" font-size="30" fill="{INK}">Continuously evolving through <tspan fill="{TEAL}">Service Design</tspan></text>')
+body.append(f'<text x="960" y="920" text-anchor="middle" font-family="Inter" font-weight="700" font-size="30" fill="{FG}">Continuously evolving through <tspan fill="{TEAL_T}">Service Design</tspan></text>')
 
 # title
-body.append(f'<text x="80" y="104" font-family="Inter Display, Inter" font-weight="800" font-size="60" fill="{INK}">What is Service Design?</text>')
-body.append(f'<text x="80" y="152" font-family="Inter" font-weight="500" font-size="26" fill="{MUTED}">Designing how value reaches people, from a raw commodity to a transformed everyday experience.</text>')
+body.append(f'<text x="80" y="104" font-family="Inter Display, Inter" font-weight="800" font-size="60" fill="{FG}">What is Service Design?</text>')
+body.append(f'<text x="80" y="152" font-family="Inter" font-weight="500" font-size="26" fill="{FG2}">Designing how value reaches people, from a raw commodity to a transformed everyday experience.</text>')
 
 svg = f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">{defs}{"".join(body)}</svg>'
 open(sys.argv[1], "w").write(svg)
